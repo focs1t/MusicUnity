@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.musicunity.backend.pojo.UserFollowing;
+import ru.musicunity.backend.pojo.User;
+
+import java.util.List;
 
 @Repository
 public interface UserFollowingRepository extends JpaRepository<UserFollowing, UserFollowing.UserFollowingId> {
@@ -15,4 +18,7 @@ public interface UserFollowingRepository extends JpaRepository<UserFollowing, Us
 
     @Query("SELECT uf FROM UserFollowing uf WHERE uf.userId = :followedId")
     Page<UserFollowing> findByFollowed(Long followedId, Pageable pageable);
+
+    @Query("SELECT uf.followed FROM UserFollowing uf WHERE uf.follower.userId = :userId")
+    List<User> findFollowedAuthorsByUser(Long userId);
 }

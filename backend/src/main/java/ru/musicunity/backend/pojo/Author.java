@@ -53,7 +53,7 @@ public class Author {
     private List<Release> releases = new ArrayList<>();
 
     public enum AuthorRole {
-        PERFORMER(0), PRODUCER(1), BOTH(2);
+        ARTIST(0), PRODUCER(1), BOTH(2);
 
         private final int code;
         AuthorRole(int code) { this.code = code; }

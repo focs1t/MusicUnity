@@ -11,6 +11,12 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+    @Query("SELECT r FROM Review r WHERE r.release.releaseId = :releaseId ORDER BY r.createdAt DESC")
+    Page<Review> findByReleaseNewest(Long releaseId, Pageable pageable);
+
+    @Query("SELECT r FROM Review r WHERE r.release.releaseId = :releaseId ORDER BY r.createdAt ASC")
+    Page<Review> findByReleaseOldest(Long releaseId, Pageable pageable);
+
     @Query("SELECT r FROM Review r WHERE r.releaseId = :releaseId")
     Page<Review> findByRelease(Long releaseId, Pageable pageable);
 
@@ -28,4 +34,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT r FROM Review r WHERE r.authorId = :authorId ORDER BY r.createdAt DESC LIMIT 10")
     List<Review> findFirst10ByAuthorOrderByCreatedAtDesc(Long authorId);
+
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.userId = :userId")
+    long countByUser(Long userId);
+
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.release.releaseId = :releaseId")
+    long countByRelease(Long releaseId);
 }

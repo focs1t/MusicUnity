@@ -1,9 +1,71 @@
 package ru.musicunity.backend.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import ru.musicunity.backend.dto.*;
+import ru.musicunity.backend.pojo.Author;
+import ru.musicunity.backend.repository.AuthorRepository;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
 public class AuthorService {
-    // TODO список всех авторов сортируя по дате регистрации
-    // TODO поиск авторов по частичному названию
-    // TODO конкретный автор с полной информацией
-    // TODO изменить автора
-    // TODO добавить автора
+    private final AuthorRepository authorRepository;
+
+    public List<AuthorDto> getAllAuthors(int page, int size) {
+        return authorRepository.findAll(PageRequest.of(page, size))
+                .stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    public List<AuthorDto> searchAuthors(String query, int page, int size) {
+        return authorRepository.searchAuthors(query, PageRequest.of(page, size))
+                .stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    public AuthorDto getAuthor(Long id) {
+        return authorRepository.findById(id).map(this::toDto).orElseThrow();
+    }
+
+    public void updateAuthor(Long id, AuthorDto dto) {
+        Author author = authorRepository.findById(id).orElseThrow();
+        author.setAuthorName(dto.getAuthorName());
+        author.setAvatarUrl(dto.getAvatarUrl());
+        author.setBio(dto.getBio());
+        authorRepository.save(author);
+    }
+
+    public void addAuthor(AuthorDto dto) {
+        Author author = Author.builder()
+                .authorName(dto.getAuthorName())
+                .avatarUrl(dto.getAvatarUrl())
+                .bio(dto.getBio())
+                .isVerified(false)
+                .role(Author.AuthorRole.ARTIST)
+                .build();
+        authorRepository.save(author);
+    }
+
+    private AuthorDto toDto(Author author) {
+        AuthorDto dto = new AuthorDto();
+        dto.setAuthorId(author.getAuthorId());
+        dto.setAuthorName(author.getAuthorName());
+        dto.setIsVerified(author.getIsVerified());
+        dto.setAvatarUrl(author.getAvatarUrl());
+        dto.setBio(author.getBio());
+        dto.setFollowingCount(author.getFollowingCount());
+        dto.setRole(author.getRole().name());
+        return dto;
+    }
+
+    private AuthorShortDto toShortDto(Author author) {
+        AuthorShortDto dto = new AuthorShortDto();
+        dto.setAuthorId(author.getAuthorId());
+        dto.setAuthorName(author.getAuthorName());
+        dto.setAvatarUrl(author.getAvatarUrl());
+        dto.setVerified(author.getIsVerified());
+        return dto;
+    }
 }

@@ -21,4 +21,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%'))")
     Page<User> searchUsers(String query, Pageable pageable);
+
+    // Топ 25 пользователей по количеству лайков на рецензиях
+    @Query("SELECT u FROM User u LEFT JOIN u.reviews r GROUP BY u ORDER BY SUM(r.likesCount) DESC")
+    Page<User> findTopUsersByReviewLikes(Pageable pageable);
+
+    // Топ 3 пользователей по количеству рецензий
+    @Query("SELECT u FROM User u LEFT JOIN u.reviews r GROUP BY u ORDER BY COUNT(r) DESC")
+    Page<User> findTopUsersByReviewCount(Pageable pageable);
 }

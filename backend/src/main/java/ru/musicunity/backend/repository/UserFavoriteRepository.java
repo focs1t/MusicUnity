@@ -19,6 +19,9 @@ public interface UserFavoriteRepository extends JpaRepository<UserFavorite, User
     @Query("SELECT uf FROM UserFavorite uf WHERE uf.releaseId = :releaseId")
     Page<UserFavorite> findByRelease(Long releaseId, Pageable pageable);
 
-    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.userId = :userId")
+    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.user.userId = :userId")
     List<Release> findFavoritesByUser(Long userId);
+
+    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.user.userId = :userId AND uf.release.type = :type")
+    List<Release> findFavoritesByUserAndType(Long userId, Release.ReleaseType type);
 }
