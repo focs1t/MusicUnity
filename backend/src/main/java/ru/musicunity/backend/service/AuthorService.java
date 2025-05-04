@@ -33,7 +33,6 @@ public class AuthorService {
         Author author = authorRepository.findById(id).orElseThrow();
         author.setAuthorName(dto.getAuthorName());
         author.setAvatarUrl(dto.getAvatarUrl());
-        author.setBio(dto.getBio());
         authorRepository.save(author);
     }
 
@@ -41,9 +40,9 @@ public class AuthorService {
         Author author = Author.builder()
                 .authorName(dto.getAuthorName())
                 .avatarUrl(dto.getAvatarUrl())
-                .bio(dto.getBio())
                 .isVerified(false)
                 .role(Author.AuthorRole.ARTIST)
+                .followingCount(0)
                 .build();
         authorRepository.save(author);
     }
@@ -54,9 +53,9 @@ public class AuthorService {
         dto.setAuthorName(author.getAuthorName());
         dto.setIsVerified(author.getIsVerified());
         dto.setAvatarUrl(author.getAvatarUrl());
-        dto.setBio(author.getBio());
         dto.setFollowingCount(author.getFollowingCount());
-        dto.setRole(author.getRole().name());
+        dto.setRole(author.getRole());
+        dto.setCreatedAt(author.getCreatedAt());
         return dto;
     }
 

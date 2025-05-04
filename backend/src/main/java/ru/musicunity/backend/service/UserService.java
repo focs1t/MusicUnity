@@ -12,6 +12,8 @@ import ru.musicunity.backend.repository.UserRepository;
 import ru.musicunity.backend.repository.UserFavoriteRepository;
 import ru.musicunity.backend.repository.UserFollowingRepository;
 import ru.musicunity.backend.config.JwtUtil;
+import ru.musicunity.backend.exception.UserAlreadyExistsException;
+import ru.musicunity.backend.exception.UserNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,14 +36,19 @@ public class UserService {
 
     // Полная инфа о пользователе
     public UserDto getUserInfo(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("" + userId));
         return toDto(user);
     }
 
     // Регистрация
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail()) || userRepository.existsByUsername(request.getUsername()))
-            throw new RuntimeException("User already exists");
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new UserAlreadyExistsException("Пользователь с email " + request.getEmail() + " уже существует");
+        }
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new UserAlreadyExistsException("Пользователь с именем " + request.getUsername() + " уже существует");
+        }
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -55,33 +62,36 @@ public class UserService {
 
     // Авторизация
     public AuthResponse login(AuthRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotFoundException(request.getEmail()));
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash()))
-            throw new RuntimeException("Invalid credentials");
+            throw new RuntimeException("Неверный пароль");
         String token = jwtUtil.generateToken(user.getEmail());
         return new AuthResponse(token);
     }
 
     // Изменение пароля
     public void changePassword(Long userId, ChangePasswordRequest request) {
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID " + userId + " не найден"));
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash()))
-            throw new RuntimeException("Wrong old password");
+            throw new RuntimeException("Неверный старый пароль");
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }
 
     // Изменение данных пользователя
     public void updateProfile(Long userId, UserDto dto) {
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID " + userId + " не найден"));
         user.setAvatarUrl(dto.getAvatarUrl());
-        user.setBio(dto.getBio());
         userRepository.save(user);
     }
 
     // Блокировка пользователя
     public void blockUser(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID " + userId + " не найден"));
         user.setRights(User.UserRole.BLOCKED);
         userRepository.save(user);
     }
@@ -109,8 +119,9 @@ public class UserService {
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
         dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setBio(user.getBio());
-        dto.setRights(user.getRights().name());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setLastLogin(user.getLastLogin());
+        dto.setRights(user.getRights());
         return dto;
     }
 

@@ -28,7 +28,7 @@ public class ReviewService {
     // Добавить полную рецензию
     public void addFullReview(ReviewDto dto) {
         User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(dto.getUserId()));
+                .orElseThrow(() -> new UserNotFoundException("" + dto.getUserId()));
         Release release = releaseRepository.findById(dto.getReleaseId())
                 .orElseThrow(() -> new ReleaseNotFoundException(dto.getReleaseId()));
         Review review = Review.builder()
@@ -43,7 +43,7 @@ public class ReviewService {
     // Добавить простую рецензию
     public void addSimpleReview(ReviewDto dto) {
         User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(dto.getUserId()));
+                .orElseThrow(() -> new UserNotFoundException("" + dto.getUserId()));
         Release release = releaseRepository.findById(dto.getReleaseId())
                 .orElseThrow(() -> new ReleaseNotFoundException(dto.getReleaseId()));
         Review review = Review.builder()

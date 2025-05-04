@@ -13,12 +13,12 @@ import java.util.List;
 
 @Repository
 public interface UserFollowingRepository extends JpaRepository<UserFollowing, UserFollowing.UserFollowingId> {
-    @Query("SELECT uf FROM UserFollowing uf WHERE uf.userId = :followerId")
+    @Query("SELECT uf FROM UserFollowing uf WHERE uf.follower.id = :followerId")
     Page<UserFollowing> findByFollower(Long followerId, Pageable pageable);
 
-    @Query("SELECT uf FROM UserFollowing uf WHERE uf.userId = :followedId")
+    @Query("SELECT uf FROM UserFollowing uf WHERE uf.followed.id = :followedId")
     Page<UserFollowing> findByFollowed(Long followedId, Pageable pageable);
 
-    @Query("SELECT uf.followed FROM UserFollowing uf WHERE uf.follower.userId = :userId")
+    @Query("SELECT uf.followed FROM UserFollowing uf WHERE uf.follower.id = :userId")
     List<User> findFollowedAuthorsByUser(Long userId);
 }

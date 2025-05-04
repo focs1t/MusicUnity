@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,6 +37,9 @@ public class Author {
     private String avatarUrl;
 
     @Lob
+    @JsonIgnore
+    @Basic(fetch = FetchType.LAZY)
+    @Column(columnDefinition = "TEXT")
     private String bio;
 
     @CreationTimestamp

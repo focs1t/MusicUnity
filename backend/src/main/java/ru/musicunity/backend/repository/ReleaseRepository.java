@@ -12,21 +12,21 @@ import java.util.List;
 
 @Repository
 public interface ReleaseRepository extends JpaRepository<Release, Long>, JpaSpecificationExecutor<Release> {
-    @Query("SELECT * FROM Release r JOIN r.authors a WHERE a.authorId = :authorId")
+    @Query("SELECT r FROM Release r JOIN r.authors a WHERE a.id = :authorId")
     Page<Release> findByAuthor(Long authorId, Pageable pageable);
 
-    @Query("SELECT * FROM Release r JOIN r.genres g WHERE g.genreId = :genreId")
+    @Query("SELECT r FROM Release r JOIN r.genres g WHERE g.id = :genreId")
     Page<Release> findByGenre(Long genreId, Pageable pageable);
 
-    @Query("SELECT * FROM Release r WHERE r.type = :type AND YEAR(r.releaseDate) = :year")
+    @Query("SELECT r FROM Release r WHERE r.type = :type AND YEAR(r.releaseDate) = :year")
     Page<Release> findByTypeAndYear(Release.ReleaseType type, int year, Pageable pageable);
 
-    @Query("SELECT * FROM Release r ORDER BY r.favoritesCount DESC")
+    @Query("SELECT r FROM Release r ORDER BY r.favoritesCount DESC")
     Page<Release> findTop15ByFavorites(Pageable pageable);
 
-    @Query(value = "SELECT * FROM Release r JOIN r.authors a WHERE a.authorId = :authorId ORDER BY r.favoritesCount DESC LIMIT 5")
+    @Query("SELECT r FROM Release r JOIN r.authors a WHERE a.id = :authorId ORDER BY r.favoritesCount DESC")
     List<Release> findTop5ByAuthorOrderByTotalScoreDesc(Long authorId);
 
-    @Query("SELECT * FROM Release r WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("SELECT r FROM Release r WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :query, '%'))")
     Page<Release> searchReleases(String query, Pageable pageable);
 }

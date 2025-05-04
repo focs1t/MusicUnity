@@ -1,12 +1,12 @@
 package ru.musicunity.backend.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.ReleaseDto;
+import ru.musicunity.backend.dto.ReleaseRequest;
 import ru.musicunity.backend.service.ReleaseService;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/releases")
@@ -15,42 +15,50 @@ public class ReleaseController {
     private final ReleaseService releaseService;
 
     @PostMapping
-    public void add(@RequestBody ReleaseDto dto,
-                    @RequestParam List<Long> authorIds,
-                    @RequestParam List<Long> genreIds) {
-        releaseService.addReleaseWithAuthorsAndGenres(dto, authorIds, genreIds);
-    }
-
-    @PostMapping("/own")
-    public void addOwn(@RequestBody ReleaseDto dto, @RequestParam Long authorId) {
-        releaseService.addOwnRelease(dto, authorId);
-    }
-
-    @GetMapping("/newest")
-    public List<ReleaseDto> getNewest(@RequestParam(defaultValue = "0") int page,
-                                      @RequestParam(defaultValue = "10") int size) {
-        return releaseService.getNewest(page, size);
-    }
-
-    @GetMapping("/author/{authorId}/grouped")
-    public Map<String, List<ReleaseDto>> getByAuthorGroupedByType(@PathVariable Long authorId,
-                                                                  @RequestParam(defaultValue = "0") int page,
-                                                                  @RequestParam(defaultValue = "100") int size) {
-        return releaseService.getByAuthorGroupedByType(authorId, page, size);
-    }
-
-    @GetMapping("/top5/{authorId}")
-    public List<ReleaseDto> getTop5ByAuthorByScore(@PathVariable Long authorId) {
-        return releaseService.getTop5ByAuthorByScore(authorId);
-    }
-
-    @GetMapping("/top15-today")
-    public List<ReleaseDto> getTop15ByReviewsToday() {
-        return releaseService.getTop15ByReviewsToday();
+    public ResponseEntity<ReleaseDto> createRelease(@RequestBody ReleaseRequest request) {
+        return ResponseEntity.ok(releaseService.createRelease(request));
     }
 
     @GetMapping("/{id}")
-    public ReleaseDto get(@PathVariable Long id) {
-        return releaseService.getRelease(id);
+    public ResponseEntity<ReleaseDto> getRelease(@PathVariable Long id) {
+        return ResponseEntity.ok(releaseService.getRelease(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<ReleaseDto>> getAllReleases(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(releaseService.getAllReleases(page, size));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<ReleaseDto>> searchReleases(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(releaseService.searchReleases(query, page, size));
+    }
+
+    @GetMapping("/author/{authorId}")
+    public ResponseEntity<Page<ReleaseDto>> getReleasesByAuthor(
+            @PathVariable Long authorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(releaseService.getReleasesByAuthor(authorId, page, size));
+    }
+
+    @GetMapping("/genre/{genreId}")
+    public ResponseEntity<Page<ReleaseDto>> getReleasesByGenre(
+            @PathVariable Long genreId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(releaseService.getReleasesByGenre(genreId, page, size));
+    }
+
+    @GetMapping("/top")
+    public ResponseEntity<Page<ReleaseDto>> getTopReleases(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(releaseService.getTopReleases(page, size));
     }
 }

@@ -15,13 +15,13 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     @Query("SELECT r FROM Report r WHERE r.status = :status ORDER BY r.createdAt DESC")
     Page<Report> findByStatus(Report.ReportStatus status, Pageable pageable);
 
-    @Query("SELECT r FROM Report r WHERE r.moderator.userId = :moderatorId ORDER BY r.createdAt DESC")
+    @Query("SELECT r FROM Report r WHERE r.moderator.id = :moderatorId ORDER BY r.createdAt DESC")
     Page<Report> findByModerator(Long moderatorId, Pageable pageable);
 
     @Query("SELECT r FROM Report r WHERE r.createdAt BETWEEN :start AND :end ORDER BY r.createdAt DESC")
     Page<Report> findByDateRange(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-    @Query("SELECT r FROM Report r WHERE r.review.reviewId = :reviewId")
+    @Query("SELECT r FROM Report r WHERE r.review.id = :reviewId")
     List<Report> findByReviewId(Long reviewId);
 
     @Query("SELECT r FROM Report r WHERE r.status = ru.musicunity.backend.pojo.Report.ReportStatus.RESOLVED")

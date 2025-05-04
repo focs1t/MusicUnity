@@ -13,15 +13,15 @@ import java.util.List;
 
 @Repository
 public interface UserFavoriteRepository extends JpaRepository<UserFavorite, UserFavorite.UserFavoriteId> {
-    @Query("SELECT uf FROM UserFavorite uf WHERE uf.userId = :userId")
+    @Query("SELECT uf FROM UserFavorite uf WHERE uf.user.id = :userId")
     Page<UserFavorite> findByUser(Long userId, Pageable pageable);
 
-    @Query("SELECT uf FROM UserFavorite uf WHERE uf.releaseId = :releaseId")
+    @Query("SELECT uf FROM UserFavorite uf WHERE uf.release.id = :releaseId")
     Page<UserFavorite> findByRelease(Long releaseId, Pageable pageable);
 
-    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.user.userId = :userId")
+    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.user.id = :userId")
     List<Release> findFavoritesByUser(Long userId);
 
-    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.user.userId = :userId AND uf.release.type = :type")
+    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.user.id = :userId AND uf.release.type = :type")
     List<Release> findFavoritesByUserAndType(Long userId, Release.ReleaseType type);
 }

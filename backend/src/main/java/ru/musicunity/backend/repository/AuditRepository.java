@@ -10,9 +10,9 @@ import ru.musicunity.backend.pojo.Audit;
 
 @Repository
 public interface AuditRepository extends JpaRepository<Audit, Long>, JpaSpecificationExecutor<Audit> {
-    @Query("SELECT * FROM Audit a WHERE a.userId = :moderatorId")
+    @Query("SELECT a FROM Audit a WHERE a.moderator.id = :moderatorId")
     Page<Audit> findByModerator(Long moderatorId, Pageable pageable);
 
-    @Query("SELECT * FROM Audit a WHERE a.actionType = :action")
+    @Query("SELECT a FROM Audit a WHERE a.actionType = :action")
     Page<Audit> findByActionType(Audit.AuditAction action, Pageable pageable);
 }

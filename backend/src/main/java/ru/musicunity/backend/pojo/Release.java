@@ -27,6 +27,9 @@ public class Release {
     @Column(nullable = false, length = 200)
     private String title;
 
+    @Lob
+    private String description;
+
     @Column(nullable = false)
     @Convert(converter = ReleaseTypeConverter.class)
     private ReleaseType type;

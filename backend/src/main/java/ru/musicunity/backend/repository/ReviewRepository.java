@@ -11,33 +11,33 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    @Query("SELECT r FROM Review r WHERE r.release.releaseId = :releaseId ORDER BY r.createdAt DESC")
+    @Query("SELECT r FROM Review r WHERE r.release.id = :releaseId ORDER BY r.createdAt DESC")
     Page<Review> findByReleaseNewest(Long releaseId, Pageable pageable);
 
-    @Query("SELECT r FROM Review r WHERE r.release.releaseId = :releaseId ORDER BY r.createdAt ASC")
+    @Query("SELECT r FROM Review r WHERE r.release.id = :releaseId ORDER BY r.createdAt ASC")
     Page<Review> findByReleaseOldest(Long releaseId, Pageable pageable);
 
-    @Query("SELECT r FROM Review r WHERE r.releaseId = :releaseId")
+    @Query("SELECT r FROM Review r WHERE r.release.id = :releaseId")
     Page<Review> findByRelease(Long releaseId, Pageable pageable);
 
-    @Query("SELECT r FROM Review r WHERE r.user.userId = :userId")
+    @Query("SELECT r FROM Review r WHERE r.user.id = :userId")
     Page<Review> findByUser(Long userId, Pageable pageable);
 
-    @Query("SELECT AVG(r.totalScore) FROM Review r WHERE r.releaseId = :releaseId")
+    @Query("SELECT AVG(r.totalScore) FROM Review r WHERE r.release.id = :releaseId")
     Double getAverageScoreForRelease(Long releaseId);
 
     @Query("SELECT r FROM Review r ORDER BY r.likesCount DESC")
     Page<Review> findPopularReviews(Pageable pageable);
 
-    @Query("SELECT AVG(r.totalScore) FROM Review r WHERE r.authorId = :authorId")
+    @Query("SELECT AVG(r.totalScore) FROM Review r JOIN r.release re JOIN re.authors a WHERE a.id = :authorId")
     Double getAverageScoreByAuthor(Long authorId);
 
-    @Query("SELECT r FROM Review r WHERE r.authorId = :authorId ORDER BY r.createdAt DESC LIMIT 10")
+    @Query("SELECT r FROM Review r JOIN r.release re JOIN re.authors a WHERE a.id = :authorId ORDER BY r.createdAt DESC")
     List<Review> findFirst10ByAuthorOrderByCreatedAtDesc(Long authorId);
 
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.userId = :userId")
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.id = :userId")
     long countByUser(Long userId);
 
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.release.releaseId = :releaseId")
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.release.id = :releaseId")
     long countByRelease(Long releaseId);
 }
