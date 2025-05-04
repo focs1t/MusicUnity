@@ -10,10 +10,9 @@ import java.util.List;
 
 @Repository
 public interface ReleaseGenreRepository extends JpaRepository<ReleaseGenre, ReleaseGenre.ReleaseGenreId> {
-    @Query("SELECT rg FROM ReleaseGenre rg WHERE rg.release.releaseId = :releaseId")
-    List<ReleaseGenre> findByReleaseId(Long releaseId);
+    @Query("SELECT * FROM ReleaseGenre rg WHERE rg.releaseId = :releaseId")
+    List<ReleaseGenre> findByRelease(Long releaseId);
 
-    @Modifying
-    @Query("DELETE FROM ReleaseGenre rg WHERE rg.release.releaseId = :releaseId AND rg.genre.genreId = :genreId")
-    void deleteByReleaseAndGenre(Long releaseId, Long genreId);
+    @Query("SELECT * FROM ReleaseGenre rg WHERE rg.genreId = :genreId")
+    List<ReleaseGenre> findByGenre(Long genreId);
 }

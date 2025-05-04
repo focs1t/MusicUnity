@@ -1,10 +1,10 @@
-package ru.musicunity.backend.controller;
+package ru.musicunity.backend.service;
 
-public class AuditController {
+public class AuditService {
     // TODO список с сортировкой по дате (новые)
     // TODO список с сортировкой по дате (старые)
     // TODO список с поиском по модератору
     // TODO список с поиском по выбранным целям (добавление релиза, удаления рецензии, бана пользователя и т. д.)
-    // TODO конкретный аудит с полной иноформацией (кто совершил, дата, действие, цель)
+    // TODO конкретный аудит с полной иноформацией
     // TODO удалить все аудиты
 }

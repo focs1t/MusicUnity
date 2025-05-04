@@ -10,10 +10,9 @@ import java.util.List;
 
 @Repository
 public interface ReleaseAuthorRepository extends JpaRepository<ReleaseAuthor, ReleaseAuthor.ReleaseAuthorId> {
-    @Query("SELECT ra FROM ReleaseAuthor ra WHERE ra.release.releaseId = :releaseId")
-    List<ReleaseAuthor> findByReleaseId(Long releaseId);
+    @Query("SELECT * FROM ReleaseAuthor ra WHERE ra.releaseId = :releaseId")
+    List<ReleaseAuthor> findByRelease(Long releaseId);
 
-    @Modifying
-    @Query("DELETE FROM ReleaseAuthor ra WHERE ra.release.releaseId = :releaseId AND ra.author.authorId = :authorId")
-    void deleteByReleaseAndAuthor(Long releaseId, Long authorId);
+    @Query("SELECT * FROM ReleaseAuthor ra WHERE ra.authorId = :authorId")
+    List<ReleaseAuthor> findByAuthor(Long authorId);
 }

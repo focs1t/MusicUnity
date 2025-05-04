@@ -1,21 +1,20 @@
 package ru.musicunity.backend.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.musicunity.backend.pojo.Like;
 
-import java.util.List;
-import java.util.Optional;
-
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
-    @Query("SELECT l FROM Like l WHERE l.user.userId = :userId AND l.review.reviewId = :reviewId")
-    Optional<Like> findByUserAndReview(Long userId, Long reviewId);
+    @Query("SELECT * FROM Like l WHERE l.reviewId = :reviewId AND l.type = :type")
+    Page<Like> findByReviewAndType(Long reviewId, Like.LikeType type, Pageable pageable);
 
-    @Query("SELECT COUNT(l) FROM Like l WHERE l.review.reviewId = :reviewId")
-    int countByReviewId(Long reviewId);
+    @Query("SELECT COUNT(*) FROM Like l WHERE l.reviewId = :reviewId")
+    Long countByReview(Long reviewId);
 
-    @Query("SELECT l FROM Like l WHERE l.type = :type")
-    List<Like> findByType(Like.LikeType type);
+    @Query("SELECT * FROM Like l WHERE l.userId = :userId")
+    Page<Like> findByUser(Long userId, Pageable pageable);
 }
