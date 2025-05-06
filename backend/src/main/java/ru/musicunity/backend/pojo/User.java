@@ -6,10 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import ru.musicunity.backend.pojo.enums.UserRole;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Entity
@@ -44,7 +44,7 @@ public class User {
     private String bio;
 
     @Column(nullable = false)
-    @Convert(converter = UserRoleConverter.class)
+    @Convert(converter = UserRole.UserRoleConverter.class)
     private UserRole rights;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -52,23 +52,4 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Report> reports = new ArrayList<>();
-
-    public enum UserRole {
-        BLOCKED(-1), REGULAR(0), AUTHOR(1), MODERATOR(2);
-
-        private final int code;
-        UserRole(int code) { this.code = code; }
-        public int getCode() { return code; }
-    }
-
-    @Converter(autoApply = true)
-    public static class UserRoleConverter implements AttributeConverter<UserRole, Integer> {
-        @Override public Integer convertToDatabaseColumn(UserRole role) { return role.getCode(); }
-        @Override public UserRole convertToEntityAttribute(Integer code) {
-            return Arrays.stream(UserRole.values())
-                    .filter(r -> r.getCode() == code)
-                    .findFirst()
-                    .orElseThrow(IllegalArgumentException::new);
-        }
-    }
 }

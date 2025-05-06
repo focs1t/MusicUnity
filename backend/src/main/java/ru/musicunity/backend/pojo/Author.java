@@ -6,10 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import ru.musicunity.backend.pojo.enums.AuthorRole;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Entity
@@ -46,28 +46,9 @@ public class Author {
     private Integer followingCount = 0;
 
     @Column(nullable = false)
-    @Convert(converter = AuthorRoleConverter.class)
+    @Convert(converter = AuthorRole.AuthorRoleConverter.class)
     private AuthorRole role;
 
     @ManyToMany(mappedBy = "authors")
     private List<Release> releases = new ArrayList<>();
-
-    public enum AuthorRole {
-        PERFORMER(0), PRODUCER(1), BOTH(2);
-
-        private final int code;
-        AuthorRole(int code) { this.code = code; }
-        public int getCode() { return code; }
-    }
-
-    @Converter(autoApply = true)
-    public static class AuthorRoleConverter implements AttributeConverter<AuthorRole, Integer> {
-        @Override public Integer convertToDatabaseColumn(AuthorRole role) { return role.getCode(); }
-        @Override public AuthorRole convertToEntityAttribute(Integer code) {
-            return Arrays.stream(AuthorRole.values())
-                    .filter(r -> r.getCode() == code)
-                    .findFirst()
-                    .orElseThrow(IllegalArgumentException::new);
-        }
-    }
 }

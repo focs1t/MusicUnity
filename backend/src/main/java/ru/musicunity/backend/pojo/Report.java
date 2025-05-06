@@ -6,9 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import ru.musicunity.backend.pojo.enums.ReportStatus;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 
 @Entity
 @Table(name = "reports")
@@ -38,7 +38,7 @@ public class Report {
     private String reason;
 
     @Column(nullable = false)
-    @Convert(converter = ReportStatusConverter.class)
+    @Convert(converter = ReportStatus.ReportStatusConverter.class)
     private ReportStatus status = ReportStatus.PENDING;
 
     @CreationTimestamp
@@ -46,23 +46,4 @@ public class Report {
     private LocalDateTime createdAt;
 
     private LocalDateTime resolvedAt;
-
-    public enum ReportStatus {
-        PENDING(0), RESOLVED(1), REJECTED(2);
-
-        private final int code;
-        ReportStatus(int code) { this.code = code; }
-        public int getCode() { return code; }
-    }
-
-    @Converter(autoApply = true)
-    public static class ReportStatusConverter implements AttributeConverter<ReportStatus, Integer> {
-        @Override public Integer convertToDatabaseColumn(ReportStatus status) { return status.getCode(); }
-        @Override public ReportStatus convertToEntityAttribute(Integer code) {
-            return Arrays.stream(ReportStatus.values())
-                    .filter(s -> s.getCode() == code)
-                    .findFirst()
-                    .orElseThrow(IllegalArgumentException::new);
-        }
-    }
 }
