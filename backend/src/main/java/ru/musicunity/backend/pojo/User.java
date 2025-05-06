@@ -47,6 +47,9 @@ public class User {
     @Convert(converter = UserRole.UserRoleConverter.class)
     private UserRole rights;
 
+    @Column(name = "telegram_chat_id")
+    private Long telegramChatId;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 
