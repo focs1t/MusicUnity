@@ -46,6 +46,7 @@ public class Release {
     private Integer favoritesCount = 0;
 
     @OneToMany(mappedBy = "release", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ReleaseAuthor> authors = new ArrayList<>();
 
     @ManyToMany
@@ -54,8 +55,14 @@ public class Release {
             joinColumns = @JoinColumn(name = "release_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
+    @Builder.Default
     private List<Genre> genres = new ArrayList<>();
 
     @OneToMany(mappedBy = "release", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "release", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Favorite> favorites = new ArrayList<>();
 }

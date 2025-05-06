@@ -5,7 +5,7 @@ import jakarta.persistence.AttributeConverter;
 import java.util.Arrays;
 
 public enum AuthorRole {
-    PERFORMER(0),
+    ARTIST(0),
     PRODUCER(1),
     BOTH(2);
 

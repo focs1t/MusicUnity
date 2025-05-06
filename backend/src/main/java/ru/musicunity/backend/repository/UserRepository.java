@@ -14,22 +14,28 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    boolean existsByEmail(String email);
-    boolean existsByUsername(String username);
-    Optional<User> findByEmail(String email);
-
-    @Query("SELECT u FROM User u WHERE u.rights = :role")
-    List<User> findByRole(@Param("role") UserRole role);
-
-    @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%'))")
-    Page<User> searchUsers(@Param("query") String query, Pageable pageable);
-
+    // Базовые методы поиска
     Optional<User> findByUsername(String username);
-    List<User> findByRights(UserRole role);
-
-    Optional<User> findByTelegramChatId(Long chatId);
+    Optional<User> findByEmail(String email);
     Optional<User> findByEmailAndRights(String email, UserRole rights);
+    Optional<User> findByTelegramChatId(Long chatId);
+    
+    // Поиск по ролям
+    List<User> findByRights(UserRole rights);
 
+    // Поиск пользователей по частичному совпадению имени
+    @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))")
+    Page<User> findByUsernameContainingIgnoreCase(String username, Pageable pageable);
+
+    // Проверка существования пользователя
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
+
+    // Поиск пользователей по роли с пагинацией
+    @Query("SELECT u FROM User u WHERE u.rights = :role")
+    Page<User> findByRole(@Param("role") UserRole role, Pageable pageable);
+
+    // Поиск пользователей по частичному совпадению имени (без пагинации)
     @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<User> searchByUsername(@Param("query") String query);
 }

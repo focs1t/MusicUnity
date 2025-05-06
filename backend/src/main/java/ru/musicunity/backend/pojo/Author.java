@@ -49,6 +49,11 @@ public class Author {
     @Convert(converter = AuthorRole.AuthorRoleConverter.class)
     private AuthorRole role;
 
-    @ManyToMany(mappedBy = "authors")
-    private List<Release> releases = new ArrayList<>();
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ReleaseAuthor> releases = new ArrayList<>();
+
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<UserFollowing> followings = new ArrayList<>();
 }

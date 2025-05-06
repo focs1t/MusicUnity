@@ -11,15 +11,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user_followings")
-public class UserFollowing {
+@Table(name = "favorites")
+public class Favorite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long followingId;
+    private Long favoriteId;
 
     @ManyToOne
-    @JoinColumn(name = "author_id", nullable = false)
-    private Author author;
+    @JoinColumn(name = "release_id", nullable = false)
+    private Release release;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

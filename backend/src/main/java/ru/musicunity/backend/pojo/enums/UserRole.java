@@ -8,7 +8,8 @@ public enum UserRole {
     BLOCKED(-1),
     REGULAR(0),
     AUTHOR(1),
-    MODERATOR(2);
+    MODERATOR(2),
+    ADMIN(3);
 
     private final int code;
 
