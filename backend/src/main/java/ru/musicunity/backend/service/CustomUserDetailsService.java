@@ -7,15 +7,17 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.security.UserDetailsImpl;
+import ru.musicunity.backend.mapper.UserMapper;
 
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserService userService;
+    private final UserMapper userMapper;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userService.findByUsername(username);
+        User user = userMapper.toEntity(userService.findByUsername(username));
         if (user == null) {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }

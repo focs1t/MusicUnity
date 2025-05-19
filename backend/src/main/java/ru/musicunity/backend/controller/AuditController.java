@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.musicunity.backend.pojo.Audit;
+import ru.musicunity.backend.dto.AuditDTO;
 import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.service.AuditService;
 
@@ -20,43 +20,43 @@ public class AuditController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Audit>> getAllAuditLogs() {
+    public ResponseEntity<List<AuditDTO>> getAllAuditLogs() {
         return ResponseEntity.ok(auditService.getAllAuditLogs());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Audit> getAuditLogById(@PathVariable Long id) {
+    public ResponseEntity<AuditDTO> getAuditLogById(@PathVariable Long id) {
         return ResponseEntity.ok(auditService.getAuditLogById(id));
     }
 
     @GetMapping("/moderator/{moderatorId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Audit>> getAuditLogsByModerator(@PathVariable Long moderatorId) {
+    public ResponseEntity<List<AuditDTO>> getAuditLogsByModerator(@PathVariable Long moderatorId) {
         return ResponseEntity.ok(auditService.getAuditLogsByModerator(moderatorId));
     }
 
     @GetMapping("/target/{targetId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Audit>> getAuditLogsByTargetId(@PathVariable Long targetId) {
+    public ResponseEntity<List<AuditDTO>> getAuditLogsByTargetId(@PathVariable Long targetId) {
         return ResponseEntity.ok(auditService.getAuditLogsByTargetId(targetId));
     }
 
     @GetMapping("/newest")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<Audit>> getAuditLogsOrderByDateDesc(Pageable pageable) {
+    public ResponseEntity<Page<AuditDTO>> getAuditLogsOrderByDateDesc(Pageable pageable) {
         return ResponseEntity.ok(auditService.getAuditLogsOrderByDateDesc(pageable));
     }
 
     @GetMapping("/oldest")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<Audit>> getAuditLogsOrderByDateAsc(Pageable pageable) {
+    public ResponseEntity<Page<AuditDTO>> getAuditLogsOrderByDateAsc(Pageable pageable) {
         return ResponseEntity.ok(auditService.getAuditLogsOrderByDateAsc(pageable));
     }
 
     @GetMapping("/action/{actionType}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<Audit>> getAuditLogsByActionType(
+    public ResponseEntity<Page<AuditDTO>> getAuditLogsByActionType(
             @PathVariable AuditAction actionType,
             Pageable pageable) {
         return ResponseEntity.ok(auditService.getAuditLogsByActionType(actionType, pageable));

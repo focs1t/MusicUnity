@@ -8,6 +8,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.musicunity.backend.dto.AuthorDTO;
+import ru.musicunity.backend.dto.ReleaseDTO;
+import ru.musicunity.backend.dto.UserDTO;
+import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.Release;
 import ru.musicunity.backend.pojo.User;
@@ -19,6 +23,7 @@ import ru.musicunity.backend.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,50 +32,55 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ReleaseService releaseService;
     private final AuthorService authorService;
+    private final UserMapper userMapper;
 
-    public User findByUsername(String username) {
+    public UserDTO findByUsername(String username) {
         return userRepository.findByUsername(username)
+                .map(userMapper::toDTO)
                 .orElse(null);
     }
 
     public void updateTelegramChatId(String username, Long chatId) {
-        User user = findByUsername(username);
-        if (user != null) {
-            user.setTelegramChatId(chatId);
-            userRepository.save(user);
-        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+        user.setTelegramChatId(chatId);
+        userRepository.save(user);
     }
 
-    public List<User> findByRights(UserRole role) {
-        return userRepository.findByRights(role);
+    public List<UserDTO> findByRights(UserRole role) {
+        return userRepository.findByRights(role)
+                .stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public User findByTelegramChatId(Long chatId) {
+    public UserDTO findByTelegramChatId(Long chatId) {
         return userRepository.findByTelegramChatId(chatId)
+                .map(userMapper::toDTO)
                 .orElse(null);
     }
 
-    public User findModeratorByEmail(String email) {
+    public UserDTO findModeratorByEmail(String email) {
         return userRepository.findByEmailAndRights(email, UserRole.MODERATOR)
+                .map(userMapper::toDTO)
                 .orElse(null);
     }
 
-    public Page<User> searchUsersByUsername(String username, Pageable pageable) {
-        return userRepository.findByUsernameContainingIgnoreCase(username, pageable);
+    public Page<UserDTO> searchUsersByUsername(String username, Pageable pageable) {
+        return userRepository.findByUsernameContainingIgnoreCase(username, pageable)
+                .map(userMapper::toDTO);
     }
 
-    public User getUserById(Long id) {
+    public UserDTO getUserById(Long id) {
         return userRepository.findById(id)
+                .map(userMapper::toDTO)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
 
     public User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = findByUsername(username);
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
-        return user;
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     @Transactional
@@ -98,7 +108,8 @@ public class UserService {
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
     public void banUser(Long userId) {
-        User user = getUserById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         user.setRights(UserRole.BLOCKED);
         userRepository.save(user);
     }
@@ -110,33 +121,39 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public Page<Release> getFavoriteReleases(Long userId, Pageable pageable) {
-        User user = getUserById(userId);
+    public Page<ReleaseDTO> getFavoriteReleases(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return releaseService.getFavoriteReleasesByUser(user, pageable);
     }
 
-    public Page<Release> getFavoriteReleasesByType(Long userId, ReleaseType type, Pageable pageable) {
-        User user = getUserById(userId);
+    public Page<ReleaseDTO> getFavoriteReleasesByType(Long userId, ReleaseType type, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return releaseService.getFavoriteReleasesByUserAndType(user, type, pageable);
     }
 
-    public Page<Author> getFollowedAuthors(Long userId, Pageable pageable) {
-        User user = getUserById(userId);
+    public Page<AuthorDTO> getFollowedAuthors(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return authorService.getFollowedAuthors(user, pageable);
     }
 
-    public Page<Author> getFollowedAuthorsByRole(Long userId, AuthorRole role, Pageable pageable) {
-        User user = getUserById(userId);
+    public Page<AuthorDTO> getFollowedAuthorsByRole(Long userId, AuthorRole role, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return authorService.getFollowedAuthorsByRole(user, role, pageable);
     }
 
-    public Page<Release> getReleasesFromFollowedAuthors(Long userId, Pageable pageable) {
-        User user = getUserById(userId);
+    public Page<ReleaseDTO> getReleasesFromFollowedAuthors(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return releaseService.getReleasesByFollowedAuthors(user, pageable);
     }
 
-    public Page<Release> getReleasesFromFollowedAuthorsByType(Long userId, ReleaseType type, Pageable pageable) {
-        User user = getUserById(userId);
+    public Page<ReleaseDTO> getReleasesFromFollowedAuthorsByType(Long userId, ReleaseType type, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return releaseService.getReleasesByFollowedAuthorsAndType(user, type, pageable);
     }
 }

@@ -3,6 +3,8 @@ package ru.musicunity.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.musicunity.backend.dto.LikeDTO;
+import ru.musicunity.backend.mapper.LikeMapper;
 import ru.musicunity.backend.pojo.Like;
 import ru.musicunity.backend.pojo.Review;
 import ru.musicunity.backend.pojo.User;
@@ -12,6 +14,7 @@ import ru.musicunity.backend.repository.ReviewRepository;
 import ru.musicunity.backend.repository.UserRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,13 +22,20 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final LikeMapper likeMapper;
 
-    public List<Like> getLikesByReview(Long reviewId) {
-        return likeRepository.findAllByReviewId(reviewId);
+    public List<LikeDTO> getLikesByReview(Long reviewId) {
+        return likeRepository.findAllByReviewId(reviewId)
+                .stream()
+                .map(likeMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<Like> getAuthorLikesByReview(Long reviewId) {
-        return likeRepository.findAllByReviewIdAndType(reviewId, LikeType.AUTHOR);
+    public List<LikeDTO> getAuthorLikesByReview(Long reviewId) {
+        return likeRepository.findAllByReviewIdAndType(reviewId, LikeType.AUTHOR)
+                .stream()
+                .map(likeMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     public Long getLikesCountByReview(Long reviewId) {
@@ -45,7 +55,7 @@ public class LikeService {
     }
 
     @Transactional
-    public Like createLike(Long reviewId, Long userId, LikeType type) {
+    public LikeDTO createLike(Long reviewId, Long userId, LikeType type) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
         User user = userRepository.findById(userId)
@@ -61,7 +71,7 @@ public class LikeService {
                 .user(user)
                 .type(type)
                 .build();
-        return likeRepository.save(like);
+        return likeMapper.toDTO(likeRepository.save(like));
     }
 
     @Transactional

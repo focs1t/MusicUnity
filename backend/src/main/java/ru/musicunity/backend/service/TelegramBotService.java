@@ -11,16 +11,19 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.musicunity.backend.pojo.enums.UserRole;
+import ru.musicunity.backend.mapper.UserMapper;
 
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TelegramBotService extends TelegramLongPollingBot {
     private final UserService userService;
+    private final UserMapper userMapper;
 
     @Value("${telegram.bot.username}")
     private String botUsername;
@@ -87,7 +90,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private void handleUnlinkCommand(Long chatId) {
         String message;
         try {
-            ru.musicunity.backend.pojo.User user = userService.findByTelegramChatId(chatId);
+            ru.musicunity.backend.pojo.User user = userMapper.toEntity(userService.findByTelegramChatId(chatId));
             if (user != null) {
                 userService.updateTelegramChatId(user.getUsername(), null);
                 message = "✅ Ваш аккаунт успешно отвязан от Telegram.";
@@ -103,7 +106,10 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     public void notifyModeratorsAboutNewReport(String reportId, String reportType, String reportContent) {
-        List<ru.musicunity.backend.pojo.User> moderators = userService.findByRights(UserRole.MODERATOR);
+        List<ru.musicunity.backend.pojo.User> moderators = userService.findByRights(UserRole.MODERATOR)
+                .stream()
+                .map(userMapper::toEntity)
+                .collect(Collectors.toList());
         
         String message = String.format(
             "🔔 Новое обращение #%s\n\nТип: %s\nСодержание: %s",
