@@ -167,7 +167,6 @@ public class ReleaseService {
                 .orElseThrow(() -> new RuntimeException("Release not found with id: " + id));
     }
 
-    // Методы для работы с избранными релизами
     public Page<ReleaseDTO> getFavoriteReleasesByUser(User user, Pageable pageable) {
         return releaseRepository.findByFavoritesUserUserId(user.getUserId(), pageable)
                 .map(releaseMapper::toDTO);
@@ -202,7 +201,6 @@ public class ReleaseService {
         releaseRepository.save(release);
     }
 
-    // Методы для работы с релизами от подписанных авторов
     public Page<ReleaseDTO> getReleasesByFollowedAuthors(User user, Pageable pageable) {
         List<Author> followedAuthors = authorRepository.findByFollowingsUserUserId(user.getUserId(), Pageable.unpaged())
                 .getContent();
