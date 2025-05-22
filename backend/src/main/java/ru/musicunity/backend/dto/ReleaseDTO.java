@@ -21,4 +21,12 @@ public class ReleaseDTO {
     private List<GenreDTO> genres;
     private Double averageRating;
     private Integer reviewsCount;
+    
+    // Поля для создания релиза
+    private List<String> producerNames;
+    private List<String> artistNames;
+    private List<Long> producerIds;
+    private List<Long> artistIds;
+    private List<Long> genreIds;
+    private Long userId;
 } 

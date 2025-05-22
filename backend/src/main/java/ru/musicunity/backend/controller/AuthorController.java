@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.pojo.enums.AuthorRole;
 import ru.musicunity.backend.service.AuthorService;
+import ru.musicunity.backend.service.AuthorFollowingService;
 import ru.musicunity.backend.service.UserService;
 import ru.musicunity.backend.mapper.UserMapper;
 
@@ -19,6 +20,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthorController {
     private final AuthorService authorService;
+    private final AuthorFollowingService authorFollowingService;
     private final UserService userService;
     private final UserMapper userMapper;
 
@@ -71,7 +73,7 @@ public class AuthorController {
     public ResponseEntity<Page<AuthorDTO>> getFollowedAuthors(
             @RequestParam Long userId,
             Pageable pageable) {
-        return ResponseEntity.ok(authorService.getFollowedAuthors(
+        return ResponseEntity.ok(authorFollowingService.getFollowedAuthors(
                 userMapper.toEntity(userService.getUserById(userId)),
                 pageable));
     }
@@ -82,7 +84,7 @@ public class AuthorController {
             @RequestParam Long userId,
             @RequestParam AuthorRole role,
             Pageable pageable) {
-        return ResponseEntity.ok(authorService.getFollowedAuthorsByRole(
+        return ResponseEntity.ok(authorFollowingService.getFollowedAuthorsByRole(
                 userMapper.toEntity(userService.getUserById(userId)),
                 role,
                 pageable));
@@ -93,7 +95,7 @@ public class AuthorController {
     public ResponseEntity<Void> followAuthor(
             @PathVariable Long authorId,
             @RequestParam Long userId) {
-        authorService.followAuthor(authorId, userId);
+        authorFollowingService.followAuthor(authorId, userMapper.toEntity(userService.getUserById(userId)));
         return ResponseEntity.ok().build();
     }
 
@@ -102,7 +104,7 @@ public class AuthorController {
     public ResponseEntity<Void> unfollowAuthor(
             @PathVariable Long authorId,
             @RequestParam Long userId) {
-        authorService.unfollowAuthor(authorId, userId);
+        authorFollowingService.unfollowAuthor(authorId, userMapper.toEntity(userService.getUserById(userId)));
         return ResponseEntity.ok().build();
     }
 } 

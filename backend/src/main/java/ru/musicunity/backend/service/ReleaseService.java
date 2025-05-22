@@ -4,18 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.mapper.ReleaseMapper;
+import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.*;
 import ru.musicunity.backend.pojo.enums.AuthorRole;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
-import ru.musicunity.backend.repository.AuthorRepository;
-import ru.musicunity.backend.repository.GenreRepository;
-import ru.musicunity.backend.repository.ReleaseRepository;
-import ru.musicunity.backend.repository.UserFollowingRepository;
-import ru.musicunity.backend.mapper.UserMapper;
+import ru.musicunity.backend.pojo.enums.ReviewType;
+import ru.musicunity.backend.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,12 +29,17 @@ public class ReleaseService {
     private final ReleaseRepository releaseRepository;
     private final AuthorService authorService;
     private final GenreService genreService;
-    private final UserService userService;
     private final AuthorRepository authorRepository;
     private final GenreRepository genreRepository;
-    private final UserFollowingRepository userFollowingRepository;
     private final ReleaseMapper releaseMapper;
     private final UserMapper userMapper;
+    private final UserRepository userRepository;
+
+    public User getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
@@ -147,7 +151,7 @@ public class ReleaseService {
     }
 
     public List<ReleaseDTO> getTopReleasesByAuthor(Long authorId) {
-        return releaseRepository.findTop5ByAuthorsAuthorAuthorIdOrderByAverageRatingDesc(authorId)
+        return releaseRepository.findTop5ByAuthorsAuthorAuthorIdOrderByAverageRatingDesc(authorId, ReviewType.EXTENDED)
                 .stream()
                 .map(releaseMapper::toDTO)
                 .collect(Collectors.toList());
@@ -165,54 +169,6 @@ public class ReleaseService {
         return releaseRepository.findById(id)
                 .map(releaseMapper::toDTO)
                 .orElseThrow(() -> new RuntimeException("Release not found with id: " + id));
-    }
-
-    public Page<ReleaseDTO> getFavoriteReleasesByUser(User user, Pageable pageable) {
-        return releaseRepository.findByFavoritesUserUserId(user.getUserId(), pageable)
-                .map(releaseMapper::toDTO);
-    }
-
-    public Page<ReleaseDTO> getFavoriteReleasesByUserAndType(User user, ReleaseType type, Pageable pageable) {
-        return releaseRepository.findByFavoritesUserUserIdAndType(user.getUserId(), type, pageable)
-                .map(releaseMapper::toDTO);
-    }
-
-    @Transactional
-    public void addToFavorites(Long releaseId, Long userId) {
-        Release release = releaseRepository.findById(releaseId)
-                .orElseThrow(() -> new RuntimeException("Release not found with id: " + releaseId));
-        User user = userMapper.toEntity(userService.getUserById(userId));
-
-        if (!release.getFavorites().stream().anyMatch(f -> f.getUser().getUserId().equals(userId))) {
-            Favorite favorite = Favorite.builder()
-                    .release(release)
-                    .user(user)
-                    .build();
-            release.getFavorites().add(favorite);
-            releaseRepository.save(release);
-        }
-    }
-
-    @Transactional
-    public void removeFromFavorites(Long releaseId, Long userId) {
-        Release release = releaseRepository.findById(releaseId)
-                .orElseThrow(() -> new RuntimeException("Release not found with id: " + releaseId));
-        release.getFavorites().removeIf(f -> f.getUser().getUserId().equals(userId));
-        releaseRepository.save(release);
-    }
-
-    public Page<ReleaseDTO> getReleasesByFollowedAuthors(User user, Pageable pageable) {
-        List<Author> followedAuthors = authorRepository.findByFollowingsUserUserId(user.getUserId(), Pageable.unpaged())
-                .getContent();
-        return releaseRepository.findByAuthorsInAndOrderByAddedAtDesc(followedAuthors, pageable)
-                .map(releaseMapper::toDTO);
-    }
-
-    public Page<ReleaseDTO> getReleasesByFollowedAuthorsAndType(User user, ReleaseType type, Pageable pageable) {
-        List<Author> followedAuthors = authorRepository.findByFollowingsUserUserId(user.getUserId(), Pageable.unpaged())
-                .getContent();
-        return releaseRepository.findByAuthorsInAndTypeOrderByAddedAtDesc(followedAuthors, type, pageable)
-                .map(releaseMapper::toDTO);
     }
 
     public Release getReleaseEntityById(Long id) {

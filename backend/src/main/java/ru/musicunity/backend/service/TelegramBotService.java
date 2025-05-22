@@ -1,8 +1,9 @@
 package ru.musicunity.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+//import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -13,34 +14,36 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.mapper.UserMapper;
 
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-@Service
+@Slf4j
+//@Service
 @RequiredArgsConstructor
 public class TelegramBotService extends TelegramLongPollingBot {
     private final UserService userService;
     private final UserMapper userMapper;
 
-    @Value("${telegram.bot.username}")
+    //@Value("${telegram.bot.username}")
     private String botUsername;
 
-    @Value("${telegram.bot.token}")
+    //@Value("${telegram.bot.token}")
     private String botToken;
 
     private final Map<String, Long> pendingLinks = new ConcurrentHashMap<>();
 
-    @PostConstruct
+    //@PostConstruct
     public void init() {
-        try {
-            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(this);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException("Failed to register Telegram bot", e);
-        }
+        //try {
+        //    TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+        //    botsApi.registerBot(this);
+        //    log.info("Telegram bot {} successfully registered with Long Polling", botUsername);
+        //} catch (TelegramApiException e) {
+        //    log.error("Failed to register Telegram bot: {}", e.getMessage());
+        //    throw new RuntimeException("Failed to register Telegram bot", e);
+        //}
     }
 
     @Override
@@ -55,89 +58,27 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageText = update.getMessage().getText();
-            Long chatId = update.getMessage().getChatId();
-
-            if (messageText.startsWith("/start ")) {
-                String token = messageText.substring(7).trim();
-                handleStartCommand(chatId, token);
-            } else if (messageText.equals("/unlink")) {
-                handleUnlinkCommand(chatId);
-            }
-        }
+        // Временно отключаем обработку обновлений
     }
 
     private void handleStartCommand(Long chatId, String token) {
-        String message;
-        try {
-            if (pendingLinks.containsKey(token)) {
-                pendingLinks.put(token, chatId);
-                message = "✅ Ваш аккаунт успешно привязан к Telegram!\n\n" +
-                         "Теперь вы будете получать уведомления о новых жалобах.";
-            } else {
-                message = "❌ Неверная ссылка для привязки.\n\n" +
-                         "Пожалуйста, используйте ссылку из веб-интерфейса.";
-            }
-        } catch (Exception e) {
-            message = "❌ Произошла ошибка при привязке аккаунта.\n\n" +
-                     "Пожалуйста, попробуйте позже или обратитесь к администратору.";
-        }
-
-        sendMessage(chatId, message);
+        // Временно отключаем обработку команды
     }
 
     private void handleUnlinkCommand(Long chatId) {
-        String message;
-        try {
-            ru.musicunity.backend.pojo.User user = userMapper.toEntity(userService.findByTelegramChatId(chatId));
-            if (user != null) {
-                userService.updateTelegramChatId(user.getUsername(), null);
-                message = "✅ Ваш аккаунт успешно отвязан от Telegram.";
-            } else {
-                message = "❌ Ваш аккаунт не привязан к Telegram.";
-            }
-        } catch (Exception e) {
-            message = "❌ Произошла ошибка при отвязке аккаунта.\n\n" +
-                     "Пожалуйста, попробуйте позже или обратитесь к администратору.";
-        }
-
-        sendMessage(chatId, message);
+        // Временно отключаем обработку команды
     }
 
     public void notifyModeratorsAboutNewReport(String reportId, String reportType, String reportContent) {
-        List<ru.musicunity.backend.pojo.User> moderators = userService.findByRights(UserRole.MODERATOR)
-                .stream()
-                .map(userMapper::toEntity)
-                .collect(Collectors.toList());
-        
-        String message = String.format(
-            "🔔 Новое обращение #%s\n\nТип: %s\nСодержание: %s",
-            reportId, reportType, reportContent
-        );
-
-        for (ru.musicunity.backend.pojo.User moderator : moderators) {
-            if (moderator.getTelegramChatId() != null) {
-                sendMessage(moderator.getTelegramChatId(), message);
-            }
-        }
+        // Временно отключаем уведомления
     }
 
     public String generateLinkToken(String username) {
-        String token = java.util.UUID.randomUUID().toString();
-        pendingLinks.put(token, null); // chatId будет установлен позже
-        return "https://t.me/" + botUsername + "?start=" + token;
+        // Временно отключаем генерацию токена
+        return null;
     }
 
     private void sendMessage(Long chatId, String text) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText(text);
-        
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException("Failed to send Telegram message", e);
-        }
+        // Временно отключаем отправку сообщений
     }
 } 

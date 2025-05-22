@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.Release;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
+import ru.musicunity.backend.pojo.enums.ReviewType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +25,8 @@ public interface ReleaseRepository extends JpaRepository<Release, Long>, JpaSpec
     @Query("SELECT r FROM Release r " +
            "JOIN r.authors ra " +
            "WHERE ra.author.authorId = :authorId " +
-           "ORDER BY (SELECT AVG(rv.rating) FROM r.reviews rv WHERE rv.isFullReview = true) DESC")
-    List<Release> findTop5ByAuthorsAuthorAuthorIdOrderByAverageRatingDesc(@Param("authorId") Long authorId);
+           "ORDER BY (SELECT AVG(rv.totalScore) FROM r.reviews rv WHERE rv.type = :reviewType) DESC")
+    List<Release> findTop5ByAuthorsAuthorAuthorIdOrderByAverageRatingDesc(@Param("authorId") Long authorId, @Param("reviewType") ReviewType reviewType);
     
     @Query("SELECT r FROM Release r " +
            "WHERE EXISTS (SELECT rv FROM r.reviews rv WHERE rv.createdAt > :date) " +

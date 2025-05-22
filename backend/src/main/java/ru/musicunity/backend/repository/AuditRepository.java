@@ -17,7 +17,7 @@ public interface AuditRepository extends JpaRepository<Audit, Long>, JpaSpecific
     @Query("SELECT a FROM Audit a WHERE a.moderator.userId = :moderatorId")
     List<Audit> findByModerator(Long moderatorId);
 
-    @Query("SELECT * FROM Audit a WHERE a.actionType = :action")
+    @Query("SELECT a FROM Audit a WHERE a.actionType = :action")
     Page<Audit> findByActionType(AuditAction action, Pageable pageable);
 
     List<Audit> findByTargetId(Long targetId);

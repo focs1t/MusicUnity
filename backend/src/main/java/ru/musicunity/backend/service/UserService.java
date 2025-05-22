@@ -12,8 +12,6 @@ import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.mapper.UserMapper;
-import ru.musicunity.backend.pojo.Author;
-import ru.musicunity.backend.pojo.Release;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.AuthorRole;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
@@ -30,8 +28,9 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ReleaseService releaseService;
-    private final AuthorService authorService;
+    private final FavoriteService favoriteService;
+    private final AuthorFollowingService authorFollowingService;
+    private final FollowedReleasesService followedReleasesService;
     private final UserMapper userMapper;
 
     public UserDTO findByUsername(String username) {
@@ -124,36 +123,36 @@ public class UserService {
     public Page<ReleaseDTO> getFavoriteReleases(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return releaseService.getFavoriteReleasesByUser(user, pageable);
+        return favoriteService.getFavoriteReleasesByUser(user, pageable);
     }
 
     public Page<ReleaseDTO> getFavoriteReleasesByType(Long userId, ReleaseType type, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return releaseService.getFavoriteReleasesByUserAndType(user, type, pageable);
+        return favoriteService.getFavoriteReleasesByUserAndType(user, type, pageable);
     }
 
     public Page<AuthorDTO> getFollowedAuthors(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return authorService.getFollowedAuthors(user, pageable);
+        return authorFollowingService.getFollowedAuthors(user, pageable);
     }
 
     public Page<AuthorDTO> getFollowedAuthorsByRole(Long userId, AuthorRole role, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return authorService.getFollowedAuthorsByRole(user, role, pageable);
+        return authorFollowingService.getFollowedAuthorsByRole(user, role, pageable);
     }
 
     public Page<ReleaseDTO> getReleasesFromFollowedAuthors(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return releaseService.getReleasesByFollowedAuthors(user, pageable);
+        return followedReleasesService.getReleasesByFollowedAuthors(user, pageable);
     }
 
     public Page<ReleaseDTO> getReleasesFromFollowedAuthorsByType(Long userId, ReleaseType type, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return releaseService.getReleasesByFollowedAuthorsAndType(user, type, pageable);
+        return followedReleasesService.getReleasesByFollowedAuthorsAndType(user, type, pageable);
     }
 }

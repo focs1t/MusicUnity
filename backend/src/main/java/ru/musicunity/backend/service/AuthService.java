@@ -58,7 +58,7 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Удаляем старые токены
-        tokenRepository.deleteByUser_Id(user.getUserId());
+        tokenRepository.deleteByUser_UserId(user.getUserId());
 
         // Создаем новый токен
         String token = UUID.randomUUID().toString();

@@ -9,19 +9,23 @@ import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
+import ru.musicunity.backend.service.FavoriteService;
 import ru.musicunity.backend.service.ReleaseService;
 import ru.musicunity.backend.service.UserService;
+import ru.musicunity.backend.service.FollowedReleasesService;
 import ru.musicunity.backend.mapper.UserMapper;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/releases")
+@RequestMapping("/api/releases")
 @RequiredArgsConstructor
 public class ReleaseController {
     private final ReleaseService releaseService;
+    private final FavoriteService favoriteService;
     private final UserService userService;
+    private final FollowedReleasesService followedReleasesService;
     private final UserMapper userMapper;
 
     @GetMapping("/{id}")
@@ -35,112 +39,92 @@ public class ReleaseController {
     }
 
     @GetMapping("/author/{authorId}")
-    public ResponseEntity<Page<ReleaseDTO>> getReleasesByAuthor(
-            @PathVariable Long authorId,
-            Pageable pageable) {
+    public ResponseEntity<Page<ReleaseDTO>> getReleasesByAuthor(@PathVariable Long authorId, Pageable pageable) {
         return ResponseEntity.ok(releaseService.getReleasesByAuthor(authorId, pageable));
     }
 
     @GetMapping("/author/{authorId}/top")
-    public ResponseEntity<List<ReleaseDTO>> getTopReleasesByAuthor(@PathVariable Long authorId) {
-        return ResponseEntity.ok(releaseService.getTopReleasesByAuthor(authorId));
+    public ResponseEntity<Page<ReleaseDTO>> getTopReleasesByAuthor(@PathVariable Long authorId) {
+        return ResponseEntity.ok(Page.empty());
     }
 
-    @GetMapping("/top/reviews")
-    public ResponseEntity<List<ReleaseDTO>> getTopReleasesByReviews() {
-        return ResponseEntity.ok(releaseService.getTopReleasesByReviews());
+    @GetMapping("/top")
+    public ResponseEntity<Page<ReleaseDTO>> getTopReleasesByReviews() {
+        return ResponseEntity.ok(Page.empty());
     }
 
     @PostMapping
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<ReleaseDTO> createRelease(
-            @RequestParam String title,
-            @RequestParam ReleaseType type,
-            @RequestParam LocalDate releaseDate,
-            @RequestParam(required = false) String coverUrl,
-            @RequestParam(required = false) String releaseLink,
-            @RequestParam(required = false) List<String> producerNames,
-            @RequestParam(required = false) List<String> artistNames,
-            @RequestParam(required = false) List<Long> producerIds,
-            @RequestParam(required = false) List<Long> artistIds,
-            @RequestParam List<Long> genreIds) {
+    public ResponseEntity<ReleaseDTO> createRelease(@RequestBody ReleaseDTO releaseDTO) {
         return ResponseEntity.ok(releaseService.createRelease(
-                title, type, releaseDate, coverUrl, releaseLink,
-                producerNames, artistNames, producerIds, artistIds, genreIds));
+                releaseDTO.getTitle(),
+                releaseDTO.getType(),
+                releaseDTO.getReleaseDate(),
+                releaseDTO.getCoverUrl(),
+                releaseDTO.getReleaseLink(),
+                releaseDTO.getProducerNames(),
+                releaseDTO.getArtistNames(),
+                releaseDTO.getProducerIds(),
+                releaseDTO.getArtistIds(),
+                releaseDTO.getGenreIds()
+        ));
     }
 
     @PostMapping("/own")
     @PreAuthorize("hasRole('AUTHOR')")
-    public ResponseEntity<ReleaseDTO> createOwnRelease(
-            @RequestParam String title,
-            @RequestParam ReleaseType type,
-            @RequestParam LocalDate releaseDate,
-            @RequestParam(required = false) String coverUrl,
-            @RequestParam(required = false) String releaseLink,
-            @RequestParam(required = false) List<String> producerNames,
-            @RequestParam(required = false) List<String> artistNames,
-            @RequestParam(required = false) List<Long> producerIds,
-            @RequestParam(required = false) List<Long> artistIds,
-            @RequestParam List<Long> genreIds,
-            @RequestParam Long userId) {
+    public ResponseEntity<ReleaseDTO> createOwnRelease(@RequestBody ReleaseDTO releaseDTO) {
         return ResponseEntity.ok(releaseService.createOwnRelease(
-                title, type, releaseDate, coverUrl, releaseLink,
-                producerNames, artistNames, producerIds, artistIds, genreIds, userId));
+                releaseDTO.getTitle(),
+                releaseDTO.getType(),
+                releaseDTO.getReleaseDate(),
+                releaseDTO.getCoverUrl(),
+                releaseDTO.getReleaseLink(),
+                releaseDTO.getProducerNames(),
+                releaseDTO.getArtistNames(),
+                releaseDTO.getProducerIds(),
+                releaseDTO.getArtistIds(),
+                releaseDTO.getGenreIds(),
+                releaseDTO.getUserId()
+        ));
     }
 
     @GetMapping("/favorites")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleases(
-            @RequestParam Long userId,
-            Pageable pageable) {
-        User user = userMapper.toEntity(userService.getUserById(userId));
-        return ResponseEntity.ok(releaseService.getFavoriteReleasesByUser(user, pageable));
+    public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleases(Pageable pageable) {
+        return ResponseEntity.ok(favoriteService.getFavoriteReleasesByUser(releaseService.getCurrentUser(), pageable));
     }
 
-    @GetMapping("/favorites/type")
+    @GetMapping("/favorites/{type}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleasesByType(
-            @RequestParam Long userId,
-            @RequestParam ReleaseType type,
-            Pageable pageable) {
-        User user = userMapper.toEntity(userService.getUserById(userId));
-        return ResponseEntity.ok(releaseService.getFavoriteReleasesByUserAndType(user, type, pageable));
+    public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleasesByType(@PathVariable ReleaseType type, Pageable pageable) {
+        return ResponseEntity.ok(favoriteService.getFavoriteReleasesByUserAndType(releaseService.getCurrentUser(), type, pageable));
     }
 
-    @PostMapping("/{releaseId}/favorites")
+    @PostMapping("/{id}/favorite")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> addToFavorites(
-            @PathVariable Long releaseId,
-            @RequestParam Long userId) {
-        releaseService.addToFavorites(releaseId, userId);
+    public ResponseEntity<Void> addToFavorites(@PathVariable Long id) {
+        favoriteService.addToFavorites(id, releaseService.getCurrentUser().getUserId());
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{releaseId}/favorites")
+    @DeleteMapping("/{id}/favorite")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> removeFromFavorites(
-            @PathVariable Long releaseId,
-            @RequestParam Long userId) {
-        releaseService.removeFromFavorites(releaseId, userId);
+    public ResponseEntity<Void> removeFromFavorites(@PathVariable Long id) {
+        favoriteService.removeFromFavorites(id, releaseService.getCurrentUser().getUserId());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/followed")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<ReleaseDTO>> getReleasesByFollowedAuthors(
-            @RequestParam Long userId,
-            Pageable pageable) {
-        User user = userMapper.toEntity(userService.getUserById(userId));
-        return ResponseEntity.ok(releaseService.getReleasesByFollowedAuthors(user, pageable));
+    public ResponseEntity<Page<ReleaseDTO>> getReleasesByFollowedAuthors(Pageable pageable) {
+        return ResponseEntity.ok(followedReleasesService.getReleasesByFollowedAuthors(releaseService.getCurrentUser(), pageable));
     }
 
-    @GetMapping("/followed/type")
+    @GetMapping("/followed/{type}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ReleaseDTO>> getReleasesByFollowedAuthorsAndType(
-            @RequestParam Long userId,
-            @RequestParam ReleaseType type,
+            @PathVariable ReleaseType type,
             Pageable pageable) {
-        User user = userMapper.toEntity(userService.getUserById(userId));
-        return ResponseEntity.ok(releaseService.getReleasesByFollowedAuthorsAndType(user, type, pageable));
+        return ResponseEntity.ok(followedReleasesService.getReleasesByFollowedAuthorsAndType(releaseService.getCurrentUser(), type, pageable));
     }
 }

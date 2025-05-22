@@ -13,12 +13,12 @@ import java.util.List;
 
 @Repository
 public interface UserFavoriteRepository extends JpaRepository<UserFavorite, UserFavorite.UserFavoriteId> {
-    @Query("SELECT uf FROM UserFavorite uf WHERE uf.userId = :userId")
+    @Query("SELECT uf FROM UserFavorite uf WHERE uf.user.userId = :userId")
     Page<UserFavorite> findByUser(Long userId, Pageable pageable);
 
-    @Query("SELECT uf FROM UserFavorite uf WHERE uf.releaseId = :releaseId")
+    @Query("SELECT uf FROM UserFavorite uf WHERE uf.release.releaseId = :releaseId")
     Page<UserFavorite> findByRelease(Long releaseId, Pageable pageable);
 
-    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.userId = :userId")
+    @Query("SELECT uf.release FROM UserFavorite uf WHERE uf.user.userId = :userId")
     List<Release> findFavoritesByUser(Long userId);
 }
