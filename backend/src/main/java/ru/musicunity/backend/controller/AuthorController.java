@@ -1,5 +1,10 @@
 package ru.musicunity.backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,83 +23,132 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/authors")
 @RequiredArgsConstructor
+@Tag(name = "Авторы", description = "API для управления авторами музыкальных произведений")
 public class AuthorController {
     private final AuthorService authorService;
     private final AuthorFollowingService authorFollowingService;
     private final UserService userService;
     private final UserMapper userMapper;
 
+    @Operation(summary = "Получение всех авторов")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список авторов")
+    })
     @GetMapping
-    public ResponseEntity<Page<AuthorDTO>> getAllAuthors(Pageable pageable) {
+    public ResponseEntity<Page<AuthorDTO>> getAllAuthors(
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(authorService.getAllAuthorsOrderByRegistrationDate(pageable));
     }
 
+    @Operation(summary = "Поиск авторов по имени")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список найденных авторов")
+    })
     @GetMapping("/search")
     public ResponseEntity<Page<AuthorDTO>> searchAuthors(
-            @RequestParam String name,
-            Pageable pageable) {
+        @Parameter(description = "Имя автора для поиска") @RequestParam String name,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(authorService.searchAuthorsByName(name, pageable));
     }
 
+    @Operation(summary = "Получение автора по ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор найден"),
+        @ApiResponse(responseCode = "404", description = "Автор не найден")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<AuthorDTO> getAuthorById(@PathVariable Long id) {
+    public ResponseEntity<AuthorDTO> getAuthorById(
+        @Parameter(description = "ID автора") @PathVariable Long id) {
         return ResponseEntity.ok(authorService.getAuthorById(id));
     }
 
+    @Operation(summary = "Получение автора по имени")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор найден"),
+        @ApiResponse(responseCode = "404", description = "Автор не найден")
+    })
     @GetMapping("/name/{authorName}")
-    public ResponseEntity<AuthorDTO> getAuthorByName(@PathVariable String authorName) {
+    public ResponseEntity<AuthorDTO> getAuthorByName(
+        @Parameter(description = "Имя автора") @PathVariable String authorName) {
         Optional<AuthorDTO> author = authorService.findByAuthorName(authorName);
         return author.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Обновление данных автора")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Данные автора обновлены"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для обновления"),
+        @ApiResponse(responseCode = "404", description = "Автор не найден")
+    })
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<AuthorDTO> updateAuthor(
-            @PathVariable Long id,
-            @RequestBody AuthorDTO updatedAuthor) {
+        @Parameter(description = "ID автора") @PathVariable Long id,
+        @Parameter(description = "Обновленные данные автора") @RequestBody AuthorDTO updatedAuthor) {
         return ResponseEntity.ok(authorService.updateAuthor(id, updatedAuthor));
     }
 
+    @Operation(summary = "Создание нового автора")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор успешно создан"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для создания автора")
+    })
     @PostMapping
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<AuthorDTO> createAuthor(
-            @RequestParam String authorName,
-            @RequestParam Long userId,
-            @RequestParam AuthorRole role) {
+        @Parameter(description = "Имя автора") @RequestParam String authorName,
+        @Parameter(description = "ID пользователя") @RequestParam Long userId,
+        @Parameter(description = "Роль автора") @RequestParam AuthorRole role) {
         return ResponseEntity.ok(authorService.createAuthor(
                 authorName,
                 userMapper.toEntity(userService.getUserById(userId)),
                 role));
     }
 
+    @Operation(summary = "Получение отслеживаемых авторов")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список отслеживаемых авторов"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
     @GetMapping("/followed")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AuthorDTO>> getFollowedAuthors(
-            @RequestParam Long userId,
-            Pageable pageable) {
+        @Parameter(description = "ID пользователя") @RequestParam Long userId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(authorFollowingService.getFollowedAuthors(
                 userMapper.toEntity(userService.getUserById(userId)),
                 pageable));
     }
 
+    @Operation(summary = "Получение отслеживаемых авторов по роли")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список отслеживаемых авторов"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
     @GetMapping("/followed/role")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AuthorDTO>> getFollowedAuthorsByRole(
-            @RequestParam Long userId,
-            @RequestParam AuthorRole role,
-            Pageable pageable) {
+        @Parameter(description = "ID пользователя") @RequestParam Long userId,
+        @Parameter(description = "Роль автора") @RequestParam AuthorRole role,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(authorFollowingService.getFollowedAuthorsByRole(
                 userMapper.toEntity(userService.getUserById(userId)),
                 role,
                 pageable));
     }
 
+    @Operation(summary = "Подписка на автора")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Успешная подписка"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация"),
+        @ApiResponse(responseCode = "404", description = "Автор не найден")
+    })
     @PostMapping("/{authorId}/follow")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> followAuthor(
-            @PathVariable Long authorId,
-            @RequestParam Long userId) {
+        @Parameter(description = "ID автора") @PathVariable Long authorId,
+        @Parameter(description = "ID пользователя") @RequestParam Long userId) {
         authorFollowingService.followAuthor(authorId, userMapper.toEntity(userService.getUserById(userId)));
         return ResponseEntity.ok().build();
     }

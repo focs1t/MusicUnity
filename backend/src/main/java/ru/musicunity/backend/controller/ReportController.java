@@ -1,5 +1,10 @@
 package ru.musicunity.backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,60 +17,109 @@ import ru.musicunity.backend.service.ReportService;
 @RestController
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
+@Tag(name = "Жалобы", description = "API для управления жалобами на отзывы")
 public class ReportController {
     private final ReportService reportService;
 
+    @Operation(summary = "Получение всех жалоб (сначала новые)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список жалоб"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
+    })
     @GetMapping
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Page<ReportDTO>> getAllReportsNewestFirst(Pageable pageable) {
+    public ResponseEntity<Page<ReportDTO>> getAllReportsNewestFirst(
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(reportService.getAllReportsNewestFirst(pageable));
     }
 
+    @Operation(summary = "Получение всех жалоб (сначала старые)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список жалоб"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
+    })
     @GetMapping("/oldest")
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Page<ReportDTO>> getAllReportsOldestFirst(Pageable pageable) {
+    public ResponseEntity<Page<ReportDTO>> getAllReportsOldestFirst(
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(reportService.getAllReportsOldestFirst(pageable));
     }
 
+    @Operation(summary = "Получение жалобы по ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Жалоба найдена"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалобы"),
+        @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
+    })
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<ReportDTO> getReportById(@PathVariable Long id) {
+    public ResponseEntity<ReportDTO> getReportById(
+        @Parameter(description = "ID жалобы") @PathVariable Long id) {
         return ResponseEntity.ok(reportService.getReportById(id));
     }
 
+    @Operation(summary = "Создание жалобы")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Жалоба успешно создана"),
+        @ApiResponse(responseCode = "400", description = "Некорректные данные жалобы"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'AUTHOR')")
     public ResponseEntity<ReportDTO> createReport(
-            @RequestParam Long reviewId,
-            @RequestParam Long userId,
-            @RequestParam String reason) {
+        @Parameter(description = "ID отзыва") @RequestParam Long reviewId,
+        @Parameter(description = "ID пользователя") @RequestParam Long userId,
+        @Parameter(description = "Причина жалобы") @RequestParam String reason) {
         return ResponseEntity.ok(reportService.createReport(reviewId, userId, reason));
     }
 
+    @Operation(summary = "Удаление отзыва по жалобе")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Отзыв успешно удален"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для удаления отзыва"),
+        @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
+    })
     @PostMapping("/{reportId}/delete-review")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<ReportDTO> deleteReview(
-            @PathVariable Long reportId,
-            @RequestParam Long moderatorId) {
+        @Parameter(description = "ID жалобы") @PathVariable Long reportId,
+        @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
         return ResponseEntity.ok(reportService.deleteReview(reportId, moderatorId));
     }
 
+    @Operation(summary = "Блокировка пользователя по жалобе")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Пользователь успешно заблокирован"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для блокировки пользователя"),
+        @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
+    })
     @PostMapping("/{reportId}/ban-user")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<ReportDTO> banUser(
-            @PathVariable Long reportId,
-            @RequestParam Long moderatorId) {
+        @Parameter(description = "ID жалобы") @PathVariable Long reportId,
+        @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
         return ResponseEntity.ok(reportService.banUser(reportId, moderatorId));
     }
 
+    @Operation(summary = "Отклонение жалобы")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Жалоба успешно отклонена"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для отклонения жалобы"),
+        @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
+    })
     @PostMapping("/{reportId}/reject")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<ReportDTO> rejectReport(
-            @PathVariable Long reportId,
-            @RequestParam Long moderatorId) {
+        @Parameter(description = "ID жалобы") @PathVariable Long reportId,
+        @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
         return ResponseEntity.ok(reportService.rejectReport(reportId, moderatorId));
     }
 
+    @Operation(summary = "Очистка обработанных жалоб")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Жалобы успешно очищены"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для очистки жалоб")
+    })
     @DeleteMapping("/resolved")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<Void> clearResolvedReports() {
@@ -73,15 +127,27 @@ public class ReportController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Получение ожидающих жалоб (сначала новые)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список жалоб"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
+    })
     @GetMapping("/pending")
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Page<ReportDTO>> getPendingReportsNewestFirst(Pageable pageable) {
+    public ResponseEntity<Page<ReportDTO>> getPendingReportsNewestFirst(
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(reportService.getPendingReportsNewestFirst(pageable));
     }
 
+    @Operation(summary = "Получение ожидающих жалоб (сначала старые)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список жалоб"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
+    })
     @GetMapping("/pending/oldest")
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Page<ReportDTO>> getPendingReportsOldestFirst(Pageable pageable) {
+    public ResponseEntity<Page<ReportDTO>> getPendingReportsOldestFirst(
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(reportService.getPendingReportsOldestFirst(pageable));
     }
 }

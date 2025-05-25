@@ -1,5 +1,10 @@
 package ru.musicunity.backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,115 +24,193 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@Tag(name = "Пользователи", description = "API для управления пользователями")
 public class UserController {
     private final UserService userService;
 
+    @Operation(summary = "Поиск пользователя по имени пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Пользователь найден"),
+        @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
     @GetMapping("/username/{username}")
-    public ResponseEntity<UserDTO> findByUsername(@PathVariable String username) {
+    public ResponseEntity<UserDTO> findByUsername(
+        @Parameter(description = "Имя пользователя") @PathVariable String username) {
         UserDTO user = userService.findByUsername(username);
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
+    @Operation(summary = "Поиск пользователя по Telegram ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Пользователь найден"),
+        @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
     @GetMapping("/telegram/{chatId}")
-    public ResponseEntity<UserDTO> findByTelegramChatId(@PathVariable Long chatId) {
+    public ResponseEntity<UserDTO> findByTelegramChatId(
+        @Parameter(description = "Telegram Chat ID") @PathVariable Long chatId) {
         UserDTO user = userService.findByTelegramChatId(chatId);
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
+    @Operation(summary = "Поиск модератора по email")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Модератор найден"),
+        @ApiResponse(responseCode = "404", description = "Модератор не найден")
+    })
     @GetMapping("/moderator/email/{email}")
-    public ResponseEntity<UserDTO> findModeratorByEmail(@PathVariable String email) {
+    public ResponseEntity<UserDTO> findModeratorByEmail(
+        @Parameter(description = "Email модератора") @PathVariable String email) {
         UserDTO user = userService.findModeratorByEmail(email);
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
+    @Operation(summary = "Поиск пользователей по имени пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список пользователей")
+    })
     @GetMapping("/search")
     public ResponseEntity<Page<UserDTO>> searchUsersByUsername(
-            @RequestParam String username,
-            Pageable pageable) {
+        @Parameter(description = "Имя пользователя для поиска") @RequestParam String username,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.searchUsersByUsername(username, pageable));
     }
 
+    @Operation(summary = "Получение пользователя по ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Пользователь найден"),
+        @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDTO> getUserById(
+        @Parameter(description = "ID пользователя") @PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
+    @Operation(summary = "Получение пользователей по роли")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список пользователей")
+    })
     @GetMapping("/role/{role}")
-    public ResponseEntity<List<UserDTO>> findByRights(@PathVariable UserRole role) {
+    public ResponseEntity<List<UserDTO>> findByRights(
+        @Parameter(description = "Роль пользователя") @PathVariable UserRole role) {
         return ResponseEntity.ok(userService.findByRights(role));
     }
 
+    @Operation(summary = "Обновление пароля пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Пароль успешно обновлен"),
+        @ApiResponse(responseCode = "400", description = "Неверный текущий пароль")
+    })
     @PostMapping("/password")
     public ResponseEntity<Void> updateOwnPassword(
-            @RequestParam String currentPassword,
-            @RequestParam String newPassword) {
+        @Parameter(description = "Текущий пароль") @RequestParam String currentPassword,
+        @Parameter(description = "Новый пароль") @RequestParam String newPassword) {
         userService.updateOwnPassword(currentPassword, newPassword);
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Обновление данных пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Данные успешно обновлены")
+    })
     @PostMapping("/data")
     public ResponseEntity<Void> updateOwnData(
-            @RequestParam(required = false) String bio,
-            @RequestParam(required = false) String avatarUrl) {
+        @Parameter(description = "Биография пользователя") @RequestParam(required = false) String bio,
+        @Parameter(description = "URL аватара") @RequestParam(required = false) String avatarUrl) {
         userService.updateOwnData(bio, avatarUrl);
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Блокировка пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Пользователь заблокирован"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для блокировки"),
+        @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
     @PostMapping("/{id}/ban")
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Void> banUser(@PathVariable Long id) {
+    public ResponseEntity<Void> banUser(
+        @Parameter(description = "ID пользователя") @PathVariable Long id) {
         userService.banUser(id);
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Выход из системы")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Успешный выход")
+    })
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         userService.logout();
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Получение избранных релизов пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список избранных релизов")
+    })
     @GetMapping("/{userId}/favorites")
     public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleases(
-            @PathVariable Long userId,
-            Pageable pageable) {
+        @Parameter(description = "ID пользователя") @PathVariable Long userId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getFavoriteReleases(userId, pageable));
     }
 
+    @Operation(summary = "Получение избранных релизов пользователя по типу")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список избранных релизов")
+    })
     @GetMapping("/{userId}/favorites/type/{type}")
     public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleasesByType(
-            @PathVariable Long userId,
-            @PathVariable ReleaseType type,
-            Pageable pageable) {
+        @Parameter(description = "ID пользователя") @PathVariable Long userId,
+        @Parameter(description = "Тип релиза") @PathVariable ReleaseType type,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getFavoriteReleasesByType(userId, type, pageable));
     }
 
+    @Operation(summary = "Получение отслеживаемых авторов пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список отслеживаемых авторов")
+    })
     @GetMapping("/{userId}/followed-authors")
     public ResponseEntity<Page<AuthorDTO>> getFollowedAuthors(
-            @PathVariable Long userId,
-            Pageable pageable) {
+        @Parameter(description = "ID пользователя") @PathVariable Long userId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getFollowedAuthors(userId, pageable));
     }
 
+    @Operation(summary = "Получение отслеживаемых авторов пользователя по роли")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список отслеживаемых авторов")
+    })
     @GetMapping("/{userId}/followed-authors/role/{role}")
     public ResponseEntity<Page<AuthorDTO>> getFollowedAuthorsByRole(
-            @PathVariable Long userId,
-            @PathVariable AuthorRole role,
-            Pageable pageable) {
+        @Parameter(description = "ID пользователя") @PathVariable Long userId,
+        @Parameter(description = "Роль автора") @PathVariable AuthorRole role,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getFollowedAuthorsByRole(userId, role, pageable));
     }
 
+    @Operation(summary = "Получение релизов от отслеживаемых авторов")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список релизов")
+    })
     @GetMapping("/{userId}/followed-authors/releases")
     public ResponseEntity<Page<ReleaseDTO>> getReleasesFromFollowedAuthors(
-            @PathVariable Long userId,
-            Pageable pageable) {
+        @Parameter(description = "ID пользователя") @PathVariable Long userId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getReleasesFromFollowedAuthors(userId, pageable));
     }
 
+    @Operation(summary = "Получение релизов от отслеживаемых авторов по типу")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список релизов")
+    })
     @GetMapping("/{userId}/followed-authors/releases/type/{type}")
     public ResponseEntity<Page<ReleaseDTO>> getReleasesFromFollowedAuthorsByType(
-            @PathVariable Long userId,
-            @PathVariable ReleaseType type,
-            Pageable pageable) {
+        @Parameter(description = "ID пользователя") @PathVariable Long userId,
+        @Parameter(description = "Тип релиза") @PathVariable ReleaseType type,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getReleasesFromFollowedAuthorsByType(userId, type, pageable));
     }
 } 

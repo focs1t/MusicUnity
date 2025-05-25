@@ -3,9 +3,16 @@ package ru.musicunity.backend.mapper;
 import org.springframework.stereotype.Component;
 import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.pojo.User;
+import ru.musicunity.backend.repository.UserRepository;
 
 @Component
 public class UserMapper {
+    
+    private final UserRepository userRepository;
+
+    public UserMapper(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
     
     public UserDTO toDTO(User user) {
         if (user == null) {
@@ -41,6 +48,14 @@ public class UserMapper {
         user.setRights(dto.getRights());
         user.setLastLogin(dto.getLastLogin());
         user.setCreatedAt(dto.getCreatedAt());
+        
+        // Получаем пароль из базы данных
+        if (dto.getUserId() != null) {
+            User existingUser = userRepository.findById(dto.getUserId()).orElse(null);
+            if (existingUser != null) {
+                user.setPasswordHash(existingUser.getPasswordHash());
+            }
+        }
         
         return user;
     }

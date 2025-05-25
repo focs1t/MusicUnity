@@ -35,7 +35,7 @@ public class Author {
 
     private String avatarUrl;
 
-    @Lob
+    @Column(length = 1000)
     private String bio;
 
     @CreationTimestamp

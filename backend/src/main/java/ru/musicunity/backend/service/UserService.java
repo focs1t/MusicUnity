@@ -33,6 +33,11 @@ public class UserService {
     private final FollowedReleasesService followedReleasesService;
     private final UserMapper userMapper;
 
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElse(null);
+    }
+
     public UserDTO findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .map(userMapper::toDTO)

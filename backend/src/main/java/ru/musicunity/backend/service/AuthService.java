@@ -13,6 +13,7 @@ import ru.musicunity.backend.pojo.records.RegisterRequest;
 import ru.musicunity.backend.repository.PasswordResetTokenRepository;
 import ru.musicunity.backend.repository.UserRepository;
 import ru.musicunity.backend.security.JwtService;
+import ru.musicunity.backend.security.UserDetailsImpl;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -27,8 +28,8 @@ public class AuthService {
     private final EmailService emailService;
 
     public AuthResponse generateToken(Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        String token = jwtService.generateToken(user);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        String token = jwtService.generateToken(userDetails.getUser());
         return new AuthResponse(token);
     }
 

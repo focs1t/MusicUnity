@@ -39,7 +39,7 @@ public class Review {
     @Column(nullable = false, length = 50)
     private String title;
 
-    @Lob
+    @Column(length = 1000)
     private String content;
 
     @CreationTimestamp

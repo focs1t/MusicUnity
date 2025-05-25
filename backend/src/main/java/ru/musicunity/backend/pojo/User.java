@@ -40,7 +40,7 @@ public class User {
 
     private String avatarUrl;
 
-    @Lob
+    @Column(length = 1000)
     private String bio;
 
     @Column(nullable = false)
