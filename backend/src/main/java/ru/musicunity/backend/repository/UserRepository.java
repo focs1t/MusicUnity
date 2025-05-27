@@ -22,6 +22,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     // Поиск по ролям
     List<User> findByRights(UserRole rights);
+    List<User> findByIsBlockedTrue();
 
     // Поиск пользователей по частичному совпадению имени
     @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))")
@@ -34,6 +35,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Поиск пользователей по роли с пагинацией
     @Query("SELECT u FROM User u WHERE u.rights = :role")
     Page<User> findByRole(@Param("role") UserRole role, Pageable pageable);
+
+    // Поиск пользователей по статусу блокировки с пагинацией
+    @Query("SELECT u FROM User u WHERE u.isBlocked = :isBlocked")
+    Page<User> findByBlockedStatus(@Param("isBlocked") boolean isBlocked, Pageable pageable);
 
     // Поиск пользователей по частичному совпадению имени (без пагинации)
     @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%'))")

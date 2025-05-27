@@ -19,9 +19,26 @@ public class ReleaseDTO {
     private LocalDateTime addedAt;
     private List<AuthorDTO> authors;
     private List<GenreDTO> genres;
-    private Double averageRating;
     private Integer reviewsCount;
-    
+    private Double averageRating;
+
+    @Data
+    public static class AuthorDTO {
+        private Long id;
+        private String authorName;
+        private String avatarUrl;
+        private Boolean isArtist;
+        private Boolean isProducer;
+
+        public AuthorDTO(Long id, String authorName, String avatarUrl, Boolean isArtist, Boolean isProducer) {
+            this.id = id;
+            this.authorName = authorName;
+            this.avatarUrl = avatarUrl;
+            this.isArtist = isArtist;
+            this.isProducer = isProducer;
+        }
+    }
+
     // Поля для создания релиза
     private List<String> producerNames;
     private List<String> artistNames;

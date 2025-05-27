@@ -20,7 +20,9 @@ public interface ReleaseRepository extends JpaRepository<Release, Long>, JpaSpec
 
     Page<Release> findAllByOrderByAddedAtDesc(Pageable pageable);
     
-    Page<Release> findByAuthorsAuthorAuthorIdOrderByTypeAsc(Long authorId, Pageable pageable);
+    @Query(value = "SELECT DISTINCT r FROM Release r JOIN r.authors ra WHERE ra.author.authorId = :authorId",
+           countQuery = "SELECT COUNT(DISTINCT r) FROM Release r JOIN r.authors ra WHERE ra.author.authorId = :authorId")
+    Page<Release> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
     
     @Query("SELECT r FROM Release r " +
            "JOIN r.authors ra " +

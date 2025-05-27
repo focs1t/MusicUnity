@@ -32,17 +32,36 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReviewById(id));
     }
 
-    @Operation(summary = "Создание полного отзыва")
+    @Operation(summary = "Создание простой оценки")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Отзыв успешно создан"),
-        @ApiResponse(responseCode = "400", description = "Некорректные данные отзыва")
+        @ApiResponse(responseCode = "200", description = "Оценка успешно создана"),
+        @ApiResponse(responseCode = "400", description = "Некорректные данные оценки")
+    })
+    @PostMapping("/simple")
+    public ResponseEntity<ReviewDTO> createSimpleReview(
+        @Parameter(description = "ID пользователя") @RequestParam Long userId,
+        @Parameter(description = "ID релиза") @RequestParam Long releaseId,
+        @Parameter(description = "Оценка рифмы и образности") @RequestParam Integer rhymeImagery,
+        @Parameter(description = "Оценка структуры и ритма") @RequestParam Integer structureRhythm,
+        @Parameter(description = "Оценка стиля и исполнения") @RequestParam Integer styleExecution,
+        @Parameter(description = "Оценка индивидуальности") @RequestParam Integer individuality,
+        @Parameter(description = "Оценка вайба") @RequestParam Integer vibe) {
+        return ResponseEntity.ok(reviewService.createSimpleReview(
+                userId, releaseId, rhymeImagery, structureRhythm,
+                styleExecution, individuality, vibe));
+    }
+
+    @Operation(summary = "Создание полной рецензии")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Рецензия успешно создана"),
+        @ApiResponse(responseCode = "400", description = "Некорректные данные рецензии")
     })
     @PostMapping("/full")
     public ResponseEntity<ReviewDTO> createFullReview(
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
         @Parameter(description = "ID релиза") @RequestParam Long releaseId,
-        @Parameter(description = "Заголовок отзыва") @RequestParam String title,
-        @Parameter(description = "Содержание отзыва") @RequestParam String content,
+        @Parameter(description = "Заголовок рецензии") @RequestParam String title,
+        @Parameter(description = "Содержание рецензии") @RequestParam String content,
         @Parameter(description = "Оценка рифмы и образности") @RequestParam Integer rhymeImagery,
         @Parameter(description = "Оценка структуры и ритма") @RequestParam Integer structureRhythm,
         @Parameter(description = "Оценка стиля и исполнения") @RequestParam Integer styleExecution,
@@ -52,21 +71,6 @@ public class ReviewController {
                 userId, releaseId, title, content,
                 rhymeImagery, structureRhythm, styleExecution,
                 individuality, vibe));
-    }
-
-    @Operation(summary = "Создание простого отзыва")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Отзыв успешно создан"),
-        @ApiResponse(responseCode = "400", description = "Некорректные данные отзыва")
-    })
-    @PostMapping("/simple")
-    public ResponseEntity<ReviewDTO> createSimpleReview(
-        @Parameter(description = "ID пользователя") @RequestParam Long userId,
-        @Parameter(description = "ID релиза") @RequestParam Long releaseId,
-        @Parameter(description = "Заголовок отзыва") @RequestParam String title,
-        @Parameter(description = "Содержание отзыва") @RequestParam String content) {
-        return ResponseEntity.ok(reviewService.createSimpleReview(
-                userId, releaseId, title, content));
     }
 
     @Operation(summary = "Удаление отзыва")

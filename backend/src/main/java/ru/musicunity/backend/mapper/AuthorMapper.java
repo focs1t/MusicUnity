@@ -16,12 +16,13 @@ public class AuthorMapper {
         dto.setAuthorId(author.getAuthorId());
         dto.setAuthorName(author.getAuthorName());
         dto.setIsVerified(author.getIsVerified());
+        dto.setIsArtist(author.getIsArtist());
+        dto.setIsProducer(author.getIsProducer());
         dto.setUserId(author.getUser() != null ? author.getUser().getUserId() : null);
         dto.setAvatarUrl(author.getAvatarUrl());
         dto.setBio(author.getBio());
-        dto.setCreatedAt(author.getCreatedAt());
         dto.setFollowingCount(author.getFollowingCount());
-        dto.setRole(author.getRole());
+        dto.setCreatedAt(author.getCreatedAt());
         
         return dto;
     }
@@ -35,11 +36,12 @@ public class AuthorMapper {
         author.setAuthorId(dto.getAuthorId());
         author.setAuthorName(dto.getAuthorName());
         author.setIsVerified(dto.getIsVerified());
+        author.setIsArtist(dto.getIsArtist());
+        author.setIsProducer(dto.getIsProducer());
         author.setAvatarUrl(dto.getAvatarUrl());
         author.setBio(dto.getBio());
-        author.setCreatedAt(dto.getCreatedAt());
         author.setFollowingCount(dto.getFollowingCount());
-        author.setRole(dto.getRole());
+        author.setCreatedAt(dto.getCreatedAt());
         
         return author;
     }

@@ -40,7 +40,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return user.getRights() != UserRole.BLOCKED;
+        return !user.getIsBlocked();
     }
 
     @Override

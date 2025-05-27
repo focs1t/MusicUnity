@@ -27,6 +27,7 @@ public class UserMapper {
         dto.setAvatarUrl(user.getAvatarUrl());
         dto.setTelegramChatId(user.getTelegramChatId());
         dto.setRights(user.getRights());
+        dto.setIsBlocked(user.getIsBlocked());
         dto.setLastLogin(user.getLastLogin());
         dto.setCreatedAt(user.getCreatedAt());
         
@@ -46,6 +47,7 @@ public class UserMapper {
         user.setAvatarUrl(dto.getAvatarUrl());
         user.setTelegramChatId(dto.getTelegramChatId());
         user.setRights(dto.getRights());
+        user.setIsBlocked(dto.getIsBlocked());
         user.setLastLogin(dto.getLastLogin());
         user.setCreatedAt(dto.getCreatedAt());
         

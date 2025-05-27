@@ -42,7 +42,7 @@ public class AuthService {
         user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setRights(UserRole.REGULAR);
+        user.setRights(UserRole.USER);
 
         user = userRepository.save(user);
         String token = jwtService.generateToken(user);

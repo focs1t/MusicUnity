@@ -33,7 +33,6 @@ public class Report {
     @JoinColumn(name = "moderator_id")
     private User moderator;
 
-    @Lob
     @Column(nullable = false)
     private String reason;
 

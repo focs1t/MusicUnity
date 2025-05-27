@@ -66,7 +66,9 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewDTO createSimpleReview(Long userId, Long releaseId, String title, String content) {
+    public ReviewDTO createSimpleReview(Long userId, Long releaseId,
+                                      Integer rhymeImagery, Integer structureRhythm, 
+                                      Integer styleExecution, Integer individuality, Integer vibe) {
         User user = userMapper.toEntity(userService.getUserById(userId));
         Release release = releaseService.getReleaseEntityById(releaseId);
 
@@ -76,8 +78,11 @@ public class ReviewService {
                 .user(user)
                 .release(release)
                 .type(ReviewType.SIMPLE)
-                .title(title)
-                .content(content)
+                .rhymeImagery(rhymeImagery)
+                .structureRhythm(structureRhythm)
+                .styleExecution(styleExecution)
+                .individuality(individuality)
+                .vibe(vibe)
                 .likesCount(0)
                 .build();
 

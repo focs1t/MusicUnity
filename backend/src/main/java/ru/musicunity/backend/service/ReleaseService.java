@@ -3,22 +3,23 @@ package ru.musicunity.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.ReleaseDTO;
+import ru.musicunity.backend.dto.CreateReleaseRequest;
 import ru.musicunity.backend.mapper.ReleaseMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.*;
-import ru.musicunity.backend.pojo.enums.AuthorRole;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,87 +30,70 @@ public class ReleaseService {
     private final ReleaseRepository releaseRepository;
     private final AuthorService authorService;
     private final GenreService genreService;
+    private final UserService userService;
     private final AuthorRepository authorRepository;
     private final GenreRepository genreRepository;
     private final ReleaseMapper releaseMapper;
     private final UserMapper userMapper;
     private final UserRepository userRepository;
-
-    public User getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
+    private final ReleaseAuthorService releaseAuthorService;
 
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
-    public ReleaseDTO createRelease(String title, ReleaseType type, LocalDate releaseDate, String coverUrl, 
-                               String releaseLink, List<String> producerNames, List<String> artistNames,
-                               List<Long> producerIds, List<Long> artistIds, List<Long> genreIds) {
+    public ReleaseDTO createRelease(CreateReleaseRequest request) {
+        // Создаем релиз
         Release release = Release.builder()
-                .title(title)
-                .type(type)
-                .releaseDate(releaseDate)
-                .coverUrl(coverUrl)
-                .releaseLink(releaseLink)
+                .title(request.getTitle())
+                .type(request.getType())
+                .releaseDate(request.getReleaseDate())
+                .coverUrl(request.getCoverUrl())
+                .releaseLink(request.getReleaseLink())
                 .favoritesCount(0)
                 .build();
+        
+        release = releaseRepository.save(release);
 
-        // Добавляем существующих авторов
-        for (Long producerId : producerIds) {
-            Author author = authorRepository.findById(producerId)
-                    .orElseThrow(() -> new RuntimeException("Author not found with id: " + producerId));
-            ReleaseAuthor releaseAuthor = ReleaseAuthor.builder()
-                    .release(release)
-                    .author(author)
-                    .build();
-            release.getAuthors().add(releaseAuthor);
-        }
-
-        for (Long artistId : artistIds) {
-            Author author = authorRepository.findById(artistId)
-                    .orElseThrow(() -> new RuntimeException("Author not found with id: " + artistId));
-            ReleaseAuthor releaseAuthor = ReleaseAuthor.builder()
-                    .release(release)
-                    .author(author)
-                    .build();
-            release.getAuthors().add(releaseAuthor);
-        }
-
-        // Создаем новых авторов
-        List<String> allNewAuthors = new ArrayList<>();
-        allNewAuthors.addAll(producerNames);
-        allNewAuthors.addAll(artistNames);
-
-        for (String authorName : allNewAuthors) {
-            Optional<Author> existingAuthor = authorRepository.findByAuthorName(authorName);
+        // Добавляем авторов
+        for (CreateReleaseRequest.AuthorRoleRequest authorRequest : request.getAuthors()) {
+            // Проверяем существует ли автор
+            Optional<Author> existingAuthor = authorRepository.findByAuthorName(authorRequest.getAuthorName());
             Author author;
+
             if (existingAuthor.isPresent()) {
                 author = existingAuthor.get();
-            } else {
-                // Определяем роль автора
-                AuthorRole role;
-                if (producerNames.contains(authorName) && artistNames.contains(authorName)) {
-                    role = AuthorRole.BOTH;
-                } else if (producerNames.contains(authorName)) {
-                    role = AuthorRole.PRODUCER;
-                } else {
-                    role = AuthorRole.ARTIST;
+                // Обновляем роли автора если необходимо
+                if (authorRequest.isArtist() && !author.getIsArtist()) {
+                    author.setIsArtist(true);
                 }
-                author = authorRepository.save(Author.builder()
-                        .authorName(authorName)
-                        .role(role)
-                        .build());
+                if (authorRequest.isProducer() && !author.getIsProducer()) {
+                    author.setIsProducer(true);
+                }
+                author = authorRepository.save(author);
+            } else {
+                // Создаем нового автора
+                author = Author.builder()
+                        .authorName(authorRequest.getAuthorName())
+                        .isArtist(authorRequest.isArtist())
+                        .isProducer(authorRequest.isProducer())
+                        .isVerified(false)
+                        .followingCount(0)
+                        .build();
+                author = authorRepository.save(author);
             }
+
+            // Создаем связь автора с релизом
             ReleaseAuthor releaseAuthor = ReleaseAuthor.builder()
+                    .id(new ReleaseAuthor.ReleaseAuthorId(release.getReleaseId(), author.getAuthorId()))
                     .release(release)
                     .author(author)
+                    .isArtist(authorRequest.isArtist())
+                    .isProducer(authorRequest.isProducer())
                     .build();
             release.getAuthors().add(releaseAuthor);
         }
 
         // Добавляем жанры
-        for (Long genreId : genreIds) {
+        for (Long genreId : request.getGenreIds()) {
             Genre genre = genreRepository.findById(genreId)
                     .orElseThrow(() -> new RuntimeException("Genre not found with id: " + genreId));
             release.getGenres().add(genre);
@@ -120,33 +104,57 @@ public class ReleaseService {
 
     @Transactional
     @PreAuthorize("hasRole('AUTHOR')")
-    public ReleaseDTO createOwnRelease(String title, ReleaseType type, LocalDate releaseDate, String coverUrl,
-                                  String releaseLink, List<String> producerNames, List<String> artistNames,
-                                  List<Long> producerIds, List<Long> artistIds, List<Long> genreIds, Long userId) {
-        // Проверяем, что пользователь является одним из авторов
-        boolean isAuthor = producerIds.stream()
-                .anyMatch(producerId -> authorRepository.findById(producerId)
-                        .map(author -> author.getUser() != null && author.getUser().getUserId().equals(userId))
-                        .orElse(false)) ||
-                artistIds.stream()
-                .anyMatch(artistId -> authorRepository.findById(artistId)
-                        .map(author -> author.getUser() != null && author.getUser().getUserId().equals(userId))
-                        .orElse(false));
-        if (!isAuthor) {
-            throw new RuntimeException("User must be one of the authors");
+    public ReleaseDTO createOwnRelease(CreateReleaseRequest request) {
+        // Получаем текущего пользователя
+        User currentUser = userService.getCurrentUser();
+        
+        // Проверяем, что пользователь является автором
+        Author userAuthor = authorRepository.findByUserUserId(currentUser.getUserId())
+                .orElseThrow(() -> new RuntimeException("User is not an author"));
+
+        // Проверяем, что пользователь указан как один из авторов
+        boolean isUserIncluded = request.getAuthors().stream()
+                .anyMatch(author -> author.getAuthorName().equals(userAuthor.getAuthorName()));
+
+        if (!isUserIncluded) {
+            throw new RuntimeException("Current user must be one of the authors");
         }
 
-        return createRelease(title, type, releaseDate, coverUrl, releaseLink, 
-                producerNames, artistNames, producerIds, artistIds, genreIds);
+        return createRelease(request);
     }
 
+    // Методы для управления авторами релиза
+    @Transactional
+    @PreAuthorize("hasRole('MODERATOR')")
+    public void addAuthorToRelease(Long releaseId, Long authorId, boolean isArtist, boolean isProducer) {
+        Release release = getReleaseEntityById(releaseId);
+        Author author = authorRepository.findById(authorId)
+                .orElseThrow(() -> new RuntimeException("Author not found with id: " + authorId));
+        releaseAuthorService.addAuthorToRelease(release, author, isArtist, isProducer);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('MODERATOR')")
+    public void removeAuthorFromRelease(Long releaseId, Long authorId) {
+        releaseAuthorService.removeAuthorFromRelease(releaseId, authorId);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('MODERATOR')")
+    public void updateAuthorRoles(Long releaseId, Long authorId, boolean isArtist, boolean isProducer) {
+        releaseAuthorService.updateAuthorRoles(releaseId, authorId, isArtist, isProducer);
+    }
+
+    // Существующие методы для получения релизов
     public Page<ReleaseDTO> getNewReleases(Pageable pageable) {
         return releaseRepository.findAllByOrderByAddedAtDesc(pageable)
                 .map(releaseMapper::toDTO);
     }
 
     public Page<ReleaseDTO> getReleasesByAuthor(Long authorId, Pageable pageable) {
-        return releaseRepository.findByAuthorsAuthorAuthorIdOrderByTypeAsc(authorId, pageable)
+        Sort sort = Sort.by("type").ascending();
+        Pageable pageableWithSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        return releaseRepository.findByAuthorId(authorId, pageableWithSort)
                 .map(releaseMapper::toDTO);
     }
 

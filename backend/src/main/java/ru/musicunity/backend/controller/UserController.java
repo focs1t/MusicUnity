@@ -14,17 +14,16 @@ import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
-import ru.musicunity.backend.pojo.enums.AuthorRole;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.service.UserService;
 
 import java.util.List;
 
+@Tag(name = "User", description = "API для работы с пользователями")
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
-@Tag(name = "Пользователи", description = "API для управления пользователями")
 public class UserController {
     private final UserService userService;
 
@@ -177,18 +176,6 @@ public class UserController {
         @Parameter(description = "ID пользователя") @PathVariable Long userId,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getFollowedAuthors(userId, pageable));
-    }
-
-    @Operation(summary = "Получение отслеживаемых авторов пользователя по роли")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список отслеживаемых авторов")
-    })
-    @GetMapping("/{userId}/followed-authors/role/{role}")
-    public ResponseEntity<Page<AuthorDTO>> getFollowedAuthorsByRole(
-        @Parameter(description = "ID пользователя") @PathVariable Long userId,
-        @Parameter(description = "Роль автора") @PathVariable AuthorRole role,
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(userService.getFollowedAuthorsByRole(userId, role, pageable));
     }
 
     @Operation(summary = "Получение релизов от отслеживаемых авторов")

@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.musicunity.backend.pojo.enums.AuthorRole;
 
 import java.io.Serializable;
 
@@ -31,8 +30,10 @@ public class ReleaseAuthor {
     private Author author;
 
     @Column(nullable = false)
-    @Convert(converter = AuthorRole.AuthorRoleConverter.class)
-    private AuthorRole role;
+    private Boolean isArtist;
+
+    @Column(nullable = false)
+    private Boolean isProducer;
 
     @Embeddable
     @Data

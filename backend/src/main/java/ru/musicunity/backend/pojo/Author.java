@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import ru.musicunity.backend.pojo.enums.AuthorRole;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,8 +45,10 @@ public class Author {
     private Integer followingCount = 0;
 
     @Column(nullable = false)
-    @Convert(converter = AuthorRole.AuthorRoleConverter.class)
-    private AuthorRole role;
+    private Boolean isArtist = false;
+
+    @Column(nullable = false)
+    private Boolean isProducer = false;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

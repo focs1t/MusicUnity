@@ -13,7 +13,6 @@ import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.User;
-import ru.musicunity.backend.pojo.enums.AuthorRole;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.repository.UserRepository;
@@ -53,6 +52,13 @@ public class UserService {
 
     public List<UserDTO> findByRights(UserRole role) {
         return userRepository.findByRights(role)
+                .stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<UserDTO> findBlockedUsers() {
+        return userRepository.findByIsBlockedTrue()
                 .stream()
                 .map(userMapper::toDTO)
                 .collect(Collectors.toList());
@@ -114,7 +120,16 @@ public class UserService {
     public void banUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        user.setRights(UserRole.BLOCKED);
+        user.setIsBlocked(true);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('MODERATOR')")
+    public void unbanUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        user.setIsBlocked(false);
         userRepository.save(user);
     }
 
@@ -141,12 +156,6 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return authorFollowingService.getFollowedAuthors(user, pageable);
-    }
-
-    public Page<AuthorDTO> getFollowedAuthorsByRole(Long userId, AuthorRole role, Pageable pageable) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return authorFollowingService.getFollowedAuthorsByRole(user, role, pageable);
     }
 
     public Page<ReleaseDTO> getReleasesFromFollowedAuthors(Long userId, Pageable pageable) {

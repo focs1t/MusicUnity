@@ -5,8 +5,7 @@ import jakarta.persistence.AttributeConverter;
 import java.util.Arrays;
 
 public enum UserRole {
-    BLOCKED(-1),
-    REGULAR(0),
+    USER(0),
     AUTHOR(1),
     MODERATOR(2),
     ADMIN(3);

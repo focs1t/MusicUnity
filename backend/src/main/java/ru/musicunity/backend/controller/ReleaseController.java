@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.ReleaseDTO;
+import ru.musicunity.backend.dto.CreateReleaseRequest;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.service.FavoriteService;
@@ -93,19 +94,8 @@ public class ReleaseController {
     @PostMapping
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<ReleaseDTO> createRelease(
-        @Parameter(description = "Данные релиза") @RequestBody ReleaseDTO releaseDTO) {
-        return ResponseEntity.ok(releaseService.createRelease(
-                releaseDTO.getTitle(),
-                releaseDTO.getType(),
-                releaseDTO.getReleaseDate(),
-                releaseDTO.getCoverUrl(),
-                releaseDTO.getReleaseLink(),
-                releaseDTO.getProducerNames(),
-                releaseDTO.getArtistNames(),
-                releaseDTO.getProducerIds(),
-                releaseDTO.getArtistIds(),
-                releaseDTO.getGenreIds()
-        ));
+        @Parameter(description = "Данные релиза") @RequestBody CreateReleaseRequest request) {
+        return ResponseEntity.ok(releaseService.createRelease(request));
     }
 
     @Operation(summary = "Создание собственного релиза")
@@ -116,20 +106,8 @@ public class ReleaseController {
     @PostMapping("/own")
     @PreAuthorize("hasRole('AUTHOR')")
     public ResponseEntity<ReleaseDTO> createOwnRelease(
-        @Parameter(description = "Данные релиза") @RequestBody ReleaseDTO releaseDTO) {
-        return ResponseEntity.ok(releaseService.createOwnRelease(
-                releaseDTO.getTitle(),
-                releaseDTO.getType(),
-                releaseDTO.getReleaseDate(),
-                releaseDTO.getCoverUrl(),
-                releaseDTO.getReleaseLink(),
-                releaseDTO.getProducerNames(),
-                releaseDTO.getArtistNames(),
-                releaseDTO.getProducerIds(),
-                releaseDTO.getArtistIds(),
-                releaseDTO.getGenreIds(),
-                releaseDTO.getUserId()
-        ));
+        @Parameter(description = "Данные релиза") @RequestBody CreateReleaseRequest request) {
+        return ResponseEntity.ok(releaseService.createOwnRelease(request));
     }
 
     @Operation(summary = "Получение избранных релизов")
@@ -141,7 +119,7 @@ public class ReleaseController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleases(
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(favoriteService.getFavoriteReleasesByUser(releaseService.getCurrentUser(), pageable));
+        return ResponseEntity.ok(favoriteService.getFavoriteReleasesByUser(userService.getCurrentUser(), pageable));
     }
 
     @Operation(summary = "Получение избранных релизов по типу")
@@ -154,7 +132,7 @@ public class ReleaseController {
     public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleasesByType(
         @Parameter(description = "Тип релиза") @PathVariable ReleaseType type,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(favoriteService.getFavoriteReleasesByUserAndType(releaseService.getCurrentUser(), type, pageable));
+        return ResponseEntity.ok(favoriteService.getFavoriteReleasesByUserAndType(userService.getCurrentUser(), type, pageable));
     }
 
     @Operation(summary = "Добавление релиза в избранное")
@@ -167,7 +145,7 @@ public class ReleaseController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> addToFavorites(
         @Parameter(description = "ID релиза") @PathVariable Long id) {
-        favoriteService.addToFavorites(id, releaseService.getCurrentUser().getUserId());
+        favoriteService.addToFavorites(id, userService.getCurrentUser().getUserId());
         return ResponseEntity.ok().build();
     }
 
@@ -181,7 +159,7 @@ public class ReleaseController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeFromFavorites(
         @Parameter(description = "ID релиза") @PathVariable Long id) {
-        favoriteService.removeFromFavorites(id, releaseService.getCurrentUser().getUserId());
+        favoriteService.removeFromFavorites(id, userService.getCurrentUser().getUserId());
         return ResponseEntity.ok().build();
     }
 
@@ -194,7 +172,7 @@ public class ReleaseController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ReleaseDTO>> getReleasesByFollowedAuthors(
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(followedReleasesService.getReleasesByFollowedAuthors(releaseService.getCurrentUser(), pageable));
+        return ResponseEntity.ok(followedReleasesService.getReleasesByFollowedAuthors(userService.getCurrentUser(), pageable));
     }
 
     @Operation(summary = "Получение релизов от отслеживаемых авторов по типу")
@@ -207,6 +185,55 @@ public class ReleaseController {
     public ResponseEntity<Page<ReleaseDTO>> getReleasesByFollowedAuthorsAndType(
         @Parameter(description = "Тип релиза") @PathVariable ReleaseType type,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(followedReleasesService.getReleasesByFollowedAuthorsAndType(releaseService.getCurrentUser(), type, pageable));
+        return ResponseEntity.ok(followedReleasesService.getReleasesByFollowedAuthorsAndType(userService.getCurrentUser(), type, pageable));
+    }
+
+    @Operation(summary = "Добавление автора к релизу")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор успешно добавлен"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для добавления автора"),
+        @ApiResponse(responseCode = "404", description = "Релиз или автор не найден")
+    })
+    @PostMapping("/{releaseId}/authors/{authorId}")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<Void> addAuthorToRelease(
+            @Parameter(description = "ID релиза") @PathVariable Long releaseId,
+            @Parameter(description = "ID автора") @PathVariable Long authorId,
+            @Parameter(description = "Роль автора") @RequestParam boolean isArtist,
+            @Parameter(description = "Роль продюсера") @RequestParam boolean isProducer) {
+        releaseService.addAuthorToRelease(releaseId, authorId, isArtist, isProducer);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Удаление автора из релиза")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор успешно удален"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для удаления автора"),
+        @ApiResponse(responseCode = "404", description = "Релиз или автор не найден")
+    })
+    @DeleteMapping("/{releaseId}/authors/{authorId}")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<Void> removeAuthorFromRelease(
+            @Parameter(description = "ID релиза") @PathVariable Long releaseId,
+            @Parameter(description = "ID автора") @PathVariable Long authorId) {
+        releaseService.removeAuthorFromRelease(releaseId, authorId);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Обновление ролей автора в релизе")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Роли автора успешно обновлены"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для обновления ролей"),
+        @ApiResponse(responseCode = "404", description = "Релиз или автор не найден")
+    })
+    @PutMapping("/{releaseId}/authors/{authorId}/roles")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<Void> updateAuthorRoles(
+            @Parameter(description = "ID релиза") @PathVariable Long releaseId,
+            @Parameter(description = "ID автора") @PathVariable Long authorId,
+            @Parameter(description = "Роль автора") @RequestParam boolean isArtist,
+            @Parameter(description = "Роль продюсера") @RequestParam boolean isProducer) {
+        releaseService.updateAuthorRoles(releaseId, authorId, isArtist, isProducer);
+        return ResponseEntity.ok().build();
     }
 }

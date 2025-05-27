@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AuthorDTO;
-import ru.musicunity.backend.pojo.enums.AuthorRole;
 import ru.musicunity.backend.service.AuthorService;
 import ru.musicunity.backend.service.AuthorFollowingService;
 import ru.musicunity.backend.service.UserService;
@@ -20,10 +19,10 @@ import ru.musicunity.backend.mapper.UserMapper;
 
 import java.util.Optional;
 
+@Tag(name = "Author", description = "API для работы с авторами")
 @RestController
-@RequestMapping("/api/v1/authors")
+@RequestMapping("/api/authors")
 @RequiredArgsConstructor
-@Tag(name = "Авторы", description = "API для управления авторами музыкальных произведений")
 public class AuthorController {
     private final AuthorService authorService;
     private final AuthorFollowingService authorFollowingService;
@@ -99,11 +98,13 @@ public class AuthorController {
     public ResponseEntity<AuthorDTO> createAuthor(
         @Parameter(description = "Имя автора") @RequestParam String authorName,
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
-        @Parameter(description = "Роль автора") @RequestParam AuthorRole role) {
+        @Parameter(description = "Является ли исполнителем") @RequestParam Boolean isArtist,
+        @Parameter(description = "Является ли продюсером") @RequestParam Boolean isProducer) {
         return ResponseEntity.ok(authorService.createAuthor(
                 authorName,
                 userMapper.toEntity(userService.getUserById(userId)),
-                role));
+                isArtist,
+                isProducer));
     }
 
     @Operation(summary = "Получение отслеживаемых авторов")
@@ -121,23 +122,6 @@ public class AuthorController {
                 pageable));
     }
 
-    @Operation(summary = "Получение отслеживаемых авторов по роли")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список отслеживаемых авторов"),
-        @ApiResponse(responseCode = "401", description = "Требуется авторизация")
-    })
-    @GetMapping("/followed/role")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<AuthorDTO>> getFollowedAuthorsByRole(
-        @Parameter(description = "ID пользователя") @RequestParam Long userId,
-        @Parameter(description = "Роль автора") @RequestParam AuthorRole role,
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(authorFollowingService.getFollowedAuthorsByRole(
-                userMapper.toEntity(userService.getUserById(userId)),
-                role,
-                pageable));
-    }
-
     @Operation(summary = "Подписка на автора")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Успешная подписка"),
@@ -147,9 +131,8 @@ public class AuthorController {
     @PostMapping("/{authorId}/follow")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> followAuthor(
-        @Parameter(description = "ID автора") @PathVariable Long authorId,
-        @Parameter(description = "ID пользователя") @RequestParam Long userId) {
-        authorFollowingService.followAuthor(authorId, userMapper.toEntity(userService.getUserById(userId)));
+            @Parameter(description = "ID автора") @PathVariable Long authorId) {
+        authorFollowingService.followAuthor(authorId, userService.getCurrentUser().getUserId());
         return ResponseEntity.ok().build();
     }
 
@@ -158,7 +141,7 @@ public class AuthorController {
     public ResponseEntity<Void> unfollowAuthor(
             @PathVariable Long authorId,
             @RequestParam Long userId) {
-        authorFollowingService.unfollowAuthor(authorId, userMapper.toEntity(userService.getUserById(userId)));
+        authorFollowingService.unfollowAuthor(authorId, userId);
         return ResponseEntity.ok().build();
     }
 } 

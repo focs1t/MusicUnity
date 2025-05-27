@@ -11,10 +11,11 @@ import ru.musicunity.backend.mapper.AuthorMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.User;
-import ru.musicunity.backend.pojo.enums.AuthorRole;
 import ru.musicunity.backend.repository.AuthorRepository;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,8 +60,11 @@ public class AuthorService {
         if (updatedAuthor.getBio() != null) {
             author.setBio(updatedAuthor.getBio());
         }
-        if (updatedAuthor.getRole() != null) {
-            author.setRole(updatedAuthor.getRole());
+        if (updatedAuthor.getIsArtist() != null) {
+            author.setIsArtist(updatedAuthor.getIsArtist());
+        }
+        if (updatedAuthor.getIsProducer() != null) {
+            author.setIsProducer(updatedAuthor.getIsProducer());
         }
         
         return authorMapper.toDTO(authorRepository.save(author));
@@ -68,14 +72,36 @@ public class AuthorService {
 
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
-    public AuthorDTO createAuthor(String authorName, User user, AuthorRole role) {
+    public AuthorDTO createAuthor(String authorName, User user, boolean isArtist, boolean isProducer) {
         Author author = Author.builder()
                 .authorName(authorName)
                 .user(user)
-                .role(role)
+                .isArtist(isArtist)
+                .isProducer(isProducer)
                 .isVerified(false)
                 .followingCount(0)
                 .build();
         return authorMapper.toDTO(authorRepository.save(author));
+    }
+
+    public List<AuthorDTO> findArtists() {
+        return authorRepository.findByIsArtistTrue()
+                .stream()
+                .map(authorMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<AuthorDTO> findProducers() {
+        return authorRepository.findByIsProducerTrue()
+                .stream()
+                .map(authorMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<AuthorDTO> findArtistsAndProducers() {
+        return authorRepository.findByIsArtistTrueAndIsProducerTrue()
+                .stream()
+                .map(authorMapper::toDTO)
+                .collect(Collectors.toList());
     }
 }

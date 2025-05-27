@@ -50,9 +50,9 @@ public class ReportService {
     public ReportDTO createReport(Long reviewId, Long userId, String reason) {
         User user = userMapper.toEntity(userService.getUserById(userId));
         
-        // Проверяем, что пользователь имеет роль USER или AUTHOR
-        if (user.getRights() != UserRole.REGULAR && user.getRights() != UserRole.AUTHOR) {
-            throw new RuntimeException("Only users and authors can create reports");
+        // Проверяем, что пользователь не заблокирован
+        if (user.getIsBlocked()) {
+            throw new RuntimeException("Blocked users cannot create reports");
         }
 
         Review review = reviewMapper.toEntity(reviewService.getReviewById(reviewId));

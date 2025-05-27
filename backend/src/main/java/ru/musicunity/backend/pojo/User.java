@@ -47,6 +47,9 @@ public class User {
     @Convert(converter = UserRole.UserRoleConverter.class)
     private UserRole rights;
 
+    @Column(nullable = false)
+    private Boolean isBlocked = false;
+
     @Column(name = "telegram_chat_id")
     private Long telegramChatId;
 

@@ -1,7 +1,6 @@
 package ru.musicunity.backend.dto;
 
 import lombok.Data;
-import ru.musicunity.backend.pojo.enums.AuthorRole;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +12,8 @@ public class AuthorDTO {
     private Long userId;
     private String avatarUrl;
     private String bio;
-    private LocalDateTime createdAt;
+    private Boolean isArtist;
+    private Boolean isProducer;
     private Integer followingCount;
-    private AuthorRole role;
+    private LocalDateTime createdAt;
 } 
