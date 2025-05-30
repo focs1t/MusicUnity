@@ -15,7 +15,7 @@ import ru.musicunity.backend.dto.ReviewDTO;
 import ru.musicunity.backend.service.ReviewService;
 
 @RestController
-@RequestMapping("/api/v1/reviews")
+@RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 @Tag(name = "Отзывы", description = "API для управления отзывами на музыкальные релизы")
 public class ReviewController {
@@ -87,37 +87,36 @@ public class ReviewController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Получение отзывов на релиз (сначала новые)")
+    @Operation(summary = "Получение отзывов на релиз")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список отзывов")
     })
-    @GetMapping("/release/{releaseId}/newest")
-    public ResponseEntity<Page<ReviewDTO>> getReviewsByReleaseNewestFirst(
+    @GetMapping("/release/{releaseId}/reviews")
+    public ResponseEntity<Page<ReviewDTO>> getReviewsByRelease(
         @Parameter(description = "ID релиза") @PathVariable Long releaseId,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reviewService.getReviewsByReleaseNewestFirst(releaseId, pageable));
+        return ResponseEntity.ok(reviewService.getAllByRelease(releaseId, pageable));
     }
 
-    @Operation(summary = "Получение отзывов на релиз (сначала старые)")
+    @Operation(summary = "Получение отзывов пользователя")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список отзывов")
+            @ApiResponse(responseCode = "200", description = "Список отзывов")
     })
-    @GetMapping("/release/{releaseId}/oldest")
-    public ResponseEntity<Page<ReviewDTO>> getReviewsByReleaseOldestFirst(
-        @Parameter(description = "ID релиза") @PathVariable Long releaseId,
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reviewService.getReviewsByReleaseOldestFirst(releaseId, pageable));
+    @GetMapping("/user/{userId}/reviews")
+    public ResponseEntity<Page<ReviewDTO>> getReviewsByUser(
+            @Parameter(description = "ID пользователя") @PathVariable Long userId,
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(reviewService.getAllByUser(userId, pageable));
     }
 
-    @Operation(summary = "Получение отзывов на релиз по количеству лайков")
+    @Operation(summary = "Получение отзывов")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список отзывов")
+            @ApiResponse(responseCode = "200", description = "Список отзывов")
     })
-    @GetMapping("/release/{releaseId}/likes")
-    public ResponseEntity<Page<ReviewDTO>> getReviewsByLikesCount(
-        @Parameter(description = "ID релиза") @PathVariable Long releaseId,
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reviewService.getReviewsByLikesCount(releaseId, pageable));
+    @GetMapping
+    public ResponseEntity<Page<ReviewDTO>> getReviews(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(reviewService.getAllSorted(pageable));
     }
 
     @Operation(summary = "Получение количества отзывов пользователя")
@@ -138,15 +137,5 @@ public class ReviewController {
     public ResponseEntity<Long> getReviewsCountByRelease(
         @Parameter(description = "ID релиза") @PathVariable Long releaseId) {
         return ResponseEntity.ok(reviewService.getReviewsCountByRelease(releaseId));
-    }
-
-    @Operation(summary = "Получение топ отзывов по количеству лайков")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список отзывов")
-    })
-    @GetMapping("/top")
-    public ResponseEntity<Page<ReviewDTO>> getAllReviewsByLikesCount(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reviewService.getAllReviewsByLikesCount(pageable));
     }
 } 

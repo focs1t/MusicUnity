@@ -13,13 +13,12 @@ import ru.musicunity.backend.mapper.UserMapper;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserService userService;
-    private final UserMapper userMapper;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userService.getUserByUsername(username);
         if (user == null) {
-            throw new UsernameNotFoundException("User not found with username: " + username);
+            throw new UsernameNotFoundException("Пользователь с именем " + username + " не найден");
         }
         return new UserDetailsImpl(user);
     }

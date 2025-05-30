@@ -15,15 +15,6 @@ import java.util.List;
 
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
-    @Query("SELECT l FROM Like l WHERE l.review.reviewId = :reviewId AND l.type = :type")
-    Page<Like> findByReviewAndType(Long reviewId, LikeType type, Pageable pageable);
-
-    @Query("SELECT COUNT(l) FROM Like l WHERE l.review.reviewId = :reviewId")
-    Long countByReview(Long reviewId);
-
-    @Query("SELECT l FROM Like l WHERE l.user.userId = :userId")
-    Page<Like> findByUser(Long userId, Pageable pageable);
-
     @Query("SELECT l FROM Like l WHERE l.review.reviewId = :reviewId")
     List<Like> findAllByReviewId(@Param("reviewId") Long reviewId);
 
@@ -31,11 +22,16 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
     List<Like> findAllByReviewIdAndType(@Param("reviewId") Long reviewId, @Param("type") LikeType type);
 
     Long countByReviewReviewId(Long reviewId);
+
     @Query("SELECT COUNT(l) FROM Like l WHERE l.review.user.userId = :userId")
     Long countByReviewAuthorUserId(Long userId);
+
     Long countByUserUserId(Long userId);
+
     @Query("SELECT COUNT(l) FROM Like l WHERE l.review.user.userId = :userId AND l.type = :type")
     Long countByReviewAuthorUserIdAndType(Long userId, LikeType type);
+
     boolean existsByReviewAndUser(Review review, User user);
+
     void deleteByReviewReviewIdAndUserUserId(Long reviewId, Long userId);
 }

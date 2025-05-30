@@ -7,8 +7,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.AuthorDTO;
+import ru.musicunity.backend.exception.AuthorNotFoundException;
 import ru.musicunity.backend.mapper.AuthorMapper;
-import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.repository.AuthorRepository;
@@ -22,10 +22,9 @@ import java.util.stream.Collectors;
 public class AuthorService {
     private final AuthorRepository authorRepository;
     private final AuthorMapper authorMapper;
-    private final UserMapper userMapper;
 
-    public Page<AuthorDTO> getAllAuthorsOrderByRegistrationDate(Pageable pageable) {
-        return authorRepository.findAllByOrderByCreatedAtDesc(pageable)
+    public Page<AuthorDTO> findAllSorted(Pageable pageable) {
+        return authorRepository.findAllSorted(pageable)
                 .map(authorMapper::toDTO);
     }
 
@@ -45,11 +44,21 @@ public class AuthorService {
                 .map(authorMapper::toDTO);
     }
 
+    public Page<AuthorDTO> findArtists(Pageable pageable) {
+        return authorRepository.findByIsArtistTrue(pageable)
+                .map(authorMapper::toDTO);
+    }
+
+    public Page<AuthorDTO> findProducers(Pageable pageable) {
+        return authorRepository.findByIsProducerTrue(pageable)
+                .map(authorMapper::toDTO);
+    }
+
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
     public AuthorDTO updateAuthor(Long id, AuthorDTO updatedAuthor) {
         Author author = authorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Author not found with id: " + id));
+                .orElseThrow(() -> new AuthorNotFoundException(id));
         
         if (updatedAuthor.getAuthorName() != null) {
             author.setAuthorName(updatedAuthor.getAuthorName());
@@ -82,26 +91,5 @@ public class AuthorService {
                 .followingCount(0)
                 .build();
         return authorMapper.toDTO(authorRepository.save(author));
-    }
-
-    public List<AuthorDTO> findArtists() {
-        return authorRepository.findByIsArtistTrue()
-                .stream()
-                .map(authorMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<AuthorDTO> findProducers() {
-        return authorRepository.findByIsProducerTrue()
-                .stream()
-                .map(authorMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<AuthorDTO> findArtistsAndProducers() {
-        return authorRepository.findByIsArtistTrueAndIsProducerTrue()
-                .stream()
-                .map(authorMapper::toDTO)
-                .collect(Collectors.toList());
     }
 }

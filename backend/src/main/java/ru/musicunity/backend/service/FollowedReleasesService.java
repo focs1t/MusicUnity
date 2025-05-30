@@ -8,6 +8,7 @@ import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.mapper.ReleaseMapper;
 import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.User;
+import ru.musicunity.backend.pojo.UserFollowing;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.repository.AuthorRepository;
 import ru.musicunity.backend.repository.ReleaseRepository;
@@ -21,24 +22,14 @@ import java.util.stream.Collectors;
 public class FollowedReleasesService {
     private final ReleaseRepository releaseRepository;
     private final UserFollowingRepository userFollowingRepository;
-    private final AuthorRepository authorRepository;
     private final ReleaseMapper releaseMapper;
 
     public Page<ReleaseDTO> getReleasesByFollowedAuthors(User user, Pageable pageable) {
         List<Author> followedAuthors = userFollowingRepository.findByUserUserId(user.getUserId())
                 .stream()
-                .map(following -> following.getAuthor())
+                .map(UserFollowing::getAuthor)
                 .collect(Collectors.toList());
-        return releaseRepository.findByAuthorsInAndOrderByAddedAtDesc(followedAuthors, pageable)
-                .map(releaseMapper::toDTO);
-    }
-
-    public Page<ReleaseDTO> getReleasesByFollowedAuthorsAndType(User user, ReleaseType type, Pageable pageable) {
-        List<Author> followedAuthors = userFollowingRepository.findByUserUserId(user.getUserId())
-                .stream()
-                .map(following -> following.getAuthor())
-                .collect(Collectors.toList());
-        return releaseRepository.findByAuthorsInAndTypeOrderByAddedAtDesc(followedAuthors, type, pageable)
+        return releaseRepository.findByAuthors(followedAuthors, pageable)
                 .map(releaseMapper::toDTO);
     }
 } 

@@ -16,7 +16,7 @@ import ru.musicunity.backend.service.LikeService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/likes")
+@RequestMapping("/api/likes")
 @RequiredArgsConstructor
 @Tag(name = "Лайки", description = "API для управления лайками на отзывы")
 public class LikeController {
@@ -36,7 +36,7 @@ public class LikeController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список лайков авторов")
     })
-    @GetMapping("/review/{reviewId}/author")
+    @GetMapping("/review/{reviewId}/count/author")
     public ResponseEntity<List<LikeDTO>> getAuthorLikesByReview(
         @Parameter(description = "ID отзыва") @PathVariable Long reviewId) {
         return ResponseEntity.ok(likeService.getAuthorLikesByReview(reviewId));

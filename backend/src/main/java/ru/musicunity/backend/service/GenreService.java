@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.GenreDTO;
+import ru.musicunity.backend.exception.GenreNotFoundException;
 import ru.musicunity.backend.mapper.GenreMapper;
 import ru.musicunity.backend.pojo.Genre;
 import ru.musicunity.backend.repository.GenreRepository;
@@ -27,7 +28,7 @@ public class GenreService {
     public GenreDTO getGenreById(Long id) {
         return genreRepository.findById(id)
                 .map(genreMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Genre not found with id: " + id));
+                .orElseThrow(() -> new GenreNotFoundException(id));
     }
 
     @Transactional
@@ -43,7 +44,7 @@ public class GenreService {
     @PreAuthorize("hasRole('MODERATOR')")
     public void deleteGenre(Long id) {
         Genre genre = genreRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Genre not found with id: " + id));
+                .orElseThrow(() -> new GenreNotFoundException(id));
         genreRepository.delete(genre);
     }
 }

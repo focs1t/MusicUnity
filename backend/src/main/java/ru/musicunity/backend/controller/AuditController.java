@@ -18,22 +18,11 @@ import ru.musicunity.backend.service.AuditService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/audit")
+@RequestMapping("/api/audit")
 @RequiredArgsConstructor
 @Tag(name = "Аудит", description = "API для управления аудитом действий пользователей")
 public class AuditController {
     private final AuditService auditService;
-
-    @Operation(summary = "Получение всех записей аудита")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список записей аудита"),
-        @ApiResponse(responseCode = "403", description = "Доступ запрещен")
-    })
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AuditDTO>> getAllAuditLogs() {
-        return ResponseEntity.ok(auditService.getAllAuditLogs());
-    }
 
     @Operation(summary = "Получение записей аудита по ID модератора")
     @ApiResponses(value = {
@@ -42,9 +31,10 @@ public class AuditController {
     })
     @GetMapping("/moderator/{moderatorId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AuditDTO>> getAuditLogsByModerator(
-        @Parameter(description = "ID модератора") @PathVariable Long moderatorId) {
-        return ResponseEntity.ok(auditService.getAuditLogsByModerator(moderatorId));
+    public ResponseEntity<Page<AuditDTO>> getAuditLogsByModerator(
+        @Parameter(description = "ID модератора") @PathVariable Long moderatorId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(auditService.getAuditLogsByModerator(moderatorId, pageable));
     }
 
     @Operation(summary = "Получение записей аудита по ID цели")
@@ -54,9 +44,10 @@ public class AuditController {
     })
     @GetMapping("/target/{targetId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AuditDTO>> getAuditLogsByTargetId(
-        @Parameter(description = "ID цели") @PathVariable Long targetId) {
-        return ResponseEntity.ok(auditService.getAuditLogsByTargetId(targetId));
+    public ResponseEntity<Page<AuditDTO>> getAuditLogsByTargetId(
+        @Parameter(description = "ID цели") @PathVariable Long targetId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(auditService.getAuditLogsByTargetId(targetId, pageable));
     }
 
     @Operation(summary = "Получение записей аудита по типу действия")
@@ -72,28 +63,16 @@ public class AuditController {
         return ResponseEntity.ok(auditService.getAuditLogsByActionType(actionType, pageable));
     }
 
-    @Operation(summary = "Получение записей аудита, отсортированных по дате (по убыванию)")
+    @Operation(summary = "Получение записей аудита")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список записей аудита"),
         @ApiResponse(responseCode = "403", description = "Доступ запрещен")
     })
-    @GetMapping("/date/desc")
+    @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<AuditDTO>> getAuditLogsOrderByDateDesc(
+    public ResponseEntity<Page<AuditDTO>> getAuditLogs(
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(auditService.getAuditLogsOrderByDateDesc(pageable));
-    }
-
-    @Operation(summary = "Получение записей аудита, отсортированных по дате (по возрастанию)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список записей аудита"),
-        @ApiResponse(responseCode = "403", description = "Доступ запрещен")
-    })
-    @GetMapping("/date/asc")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<AuditDTO>> getAuditLogsOrderByDateAsc(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(auditService.getAuditLogsOrderByDateAsc(pageable));
+        return ResponseEntity.ok(auditService.getAuditLogs(pageable));
     }
 
     @Operation(summary = "Получение записи аудита по ID")
@@ -107,17 +86,5 @@ public class AuditController {
     public ResponseEntity<AuditDTO> getAuditLogById(
         @Parameter(description = "ID записи аудита") @PathVariable Long id) {
         return ResponseEntity.ok(auditService.getAuditLogById(id));
-    }
-
-    @Operation(summary = "Удаление всех записей аудита")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Записи успешно удалены"),
-        @ApiResponse(responseCode = "403", description = "Доступ запрещен")
-    })
-    @DeleteMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteAllAuditLogs() {
-        auditService.deleteAllAuditLogs();
-        return ResponseEntity.ok().build();
     }
 }

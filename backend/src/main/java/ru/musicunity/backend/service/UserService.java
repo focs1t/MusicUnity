@@ -5,12 +5,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
+import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
@@ -43,37 +45,14 @@ public class UserService {
                 .orElse(null);
     }
 
-    public void updateTelegramChatId(String username, Long chatId) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
-        user.setTelegramChatId(chatId);
-        userRepository.save(user);
+    public Page<UserDTO> findByRights(UserRole role, Pageable pageable) {
+        return userRepository.findByRights(role, pageable)
+                .map(userMapper::toDTO);
     }
 
-    public List<UserDTO> findByRights(UserRole role) {
-        return userRepository.findByRights(role)
-                .stream()
-                .map(userMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<UserDTO> findBlockedUsers() {
-        return userRepository.findByIsBlockedTrue()
-                .stream()
-                .map(userMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    public UserDTO findByTelegramChatId(Long chatId) {
-        return userRepository.findByTelegramChatId(chatId)
-                .map(userMapper::toDTO)
-                .orElse(null);
-    }
-
-    public UserDTO findModeratorByEmail(String email) {
-        return userRepository.findByEmailAndRights(email, UserRole.MODERATOR)
-                .map(userMapper::toDTO)
-                .orElse(null);
+    public Page<UserDTO> findBlockedUsers(Pageable pageable) {
+        return userRepository.findByBlockedStatus(pageable)
+                .map(userMapper::toDTO);
     }
 
     public Page<UserDTO> searchUsersByUsername(String username, Pageable pageable) {
@@ -84,20 +63,20 @@ public class UserService {
     public UserDTO getUserById(Long id) {
         return userRepository.findById(id)
                 .map(userMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
     }
 
     public User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь с именем " + username + " не найден"));
     }
 
     @Transactional
     public void updateOwnPassword(String currentPassword, String newPassword) {
         User user = getCurrentUser();
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
-            throw new RuntimeException("Current password is incorrect");
+            throw new RuntimeException("Неверный пароль");
         }
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -119,54 +98,35 @@ public class UserService {
     @PreAuthorize("hasRole('MODERATOR')")
     public void banUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         user.setIsBlocked(true);
         userRepository.save(user);
     }
 
     @Transactional
-    @PreAuthorize("hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void unbanUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         user.setIsBlocked(false);
-        userRepository.save(user);
-    }
-
-    @Transactional
-    public void logout() {
-        User user = getCurrentUser();
-        user.setLastLogin(null);
         userRepository.save(user);
     }
 
     public Page<ReleaseDTO> getFavoriteReleases(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         return favoriteService.getFavoriteReleasesByUser(user, pageable);
-    }
-
-    public Page<ReleaseDTO> getFavoriteReleasesByType(Long userId, ReleaseType type, Pageable pageable) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return favoriteService.getFavoriteReleasesByUserAndType(user, type, pageable);
     }
 
     public Page<AuthorDTO> getFollowedAuthors(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         return authorFollowingService.getFollowedAuthors(user, pageable);
     }
 
     public Page<ReleaseDTO> getReleasesFromFollowedAuthors(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         return followedReleasesService.getReleasesByFollowedAuthors(user, pageable);
-    }
-
-    public Page<ReleaseDTO> getReleasesFromFollowedAuthorsByType(Long userId, ReleaseType type, Pageable pageable) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return followedReleasesService.getReleasesByFollowedAuthorsAndType(user, type, pageable);
     }
 }

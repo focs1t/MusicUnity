@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.ReviewDTO;
+import ru.musicunity.backend.exception.ReviewNotFoundException;
 import ru.musicunity.backend.mapper.ReviewMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Review;
@@ -27,7 +28,7 @@ public class ReviewService {
     public ReviewDTO getReviewById(Long id) {
         return reviewRepository.findById(id)
                 .map(reviewMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
+                .orElseThrow(() -> new ReviewNotFoundException(id));
     }
 
     private void checkIfUserIsAuthor(Release release, User user) {
@@ -35,7 +36,7 @@ public class ReviewService {
                 .anyMatch(releaseAuthor -> releaseAuthor.getAuthor().getUser() != null &&
                         releaseAuthor.getAuthor().getUser().getUserId().equals(user.getUserId()));
         if (isAuthor) {
-            throw new RuntimeException("Author cannot review their own release");
+            throw new RuntimeException("Автор не может оставлять рецензию на собственный релиз");
         }
     }
 
@@ -93,22 +94,22 @@ public class ReviewService {
     @PreAuthorize("hasRole('MODERATOR')")
     public void deleteReview(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
         reviewRepository.delete(review);
     }
 
-    public Page<ReviewDTO> getReviewsByReleaseNewestFirst(Long releaseId, Pageable pageable) {
-        return reviewRepository.findAllByReleaseReleaseIdOrderByCreatedAtDesc(releaseId, pageable)
+    public Page<ReviewDTO> getAllByRelease(Long releaseId, Pageable pageable) {
+        return reviewRepository.findAllByReleaseReleaseId(releaseId, pageable)
                 .map(reviewMapper::toDTO);
     }
 
-    public Page<ReviewDTO> getReviewsByReleaseOldestFirst(Long releaseId, Pageable pageable) {
-        return reviewRepository.findAllByReleaseReleaseIdOrderByCreatedAtAsc(releaseId, pageable)
+    public Page<ReviewDTO> getAllByUser(Long userId, Pageable pageable) {
+        return reviewRepository.findAllByUserUserId(userId, pageable)
                 .map(reviewMapper::toDTO);
     }
 
-    public Page<ReviewDTO> getReviewsByLikesCount(Long releaseId, Pageable pageable) {
-        return reviewRepository.findAllByReleaseReleaseIdOrderByLikesCountDesc(releaseId, pageable)
+    public Page<ReviewDTO> getAllSorted(Pageable pageable) {
+        return reviewRepository.findAllSorted(pageable)
                 .map(reviewMapper::toDTO);
     }
 
@@ -118,10 +119,5 @@ public class ReviewService {
 
     public long getReviewsCountByRelease(Long releaseId) {
         return reviewRepository.countByRelease(releaseId);
-    }
-
-    public Page<ReviewDTO> getAllReviewsByLikesCount(Pageable pageable) {
-        return reviewRepository.findAllOrderByLikesCountDesc(pageable)
-                .map(reviewMapper::toDTO);
     }
 }

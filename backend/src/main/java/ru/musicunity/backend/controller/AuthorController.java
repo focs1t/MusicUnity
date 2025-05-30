@@ -36,7 +36,7 @@ public class AuthorController {
     @GetMapping
     public ResponseEntity<Page<AuthorDTO>> getAllAuthors(
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(authorService.getAllAuthorsOrderByRegistrationDate(pageable));
+        return ResponseEntity.ok(authorService.findAllSorted(pageable));
     }
 
     @Operation(summary = "Поиск авторов по имени")
@@ -120,6 +120,30 @@ public class AuthorController {
         return ResponseEntity.ok(authorFollowingService.getFollowedAuthors(
                 userMapper.toEntity(userService.getUserById(userId)),
                 pageable));
+    }
+
+    @Operation(summary = "Получение исполнителей")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список исполнителей"),
+            @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
+    @GetMapping("/artists")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<AuthorDTO>> getArtists(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(authorService.findArtists(pageable));
+    }
+
+    @Operation(summary = "Получение продюсеров")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список продюсеров"),
+            @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
+    @GetMapping("/producers")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<AuthorDTO>> getProducers(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(authorService.findProducers(pageable));
     }
 
     @Operation(summary = "Подписка на автора")

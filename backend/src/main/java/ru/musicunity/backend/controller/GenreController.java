@@ -15,7 +15,7 @@ import ru.musicunity.backend.dto.GenreDTO;
 import ru.musicunity.backend.service.GenreService;
 
 @RestController
-@RequestMapping("/api/v1/genres")
+@RequestMapping("/api/genres")
 @RequiredArgsConstructor
 @Tag(name = "Жанры", description = "API для управления музыкальными жанрами")
 public class GenreController {

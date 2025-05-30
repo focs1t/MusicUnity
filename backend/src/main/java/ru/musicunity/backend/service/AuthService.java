@@ -5,6 +5,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.musicunity.backend.exception.UserEmailNotFoundException;
+import ru.musicunity.backend.exception.UserExistsException;
 import ru.musicunity.backend.pojo.PasswordResetToken;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.UserRole;
@@ -35,7 +37,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new RuntimeException("Username already exists");
+            throw new UserExistsException();
         }
 
         User user = new User();
@@ -56,7 +58,7 @@ public class AuthService {
     @Transactional
     public void requestPasswordReset(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserEmailNotFoundException(email));
 
         // Удаляем старые токены
         tokenRepository.deleteByUser_UserId(user.getUserId());
@@ -77,14 +79,14 @@ public class AuthService {
     @Transactional
     public void resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
+                .orElseThrow(() -> new RuntimeException("Неверный токен"));
 
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Token already used");
+            throw new RuntimeException("Токен уже был использован");
         }
 
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token expired");
+            throw new RuntimeException("Срок действия токена истек");
         }
 
         User user = resetToken.getUser();

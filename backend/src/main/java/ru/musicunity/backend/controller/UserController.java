@@ -39,30 +39,6 @@ public class UserController {
         return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
-    @Operation(summary = "Поиск пользователя по Telegram ID")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Пользователь найден"),
-        @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    })
-    @GetMapping("/telegram/{chatId}")
-    public ResponseEntity<UserDTO> findByTelegramChatId(
-        @Parameter(description = "Telegram Chat ID") @PathVariable Long chatId) {
-        UserDTO user = userService.findByTelegramChatId(chatId);
-        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
-    }
-
-    @Operation(summary = "Поиск модератора по email")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Модератор найден"),
-        @ApiResponse(responseCode = "404", description = "Модератор не найден")
-    })
-    @GetMapping("/moderator/email/{email}")
-    public ResponseEntity<UserDTO> findModeratorByEmail(
-        @Parameter(description = "Email модератора") @PathVariable String email) {
-        UserDTO user = userService.findModeratorByEmail(email);
-        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
-    }
-
     @Operation(summary = "Поиск пользователей по имени пользователя")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список пользователей")
@@ -90,9 +66,20 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Список пользователей")
     })
     @GetMapping("/role/{role}")
-    public ResponseEntity<List<UserDTO>> findByRights(
-        @Parameter(description = "Роль пользователя") @PathVariable UserRole role) {
-        return ResponseEntity.ok(userService.findByRights(role));
+    public ResponseEntity<Page<UserDTO>> findByRights(
+        @Parameter(description = "Роль пользователя") @PathVariable UserRole role,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(userService.findByRights(role, pageable));
+    }
+
+    @Operation(summary = "Получение пользователей по роли")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список пользователей")
+    })
+    @GetMapping("/blocked")
+    public ResponseEntity<Page<UserDTO>> findBlockedUsers(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(userService.findBlockedUsers(pageable));
     }
 
     @Operation(summary = "Обновление пароля пользователя")
@@ -134,13 +121,17 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Выход из системы")
+    @Operation(summary = "Разблокировка пользователя")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Успешный выход")
+            @ApiResponse(responseCode = "200", description = "Пользователь разблокирован"),
+            @ApiResponse(responseCode = "403", description = "Нет прав для разблокировки"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        userService.logout();
+    @PostMapping("/{id}/unban")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> unbanUser(
+            @Parameter(description = "ID пользователя") @PathVariable Long id) {
+        userService.unbanUser(id);
         return ResponseEntity.ok().build();
     }
 
@@ -153,18 +144,6 @@ public class UserController {
         @Parameter(description = "ID пользователя") @PathVariable Long userId,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getFavoriteReleases(userId, pageable));
-    }
-
-    @Operation(summary = "Получение избранных релизов пользователя по типу")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список избранных релизов")
-    })
-    @GetMapping("/{userId}/favorites/type/{type}")
-    public ResponseEntity<Page<ReleaseDTO>> getFavoriteReleasesByType(
-        @Parameter(description = "ID пользователя") @PathVariable Long userId,
-        @Parameter(description = "Тип релиза") @PathVariable ReleaseType type,
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(userService.getFavoriteReleasesByType(userId, type, pageable));
     }
 
     @Operation(summary = "Получение отслеживаемых авторов пользователя")
@@ -187,17 +166,5 @@ public class UserController {
         @Parameter(description = "ID пользователя") @PathVariable Long userId,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getReleasesFromFollowedAuthors(userId, pageable));
-    }
-
-    @Operation(summary = "Получение релизов от отслеживаемых авторов по типу")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список релизов")
-    })
-    @GetMapping("/{userId}/followed-authors/releases/type/{type}")
-    public ResponseEntity<Page<ReleaseDTO>> getReleasesFromFollowedAuthorsByType(
-        @Parameter(description = "ID пользователя") @PathVariable Long userId,
-        @Parameter(description = "Тип релиза") @PathVariable ReleaseType type,
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(userService.getReleasesFromFollowedAuthorsByType(userId, type, pageable));
     }
 } 

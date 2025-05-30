@@ -15,18 +15,13 @@ import java.util.List;
 @Repository
 public interface AuditRepository extends JpaRepository<Audit, Long>, JpaSpecificationExecutor<Audit> {
     @Query("SELECT a FROM Audit a WHERE a.moderator.userId = :moderatorId")
-    List<Audit> findByModerator(Long moderatorId);
+    Page<Audit> findByModerator(Long moderatorId, Pageable pageable);
 
     @Query("SELECT a FROM Audit a WHERE a.actionType = :action")
     Page<Audit> findByActionType(AuditAction action, Pageable pageable);
 
-    List<Audit> findByTargetId(Long targetId);
+    Page<Audit> findByTargetId(Long targetId, Pageable pageable);
     
-    @Query("SELECT a FROM Audit a ORDER BY a.performedAt DESC")
-    Page<Audit> findAllOrderByPerformedAtDesc(Pageable pageable);
-    
-    @Query("SELECT a FROM Audit a ORDER BY a.performedAt ASC")
-    Page<Audit> findAllOrderByPerformedAtAsc(Pageable pageable);
-    
-    void deleteAll();
+    @Query("SELECT a FROM Audit a")
+    Page<Audit> findAllSorted(Pageable pageable);
 }

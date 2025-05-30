@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.AuthorDTO;
+import ru.musicunity.backend.exception.AuthorNotFoundException;
+import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.AuthorMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Author;
@@ -20,9 +22,7 @@ import ru.musicunity.backend.repository.UserRepository;
 public class AuthorFollowingService {
     private final AuthorRepository authorRepository;
     private final UserRepository userRepository;
-    private final UserFollowingRepository userFollowingRepository;
     private final AuthorMapper authorMapper;
-    private final UserMapper userMapper;
 
     public Page<AuthorDTO> getFollowedAuthors(User user, Pageable pageable) {
         return authorRepository.findByFollowingsUserUserId(user.getUserId(), pageable)
@@ -32,9 +32,9 @@ public class AuthorFollowingService {
     @Transactional
     public void followAuthor(Long authorId, Long userId) {
         Author author = authorRepository.findById(authorId)
-                .orElseThrow(() -> new RuntimeException("Author not found with id: " + authorId));
+                .orElseThrow(() -> new AuthorNotFoundException(authorId));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         if (!author.getFollowings().stream().anyMatch(f -> f.getUser().getUserId().equals(userId))) {
             UserFollowing following = UserFollowing.builder()
@@ -50,9 +50,9 @@ public class AuthorFollowingService {
     @Transactional
     public void unfollowAuthor(Long authorId, Long userId) {
         Author author = authorRepository.findById(authorId)
-                .orElseThrow(() -> new RuntimeException("Author not found with id: " + authorId));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new AuthorNotFoundException(authorId));
+        userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         author.getFollowings().removeIf(following -> following.getUser().getUserId().equals(userId));
         author.setFollowingCount(author.getFollowingCount() - 1);

@@ -7,6 +7,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.ReportDTO;
+import ru.musicunity.backend.exception.ReportIsPendingException;
+import ru.musicunity.backend.exception.ReportNotFoundException;
+import ru.musicunity.backend.exception.UserBlockedException;
 import ru.musicunity.backend.mapper.ReportMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.mapper.ReviewMapper;
@@ -14,7 +17,6 @@ import ru.musicunity.backend.pojo.Report;
 import ru.musicunity.backend.pojo.Review;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReportStatus;
-import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.repository.ReportRepository;
 
 import java.time.LocalDateTime;
@@ -29,20 +31,15 @@ public class ReportService {
     private final UserMapper userMapper;
     private final ReviewMapper reviewMapper;
 
-    public Page<ReportDTO> getAllReportsNewestFirst(Pageable pageable) {
-        return reportRepository.findAllByOrderByCreatedAtDesc(pageable)
-                .map(reportMapper::toDTO);
-    }
-
-    public Page<ReportDTO> getAllReportsOldestFirst(Pageable pageable) {
-        return reportRepository.findAllByOrderByCreatedAtAsc(pageable)
+    public Page<ReportDTO> getAllSorted(Pageable pageable) {
+        return reportRepository.findAllSorted(pageable)
                 .map(reportMapper::toDTO);
     }
 
     public ReportDTO getReportById(Long id) {
         return reportRepository.findById(id)
                 .map(reportMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Report not found with id: " + id));
+                .orElseThrow(() -> new ReportNotFoundException(id));
     }
 
     @Transactional
@@ -52,7 +49,7 @@ public class ReportService {
         
         // Проверяем, что пользователь не заблокирован
         if (user.getIsBlocked()) {
-            throw new RuntimeException("Blocked users cannot create reports");
+            throw new UserBlockedException();
         }
 
         Review review = reviewMapper.toEntity(reviewService.getReviewById(reviewId));
@@ -71,9 +68,9 @@ public class ReportService {
     @PreAuthorize("hasRole('MODERATOR')")
     public ReportDTO deleteReview(Long reportId, Long moderatorId) {
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Report not found with id: " + reportId));
+                .orElseThrow(() -> new ReportNotFoundException(reportId));
         if (report.getStatus() != ReportStatus.PENDING) {
-            throw new RuntimeException("Report is not pending");
+            throw new ReportIsPendingException();
         }
 
         User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
@@ -90,9 +87,9 @@ public class ReportService {
     @PreAuthorize("hasRole('MODERATOR')")
     public ReportDTO banUser(Long reportId, Long moderatorId) {
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Report not found with id: " + reportId));
+                .orElseThrow(() -> new ReportNotFoundException(reportId));
         if (report.getStatus() != ReportStatus.PENDING) {
-            throw new RuntimeException("Report is not pending");
+            throw new ReportIsPendingException();
         }
 
         User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
@@ -110,9 +107,9 @@ public class ReportService {
     @PreAuthorize("hasRole('MODERATOR')")
     public ReportDTO rejectReport(Long reportId, Long moderatorId) {
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Report not found with id: " + reportId));
+                .orElseThrow(() -> new ReportNotFoundException(reportId));
         if (report.getStatus() != ReportStatus.PENDING) {
-            throw new RuntimeException("Report is not pending");
+            throw new ReportIsPendingException();
         }
 
         User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
@@ -132,13 +129,23 @@ public class ReportService {
         reportRepository.deleteAllByStatusAndResolvedAtBefore(ReportStatus.RESOLVED, sevenDaysAgo);
     }
 
-    public Page<ReportDTO> getPendingReportsNewestFirst(Pageable pageable) {
-        return reportRepository.findAllByStatusOrderByCreatedAtDesc(ReportStatus.PENDING, pageable)
+    public Page<ReportDTO> getAllByStatus(Pageable pageable) {
+        return reportRepository.findAllByStatus(ReportStatus.PENDING, pageable)
                 .map(reportMapper::toDTO);
     }
 
-    public Page<ReportDTO> getPendingReportsOldestFirst(Pageable pageable) {
-        return reportRepository.findAllByStatusOrderByCreatedAtAsc(ReportStatus.PENDING, pageable)
+    public Page<ReportDTO> getByModerator(Long moderatorId, Pageable pageable) {
+        return reportRepository.findByModerator(moderatorId, pageable)
+                .map(reportMapper::toDTO);
+    }
+
+    public Page<ReportDTO> getByDateRange(LocalDateTime start, LocalDateTime end, Pageable pageable) {
+        return reportRepository.findByDateRange(start, end, pageable)
+                .map(reportMapper::toDTO);
+    }
+
+    public Page<ReportDTO> getByUser(Long userId, Pageable pageable) {
+        return reportRepository.findByUser(userId, pageable)
                 .map(reportMapper::toDTO);
     }
 }

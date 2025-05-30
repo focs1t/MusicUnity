@@ -14,16 +14,4 @@ import java.util.Optional;
 public interface ReleaseAuthorRepository extends JpaRepository<ReleaseAuthor, ReleaseAuthor.ReleaseAuthorId> {
     @Query("SELECT ra FROM ReleaseAuthor ra WHERE ra.release.releaseId = :releaseId AND ra.author.authorId = :authorId")
     Optional<ReleaseAuthor> findByReleaseIdAndAuthorId(@Param("releaseId") Long releaseId, @Param("authorId") Long authorId);
-
-    @Query("SELECT ra FROM ReleaseAuthor ra WHERE ra.release.releaseId = :releaseId AND ra.isArtist = true")
-    List<ReleaseAuthor> findArtistsByReleaseId(@Param("releaseId") Long releaseId);
-
-    @Query("SELECT ra FROM ReleaseAuthor ra WHERE ra.release.releaseId = :releaseId AND ra.isProducer = true")
-    List<ReleaseAuthor> findProducersByReleaseId(@Param("releaseId") Long releaseId);
-
-    @Query("SELECT ra FROM ReleaseAuthor ra WHERE ra.author.authorId = :authorId AND ra.isArtist = true")
-    List<ReleaseAuthor> findReleasesWhereAuthorIsArtist(@Param("authorId") Long authorId);
-
-    @Query("SELECT ra FROM ReleaseAuthor ra WHERE ra.author.authorId = :authorId AND ra.isProducer = true")
-    List<ReleaseAuthor> findReleasesWhereAuthorIsProducer(@Param("authorId") Long authorId);
 }

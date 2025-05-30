@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.LikeDTO;
+import ru.musicunity.backend.exception.LikeExistsException;
+import ru.musicunity.backend.exception.ReviewNotFoundException;
+import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.LikeMapper;
 import ru.musicunity.backend.pojo.Like;
 import ru.musicunity.backend.pojo.Review;
@@ -57,13 +60,12 @@ public class LikeService {
     @Transactional
     public LikeDTO createLike(Long reviewId, Long userId, LikeType type) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // Проверяем, не существует ли уже такой лайк
         if (likeRepository.existsByReviewAndUser(review, user)) {
-            throw new RuntimeException("Like already exists for this review and user");
+            throw new LikeExistsException();
         }
 
         Like like = Like.builder()

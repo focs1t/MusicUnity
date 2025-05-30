@@ -12,13 +12,5 @@ import java.util.List;
 
 @Repository
 public interface UserFollowingRepository extends JpaRepository<UserFollowing, Long> {
-    @Query("SELECT uf FROM UserFollowing uf WHERE uf.user.userId = :followerId")
-    Page<UserFollowing> findByFollower(Long followerId, Pageable pageable);
-
-    @Query("SELECT uf FROM UserFollowing uf WHERE uf.user.userId = :followedId")
-    Page<UserFollowing> findByFollowed(Long followedId, Pageable pageable);
-
     List<UserFollowing> findByUserUserId(Long userId);
-
-    boolean existsByAuthorAuthorIdAndUserUserId(Long authorId, Long userId);
 }

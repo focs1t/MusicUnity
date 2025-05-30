@@ -12,37 +12,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.ReportDTO;
+import ru.musicunity.backend.pojo.enums.ReportStatus;
 import ru.musicunity.backend.service.ReportService;
 
+import java.time.LocalDateTime;
+
 @RestController
-@RequestMapping("/api/v1/reports")
+@RequestMapping("/api/reports")
 @RequiredArgsConstructor
 @Tag(name = "Жалобы", description = "API для управления жалобами на отзывы")
 public class ReportController {
     private final ReportService reportService;
 
-    @Operation(summary = "Получение всех жалоб (сначала новые)")
+    @Operation(summary = "Получение всех жалоб")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список жалоб"),
         @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
     })
     @GetMapping
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Page<ReportDTO>> getAllReportsNewestFirst(
+    public ResponseEntity<Page<ReportDTO>> getAllReports(
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reportService.getAllReportsNewestFirst(pageable));
-    }
-
-    @Operation(summary = "Получение всех жалоб (сначала старые)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список жалоб"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
-    })
-    @GetMapping("/oldest")
-    @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Page<ReportDTO>> getAllReportsOldestFirst(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reportService.getAllReportsOldestFirst(pageable));
+        return ResponseEntity.ok(reportService.getAllSorted(pageable));
     }
 
     @Operation(summary = "Получение жалобы по ID")
@@ -127,27 +118,55 @@ public class ReportController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Получение ожидающих жалоб (сначала новые)")
+    @Operation(summary = "Получение ожидающих жалоб")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список жалоб"),
         @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
     })
     @GetMapping("/pending")
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Page<ReportDTO>> getPendingReportsNewestFirst(
+    public ResponseEntity<Page<ReportDTO>> getPendingReports(
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reportService.getPendingReportsNewestFirst(pageable));
+        return ResponseEntity.ok(reportService.getAllByStatus(pageable));
     }
 
-    @Operation(summary = "Получение ожидающих жалоб (сначала старые)")
+    @Operation(summary = "Получение жалоб по модератору")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список жалоб"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
+            @ApiResponse(responseCode = "200", description = "Список жалоб"),
+            @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
     })
-    @GetMapping("/pending/oldest")
+    @GetMapping("/moderator/{reportId}")
     @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Page<ReportDTO>> getPendingReportsOldestFirst(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reportService.getPendingReportsOldestFirst(pageable));
+    public ResponseEntity<Page<ReportDTO>> getByModerators(
+            @Parameter(description = "ID модератора") @PathVariable Long moderatorId,
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(reportService.getByModerator(moderatorId, pageable));
+    }
+
+    @Operation(summary = "Получение жалоб по пользователю")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список жалоб"),
+            @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
+    })
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<Page<ReportDTO>> getByUsers(
+            @Parameter(description = "ID пользователя") @PathVariable Long userId,
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(reportService.getByUser(userId, pageable));
+    }
+
+    @Operation(summary = "Получение жалоб по промежутку дат")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список жалоб"),
+            @ApiResponse(responseCode = "403", description = "Нет прав для просмотра жалоб")
+    })
+    @GetMapping("/date/from{start}to/{end}")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<Page<ReportDTO>> getByDateRange(
+            @Parameter(description = "С") @PathVariable LocalDateTime start,
+            @Parameter(description = "ПО") @PathVariable LocalDateTime end,
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(reportService.getByDateRange(start, end, pageable));
     }
 }
