@@ -9,7 +9,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Entity
@@ -35,7 +34,7 @@ public class Author {
 
     private String avatarUrl;
 
-    @Lob
+    @Column(length = 1000)
     private String bio;
 
     @CreationTimestamp
@@ -46,28 +45,16 @@ public class Author {
     private Integer followingCount = 0;
 
     @Column(nullable = false)
-    @Convert(converter = AuthorRoleConverter.class)
-    private AuthorRole role;
+    private Boolean isArtist = false;
 
-    @ManyToMany(mappedBy = "authors")
-    private List<Release> releases = new ArrayList<>();
+    @Column(nullable = false)
+    private Boolean isProducer = false;
 
-    public enum AuthorRole {
-        PERFORMER(0), PRODUCER(1), BOTH(2);
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ReleaseAuthor> releases = new ArrayList<>();
 
-        private final int code;
-        AuthorRole(int code) { this.code = code; }
-        public int getCode() { return code; }
-    }
-
-    @Converter(autoApply = true)
-    public static class AuthorRoleConverter implements AttributeConverter<AuthorRole, Integer> {
-        @Override public Integer convertToDatabaseColumn(AuthorRole role) { return role.getCode(); }
-        @Override public AuthorRole convertToEntityAttribute(Integer code) {
-            return Arrays.stream(AuthorRole.values())
-                    .filter(r -> r.getCode() == code)
-                    .findFirst()
-                    .orElseThrow(IllegalArgumentException::new);
-        }
-    }
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<UserFollowing> followings = new ArrayList<>();
 }

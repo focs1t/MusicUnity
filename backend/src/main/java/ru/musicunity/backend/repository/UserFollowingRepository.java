@@ -8,11 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.musicunity.backend.pojo.UserFollowing;
 
-@Repository
-public interface UserFollowingRepository extends JpaRepository<UserFollowing, UserFollowing.UserFollowingId> {
-    @Query("SELECT uf FROM UserFollowing uf WHERE uf.userId = :followerId")
-    Page<UserFollowing> findByFollower(Long followerId, Pageable pageable);
+import java.util.List;
 
-    @Query("SELECT uf FROM UserFollowing uf WHERE uf.userId = :followedId")
-    Page<UserFollowing> findByFollowed(Long followedId, Pageable pageable);
+@Repository
+public interface UserFollowingRepository extends JpaRepository<UserFollowing, Long> {
+    List<UserFollowing> findByUserUserId(Long userId);
 }

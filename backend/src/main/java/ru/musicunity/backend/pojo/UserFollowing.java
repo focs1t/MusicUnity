@@ -6,35 +6,22 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-
-@Entity
-@Table(name = "user_following")
 @Data
+@Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "user_followings")
 public class UserFollowing {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long followingId;
 
-    @EmbeddedId
-    private UserFollowingId id;
+    @ManyToOne
+    @JoinColumn(name = "author_id", nullable = false)
+    private Author author;
 
-    @MapsId("followerId")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "follower_id")
-    private User follower;
-
-    @MapsId("followedId")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "followed_id")
-    private User followed;
-
-    @Embeddable
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class UserFollowingId implements Serializable {
-        private Long followerId;
-        private Long followedId;
-    }
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }

@@ -11,21 +11,16 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    @Query("SELECT r FROM Review r WHERE r.releaseId = :releaseId")
-    Page<Review> findByRelease(Long releaseId, Pageable pageable);
+    Page<Review> findAllByReleaseReleaseId(Long releaseId, Pageable pageable);
 
-    @Query("SELECT r FROM Review r WHERE r.user.userId = :userId")
-    Page<Review> findByUser(Long userId, Pageable pageable);
+    Page<Review> findAllByUserUserId(Long userId, Pageable pageable);
 
-    @Query("SELECT AVG(r.totalScore) FROM Review r WHERE r.releaseId = :releaseId")
-    Double getAverageScoreForRelease(Long releaseId);
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.userId = :userId")
+    long countByUser(Long userId);
 
-    @Query("SELECT r FROM Review r ORDER BY r.likesCount DESC")
-    Page<Review> findPopularReviews(Pageable pageable);
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.release.releaseId = :releaseId")
+    long countByRelease(Long releaseId);
 
-    @Query("SELECT AVG(r.totalScore) FROM Review r WHERE r.authorId = :authorId")
-    Double getAverageScoreByAuthor(Long authorId);
-
-    @Query("SELECT r FROM Review r WHERE r.authorId = :authorId ORDER BY r.createdAt DESC LIMIT 10")
-    List<Review> findFirst10ByAuthorOrderByCreatedAtDesc(Long authorId);
+    @Query("SELECT r FROM Review r")
+    Page<Review> findAllSorted(Pageable pageable);
 }

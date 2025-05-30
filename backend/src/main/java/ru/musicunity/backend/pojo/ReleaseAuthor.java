@@ -29,6 +29,12 @@ public class ReleaseAuthor {
     @JoinColumn(name = "author_id")
     private Author author;
 
+    @Column(nullable = false)
+    private Boolean isArtist;
+
+    @Column(nullable = false)
+    private Boolean isProducer;
+
     @Embeddable
     @Data
     @NoArgsConstructor

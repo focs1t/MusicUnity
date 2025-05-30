@@ -9,9 +9,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Formula;
+import ru.musicunity.backend.pojo.enums.ReviewType;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 
 @Entity
 @Table(name = "reviews")
@@ -33,10 +33,13 @@ public class Review {
     private Release release;
 
     @Column(nullable = false)
-    @Convert(converter = ReviewTypeConverter.class)
+    @Convert(converter = ReviewType.ReviewTypeConverter.class)
     private ReviewType type;
 
-    @Lob
+    @Column(length = 50)
+    private String title;
+
+    @Column(length = 1000)
     private String content;
 
     @CreationTimestamp
@@ -48,43 +51,24 @@ public class Review {
 
     @Column(nullable = false)
     @Min(1) @Max(10)
-    private Integer rhymeImagery = 5;
+    private Integer rhymeImagery;
 
     @Column(nullable = false)
     @Min(1) @Max(10)
-    private Integer structureRhythm = 5;
+    private Integer structureRhythm;
 
     @Column(nullable = false)
     @Min(1) @Max(10)
-    private Integer styleExecution = 5;
+    private Integer styleExecution;
 
     @Column(nullable = false)
     @Min(1) @Max(10)
-    private Integer individuality = 5;
+    private Integer individuality;
 
     @Column(nullable = false)
     @Min(1) @Max(10)
-    private Integer vibe = 5;
+    private Integer vibe;
 
     @Formula("ROUND((rhyme_imagery + structure_rhythm + style_execution + individuality) * (1 + (vibe / 10.0) * 1.5))")
     private Integer totalScore;
-
-    public enum ReviewType {
-        SIMPLE(0), EXTENDED(1);
-
-        private final int code;
-        ReviewType(int code) { this.code = code; }
-        public int getCode() { return code; }
-    }
-
-    @Converter(autoApply = true)
-    public static class ReviewTypeConverter implements AttributeConverter<ReviewType, Integer> {
-        @Override public Integer convertToDatabaseColumn(ReviewType type) { return type.getCode(); }
-        @Override public ReviewType convertToEntityAttribute(Integer code) {
-            return Arrays.stream(ReviewType.values())
-                    .filter(t -> t.getCode() == code)
-                    .findFirst()
-                    .orElseThrow(IllegalArgumentException::new);
-        }
-    }
 }
