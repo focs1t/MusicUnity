@@ -217,4 +217,46 @@ public class ReleaseService {
         return releaseRepository.findById(id)
                 .orElseThrow(() -> new ReleaseNotFoundException(id));
     }
+
+    @Transactional
+    @PreAuthorize("hasRole('MODERATOR')")
+    public void softDeleteRelease(Long releaseId) {
+        Release release = releaseRepository.findById(releaseId)
+                .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
+        release.setIsDeleted(true);
+        releaseRepository.save(release);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void hardDeleteRelease(Long releaseId) {
+        Release release = releaseRepository.findById(releaseId)
+                .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
+        releaseRepository.delete(release);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void restoreRelease(Long releaseId) {
+        Release release = releaseRepository.findById(releaseId)
+                .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
+        release.setIsDeleted(false);
+        releaseRepository.save(release);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<ReleaseDTO> getAllDeletedReleases(Pageable pageable) {
+        return releaseRepository.findAllDeleted(pageable)
+                .map(releaseMapper::toDTO);
+    }
+
+    public Page<ReleaseDTO> getAllByUser(Long userId, Pageable pageable) {
+        return releaseRepository.findByFavoritesUserUserIdAndIsDeletedFalse(userId, pageable)
+                .map(releaseMapper::toDTO);
+    }
+
+    public Page<ReleaseDTO> getAllSorted(Pageable pageable) {
+        return releaseRepository.findAllSorted(pageable)
+                .map(releaseMapper::toDTO);
+    }
 }

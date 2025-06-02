@@ -13,21 +13,30 @@ import java.util.Optional;
 
 @Repository
 public interface AuthorRepository extends JpaRepository<Author, Long> {
-    Optional<Author> findByAuthorName(String authorName);
+    @Query("SELECT a FROM Author a WHERE a.authorName = :authorName AND a.isDeleted = false")
+    Optional<Author> findByAuthorName(@Param("authorName") String authorName);
 
-    Optional<Author> findByUserUserId(Long userId);
+    @Query("SELECT a FROM Author a WHERE a.user.userId = :userId AND a.isDeleted = false")
+    Optional<Author> findByUserUserId(@Param("userId") Long userId);
 
+    @Query("SELECT a FROM Author a WHERE a.isArtist = true AND a.isDeleted = false")
     Page<Author> findByIsArtistTrue(Pageable pageable);
 
+    @Query("SELECT a FROM Author a WHERE a.isProducer = true AND a.isDeleted = false")
     Page<Author> findByIsProducerTrue(Pageable pageable);
 
-    @Query(value = "SELECT a FROM Author a",
-           countQuery = "SELECT COUNT(a) FROM Author a")
+    @Query("SELECT a FROM Author a WHERE a.isDeleted = false")
     Page<Author> findAllSorted(Pageable pageable);
 
-    @Query("SELECT a FROM Author a WHERE LOWER(a.authorName) LIKE LOWER(CONCAT('%', :authorName, '%'))")
-    Page<Author> findByAuthorNameContainingIgnoreCase(String authorName, Pageable pageable);
+    @Query("SELECT a FROM Author a WHERE LOWER(a.authorName) LIKE LOWER(CONCAT('%', :authorName, '%')) AND a.isDeleted = false")
+    Page<Author> findByAuthorNameContainingIgnoreCase(@Param("authorName") String authorName, Pageable pageable);
 
-    @Query("SELECT a FROM Author a JOIN a.followings f WHERE f.user.userId = :userId")
+    @Query("SELECT a FROM Author a WHERE a.isDeleted = false")
+    Page<Author> findAllNotDeleted(Pageable pageable);
+
+    @Query("SELECT a FROM Author a WHERE a.isDeleted = true")
+    Page<Author> findAllDeleted(Pageable pageable);
+
+    @Query("SELECT a FROM Author a JOIN a.followings f WHERE f.user.userId = :userId AND a.isDeleted = false")
     Page<Author> findByFollowingsUserUserId(@Param("userId") Long userId, Pageable pageable);
 }

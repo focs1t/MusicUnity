@@ -11,16 +11,19 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    Page<Review> findAllByReleaseReleaseId(Long releaseId, Pageable pageable);
+    Page<Review> findAllByReleaseReleaseIdAndIsDeletedFalse(Long releaseId, Pageable pageable);
 
-    Page<Review> findAllByUserUserId(Long userId, Pageable pageable);
+    Page<Review> findAllByUserUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
 
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.userId = :userId")
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.userId = :userId AND r.isDeleted = false")
     long countByUser(Long userId);
 
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.release.releaseId = :releaseId")
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.release.releaseId = :releaseId AND r.isDeleted = false")
     long countByRelease(Long releaseId);
 
-    @Query("SELECT r FROM Review r")
+    @Query("SELECT r FROM Review r WHERE r.isDeleted = false")
     Page<Review> findAllSorted(Pageable pageable);
+
+    @Query("SELECT r FROM Review r WHERE r.isDeleted = true")
+    Page<Review> findAllDeleted(Pageable pageable);
 }

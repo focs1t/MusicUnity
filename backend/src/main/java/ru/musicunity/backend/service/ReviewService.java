@@ -98,13 +98,45 @@ public class ReviewService {
         reviewRepository.delete(review);
     }
 
+    @Transactional
+    @PreAuthorize("hasRole('MODERATOR')")
+    public void softDeleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        review.setIsDeleted(true);
+        reviewRepository.save(review);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void hardDeleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        reviewRepository.delete(review);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void restoreReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        review.setIsDeleted(false);
+        reviewRepository.save(review);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<ReviewDTO> getAllDeletedReviews(Pageable pageable) {
+        return reviewRepository.findAllDeleted(pageable)
+                .map(reviewMapper::toDTO);
+    }
+
     public Page<ReviewDTO> getAllByRelease(Long releaseId, Pageable pageable) {
-        return reviewRepository.findAllByReleaseReleaseId(releaseId, pageable)
+        return reviewRepository.findAllByReleaseReleaseIdAndIsDeletedFalse(releaseId, pageable)
                 .map(reviewMapper::toDTO);
     }
 
     public Page<ReviewDTO> getAllByUser(Long userId, Pageable pageable) {
-        return reviewRepository.findAllByUserUserId(userId, pageable)
+        return reviewRepository.findAllByUserUserIdAndIsDeletedFalse(userId, pageable)
                 .map(reviewMapper::toDTO);
     }
 
