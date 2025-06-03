@@ -65,4 +65,7 @@ public class Release {
     @OneToMany(mappedBy = "release", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Favorite> favorites = new ArrayList<>();
+
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
 }

@@ -18,18 +18,21 @@ import java.util.List;
 @Repository
 public interface ReleaseRepository extends JpaRepository<Release, Long>, JpaSpecificationExecutor<Release> {
 
-    @Query(value = "SELECT r FROM Release r",
-           countQuery = "SELECT COUNT(r) FROM Release r")
+    @Query(value = "SELECT r FROM Release r WHERE r.isDeleted = false",
+           countQuery = "SELECT COUNT(r) FROM Release r WHERE r.isDeleted = false")
     Page<Release> findAllSorted(Pageable pageable);
     
-    @Query(value = "SELECT DISTINCT r FROM Release r JOIN r.authors ra WHERE ra.author.authorId = :authorId",
-           countQuery = "SELECT COUNT(DISTINCT r) FROM Release r JOIN r.authors ra WHERE ra.author.authorId = :authorId")
+    @Query(value = "SELECT DISTINCT r FROM Release r JOIN r.authors ra WHERE ra.author.authorId = :authorId AND r.isDeleted = false",
+           countQuery = "SELECT COUNT(DISTINCT r) FROM Release r JOIN r.authors ra WHERE ra.author.authorId = :authorId AND r.isDeleted = false")
     Page<Release> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
 
-    Page<Release> findByFavoritesUserUserId(Long userId, Pageable pageable);
+    @Query("SELECT r FROM Release r WHERE r.isDeleted = true")
+    Page<Release> findAllDeleted(Pageable pageable);
+
+    Page<Release> findByFavoritesUserUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
 
     @Query("SELECT DISTINCT r FROM Release r " +
            "JOIN r.authors ra " +
-           "WHERE ra.author IN :authors ")
+           "WHERE ra.author IN :authors AND r.isDeleted = false")
     Page<Release> findByAuthors(@Param("authors") List<Author> authors, Pageable pageable);
 }

@@ -70,7 +70,7 @@ public class ReportController {
         @ApiResponse(responseCode = "403", description = "Нет прав для удаления отзыва"),
         @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
     })
-    @PostMapping("/{reportId}/delete-review")
+    @PatchMapping("/{reportId}/delete-review")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<ReportDTO> deleteReview(
         @Parameter(description = "ID жалобы") @PathVariable Long reportId,
@@ -84,7 +84,7 @@ public class ReportController {
         @ApiResponse(responseCode = "403", description = "Нет прав для блокировки пользователя"),
         @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
     })
-    @PostMapping("/{reportId}/ban-user")
+    @PatchMapping("/{reportId}/ban-user")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<ReportDTO> banUser(
         @Parameter(description = "ID жалобы") @PathVariable Long reportId,
@@ -98,7 +98,7 @@ public class ReportController {
         @ApiResponse(responseCode = "403", description = "Нет прав для отклонения жалобы"),
         @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
     })
-    @PostMapping("/{reportId}/reject")
+    @PatchMapping("/{reportId}/reject")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<ReportDTO> rejectReport(
         @Parameter(description = "ID жалобы") @PathVariable Long reportId,

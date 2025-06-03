@@ -87,7 +87,7 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Пароль успешно обновлен"),
         @ApiResponse(responseCode = "400", description = "Неверный текущий пароль")
     })
-    @PostMapping("/password")
+    @PatchMapping("/password")
     public ResponseEntity<Void> updateOwnPassword(
         @Parameter(description = "Текущий пароль") @RequestParam String currentPassword,
         @Parameter(description = "Новый пароль") @RequestParam String newPassword) {
@@ -99,7 +99,7 @@ public class UserController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Данные успешно обновлены")
     })
-    @PostMapping("/data")
+    @PatchMapping("/data")
     public ResponseEntity<Void> updateOwnData(
         @Parameter(description = "Биография пользователя") @RequestParam(required = false) String bio,
         @Parameter(description = "URL аватара") @RequestParam(required = false) String avatarUrl) {
@@ -113,7 +113,7 @@ public class UserController {
         @ApiResponse(responseCode = "403", description = "Нет прав для блокировки"),
         @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
-    @PostMapping("/{id}/ban")
+    @PatchMapping("/{id}/ban")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<Void> banUser(
         @Parameter(description = "ID пользователя") @PathVariable Long id) {
@@ -127,7 +127,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Нет прав для разблокировки"),
             @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
-    @PostMapping("/{id}/unban")
+    @PatchMapping("/{id}/unban")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> unbanUser(
             @Parameter(description = "ID пользователя") @PathVariable Long id) {

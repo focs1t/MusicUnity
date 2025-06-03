@@ -57,4 +57,7 @@ public class Author {
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<UserFollowing> followings = new ArrayList<>();
+
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
 }

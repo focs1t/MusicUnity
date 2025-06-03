@@ -71,4 +71,7 @@ public class Review {
 
     @Formula("ROUND((rhyme_imagery + structure_rhythm + style_execution + individuality) * (1 + (vibe / 10.0) * 1.5))")
     private Integer totalScore;
+
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
 }

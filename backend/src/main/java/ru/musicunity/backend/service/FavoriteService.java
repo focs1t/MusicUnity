@@ -24,7 +24,7 @@ public class FavoriteService {
     private final ReleaseMapper releaseMapper;
 
     public Page<ReleaseDTO> getFavoriteReleasesByUser(User user, Pageable pageable) {
-        return releaseRepository.findByFavoritesUserUserId(user.getUserId(), pageable)
+        return releaseRepository.findByFavoritesUserUserIdAndIsDeletedFalse(user.getUserId(), pageable)
                 .map(releaseMapper::toDTO);
     }
 
@@ -32,6 +32,12 @@ public class FavoriteService {
     public void addToFavorites(Long releaseId, Long userId) {
         Release release = releaseRepository.findById(releaseId)
                 .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
+        
+        // Проверяем, не удален ли релиз
+        if (release.getIsDeleted()) {
+            throw new ReleaseNotFoundException(releaseId);
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
