@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { sessionUI } from '../../../entities/session';
+import { RegisterForm } from '../../../entities/session/ui';
+import './RegisterPage.css';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const RegisterPage = () => {
   return (
     <div className="register-page">
       <div className="auth-container">
-        <sessionUI.RegisterForm onSuccess={handleRegisterSuccess} />
+        <RegisterForm onSuccess={handleRegisterSuccess} />
         
         <div className="auth-links">
           <p>

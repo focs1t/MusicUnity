@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { sessionModel } from '../..';
+import '../auth-forms.css';
 
 const RegisterForm = ({ onSuccess }) => {
   const dispatch = useDispatch();
@@ -54,6 +55,7 @@ const RegisterForm = ({ onSuccess }) => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             disabled={loading}
+            placeholder="Введите имя пользователя"
             required
           />
         </div>
@@ -66,6 +68,7 @@ const RegisterForm = ({ onSuccess }) => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
+            placeholder="Введите ваш email"
             required
           />
         </div>
@@ -78,6 +81,7 @@ const RegisterForm = ({ onSuccess }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
+            placeholder="Придумайте пароль"
             required
           />
         </div>
@@ -90,6 +94,7 @@ const RegisterForm = ({ onSuccess }) => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={loading}
+            placeholder="Повторите пароль"
             required
           />
         </div>

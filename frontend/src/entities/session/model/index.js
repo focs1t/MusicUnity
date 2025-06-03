@@ -13,7 +13,9 @@ import {
   login,
   register,
   logout as logoutOperation,
-  checkAuth
+  checkAuth,
+  forgotPassword,
+  resetPassword
 } from './sessionOperations';
 
 export {
@@ -29,5 +31,7 @@ export {
   login,
   register,
   logoutOperation,
-  checkAuth
+  checkAuth,
+  forgotPassword,
+  resetPassword
 }; 

@@ -72,7 +72,7 @@ public class AuthService {
         resetToken.setUsed(false);
         tokenRepository.save(resetToken);
 
-        String resetLink = "https://musicunity.ru/reset-password?token=" + token;
+        String resetLink = "http://192.168.31.31:3000/reset-password?token=" + token;
         emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
     }
 

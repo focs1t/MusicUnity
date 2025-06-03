@@ -99,4 +99,26 @@ export const checkAuth = () => (dispatch) => {
     }
   }
   return false;
+};
+
+// Операция запроса сброса пароля
+export const forgotPassword = (email) => async () => {
+  try {
+    await authApi.forgotPassword(email);
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Ошибка при запросе сброса пароля';
+    return { success: false, error: errorMessage };
+  }
+};
+
+// Операция сброса пароля
+export const resetPassword = (token, newPassword) => async () => {
+  try {
+    await authApi.resetPassword(token, newPassword);
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Ошибка при сбросе пароля';
+    return { success: false, error: errorMessage };
+  }
 }; 

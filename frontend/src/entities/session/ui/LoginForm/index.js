@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { sessionModel } from '../..';
+import '../auth-forms.css';
 
 const LoginForm = ({ onSuccess }) => {
   const dispatch = useDispatch();
@@ -42,6 +43,7 @@ const LoginForm = ({ onSuccess }) => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             disabled={loading}
+            placeholder="Введите имя пользователя"
             required
           />
         </div>
@@ -54,6 +56,7 @@ const LoginForm = ({ onSuccess }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
+            placeholder="Введите пароль"
             required
           />
         </div>

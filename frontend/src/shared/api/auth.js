@@ -34,5 +34,28 @@ export const authApi = {
     } catch (error) {
       console.error('Ошибка при выходе из системы:', error);
     }
+  },
+
+  forgotPassword: async (email) => {
+    try {
+      await httpClient.post(`${API_URL}/forgot-password?email=${email}`);
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  resetPassword: async (token, newPassword) => {
+    try {
+      await httpClient.post(`${API_URL}/reset-password`, null, {
+        params: {
+          token,
+          newPassword
+        }
+      });
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
   }
 }; 
