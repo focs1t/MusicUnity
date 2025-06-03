@@ -1,0 +1,10 @@
+export { AUTH_ENDPOINTS } from './auth.endpoints';
+export { USER_ENDPOINTS } from './user.endpoints';
+export { RELEASE_ENDPOINTS } from './release.endpoints';
+export { AUTHOR_ENDPOINTS } from './author.endpoints';
+export { GENRE_ENDPOINTS } from './genre.endpoints';
+export { REVIEW_ENDPOINTS } from './review.endpoints';
+export { LIKE_ENDPOINTS } from './like.endpoints';
+export { FILE_ENDPOINTS } from './file.endpoints';
+export { REPORT_ENDPOINTS } from './report.endpoints';
+export { AUDIT_ENDPOINTS } from './audit.endpoints'; 
