@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LoginForm } from '../../../entities/session/ui';
+import { LoginForm } from '../../../features/auth';
 import './LoginPage.css';
 
 const LoginPage = () => {

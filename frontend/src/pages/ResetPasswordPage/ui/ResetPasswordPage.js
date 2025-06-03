@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ResetPasswordForm } from '../../../entities/session/ui';
+import { ResetPasswordForm } from '../../../features/auth';
 import './ResetPasswordPage.css';
 
 const ResetPasswordPage = () => {

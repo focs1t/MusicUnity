@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 const AuthGuard = ({ children }) => {
-  const { isAuthenticated } = useSelector(state => state.session);
+  const { isAuthenticated } = useSelector(state => state.auth);
   const location = useLocation();
 
   if (!isAuthenticated) {

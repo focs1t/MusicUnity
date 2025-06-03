@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { sessionModel } from '../../../../entities/session';
+import { authModel } from '../../../../entities/auth';
 
 const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
     // При инициализации приложения проверяем авторизацию пользователя
-    dispatch(sessionModel.checkAuth());
+    dispatch(authModel.checkAuth());
   }, [dispatch]);
 
   return <>{children}</>;

@@ -1,14 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { sessionModel } from '../../entities/session';
+import rootReducer from './rootReducer';
 
 const store = configureStore({
-  reducer: {
-    session: sessionModel.sessionReducer,
-    // Здесь будут добавляться другие редьюсеры
-  },
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
+      serializableCheck: false
     })
 });
 

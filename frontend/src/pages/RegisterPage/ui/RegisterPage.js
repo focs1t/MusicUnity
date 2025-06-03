@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { RegisterForm } from '../../../entities/session/ui';
+import { RegisterForm } from '../../../features/auth';
 import './RegisterPage.css';
 
 const RegisterPage = () => {

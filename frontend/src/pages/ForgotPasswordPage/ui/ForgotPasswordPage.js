@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ForgotPasswordForm } from '../../../entities/session/ui';
+import { ForgotPasswordForm } from '../../../features/auth';
 import './ForgotPasswordPage.css';
 
 const ForgotPasswordPage = () => {
