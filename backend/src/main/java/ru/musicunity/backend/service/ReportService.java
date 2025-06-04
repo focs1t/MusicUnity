@@ -13,10 +13,13 @@ import ru.musicunity.backend.exception.UserBlockedException;
 import ru.musicunity.backend.mapper.ReportMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.mapper.ReviewMapper;
+import ru.musicunity.backend.pojo.Audit;
 import ru.musicunity.backend.pojo.Report;
 import ru.musicunity.backend.pojo.Review;
 import ru.musicunity.backend.pojo.User;
+import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.ReportStatus;
+import ru.musicunity.backend.repository.AuditRepository;
 import ru.musicunity.backend.repository.ReportRepository;
 
 import java.time.LocalDateTime;
@@ -30,6 +33,7 @@ public class ReportService {
     private final ReportMapper reportMapper;
     private final UserMapper userMapper;
     private final ReviewMapper reviewMapper;
+    private final AuditRepository auditRepository;
 
     public Page<ReportDTO> getAllSorted(Pageable pageable) {
         return reportRepository.findAllSorted(pageable)
@@ -74,11 +78,20 @@ public class ReportService {
         }
 
         User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
-        reviewService.deleteReview(report.getReview().getReviewId());
+        reviewService.softDeleteReview(report.getReview().getReviewId());
 
         report.setStatus(ReportStatus.RESOLVED);
         report.setModerator(moderator);
         report.setResolvedAt(LocalDateTime.now());
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(moderator)
+                .actionType(AuditAction.REPORT_RESOLVE_DELETE)
+                .targetId(reportId)
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
 
         return reportMapper.toDTO(reportRepository.save(report));
     }
@@ -99,6 +112,15 @@ public class ReportService {
         report.setStatus(ReportStatus.RESOLVED);
         report.setModerator(moderator);
         report.setResolvedAt(LocalDateTime.now());
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(moderator)
+                .actionType(AuditAction.REPORT_RESOLVE_BAN)
+                .targetId(reportId)
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
 
         return reportMapper.toDTO(reportRepository.save(report));
     }
@@ -117,6 +139,15 @@ public class ReportService {
         report.setStatus(ReportStatus.REJECTED);
         report.setModerator(moderator);
         report.setResolvedAt(LocalDateTime.now());
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(moderator)
+                .actionType(AuditAction.REPORT_REJECT)
+                .targetId(reportId)
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
 
         return reportMapper.toDTO(reportRepository.save(report));
     }

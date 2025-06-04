@@ -41,30 +41,4 @@ public class GenreController {
         @Parameter(description = "ID жанра") @PathVariable Long id) {
         return ResponseEntity.ok(genreService.getGenreById(id));
     }
-
-    @Operation(summary = "Создание нового жанра")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Жанр успешно создан"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для создания жанра")
-    })
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<GenreDTO> createGenre(
-        @Parameter(description = "Название жанра") @RequestParam String name) {
-        return ResponseEntity.ok(genreService.createGenre(name));
-    }
-
-    @Operation(summary = "Удаление жанра")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Жанр успешно удален"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для удаления жанра"),
-        @ApiResponse(responseCode = "404", description = "Жанр не найден")
-    })
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteGenre(
-        @Parameter(description = "ID жанра") @PathVariable Long id) {
-        genreService.deleteGenre(id);
-        return ResponseEntity.ok().build();
-    }
 } 

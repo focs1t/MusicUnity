@@ -199,44 +199,4 @@ public class ReleaseController {
         releaseService.softDeleteRelease(id);
         return ResponseEntity.ok().build();
     }
-
-    @Operation(summary = "Жесткое удаление релиза (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Релиз успешно удален"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для удаления релиза"),
-        @ApiResponse(responseCode = "404", description = "Релиз не найден")
-    })
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> hardDeleteRelease(
-        @Parameter(description = "ID релиза") @PathVariable Long id) {
-        releaseService.hardDeleteRelease(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Восстановление удаленного релиза (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Релиз успешно восстановлен"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для восстановления релиза"),
-        @ApiResponse(responseCode = "404", description = "Релиз не найден")
-    })
-    @PatchMapping("/{id}/restore")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> restoreRelease(
-        @Parameter(description = "ID релиза") @PathVariable Long id) {
-        releaseService.restoreRelease(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Получение списка удаленных релизов (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список удаленных релизов"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра удаленных релизов")
-    })
-    @GetMapping("/deleted")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<ReleaseDTO>> getDeletedReleases(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(releaseService.getAllDeletedReleases(pageable));
-    }
 }

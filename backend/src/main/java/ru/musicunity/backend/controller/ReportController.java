@@ -56,7 +56,7 @@ public class ReportController {
         @ApiResponse(responseCode = "401", description = "Требуется авторизация")
     })
     @PostMapping
-    @PreAuthorize("hasAnyRole('USER', 'AUTHOR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReportDTO> createReport(
         @Parameter(description = "ID отзыва") @RequestParam Long reviewId,
         @Parameter(description = "ID пользователя") @RequestParam Long userId,

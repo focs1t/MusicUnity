@@ -8,7 +8,12 @@ public enum AuditAction {
     USER_BLOCK(0),
     REVIEW_DELETE(1),
     RELEASE_ADD(2),
-    AUTHOR_ADD(3);
+    AUTHOR_ADD(3),
+    REPORT_REJECT(4),
+    REPORT_RESOLVE_DELETE(5),
+    REPORT_RESOLVE_BAN(6),
+    RELEASE_CREATE_OWN(7),
+    RELEASE_DELETE(8);
 
     private final int code;
 

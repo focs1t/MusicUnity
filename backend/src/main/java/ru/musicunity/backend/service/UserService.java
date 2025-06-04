@@ -15,9 +15,12 @@ import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.UserMapper;
+import ru.musicunity.backend.pojo.Audit;
 import ru.musicunity.backend.pojo.User;
+import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
+import ru.musicunity.backend.repository.AuditRepository;
 import ru.musicunity.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -29,6 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final AuditRepository auditRepository;
     private final PasswordEncoder passwordEncoder;
     private final FavoriteService favoriteService;
     private final AuthorFollowingService authorFollowingService;
@@ -97,9 +101,22 @@ public class UserService {
 
     @Transactional
     public void banUser(Long userId) {
+        // Получаем текущего пользователя (модератора)
+        User currentUser = getCurrentUser();
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         user.setIsBlocked(true);
+
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(currentUser)
+                .actionType(AuditAction.USER_BLOCK)
+                .targetId(userId)
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
+
         userRepository.save(user);
     }
 

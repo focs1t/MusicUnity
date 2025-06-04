@@ -15,6 +15,7 @@ import ru.musicunity.backend.exception.*;
 import ru.musicunity.backend.mapper.ReleaseMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.*;
+import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.repository.*;
 
@@ -32,10 +33,14 @@ public class ReleaseService {
     private final GenreRepository genreRepository;
     private final ReleaseMapper releaseMapper;
     private final ReleaseAuthorService releaseAuthorService;
+    private final AuditRepository auditRepository;
 
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
     public ReleaseDTO createRelease(CreateReleaseRequest request) {
+        // Получаем текущего пользователя (модератора)
+        User currentUser = userService.getCurrentUser();
+        
         // Создаем релиз
         Release release = Release.builder()
                 .title(request.getTitle())
@@ -93,6 +98,15 @@ public class ReleaseService {
                     .orElseThrow(() -> new GenreNotFoundException(genreId));
             release.getGenres().add(genre);
         }
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(currentUser)
+                .actionType(AuditAction.RELEASE_ADD)
+                .targetId(release.getReleaseId())
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
 
         return releaseMapper.toDTO(releaseRepository.save(release));
     }
@@ -181,6 +195,15 @@ public class ReleaseService {
                     .orElseThrow(() -> new GenreNotFoundException(genreId));
             release.getGenres().add(genre);
         }
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(currentUser)
+                .actionType(AuditAction.RELEASE_CREATE_OWN)
+                .targetId(release.getReleaseId())
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
 
         return releaseMapper.toDTO(releaseRepository.save(release));
     }
@@ -221,10 +244,22 @@ public class ReleaseService {
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
     public void softDeleteRelease(Long releaseId) {
+        // Получаем текущего пользователя (модератора)
+        User currentUser = userService.getCurrentUser();
+        
         Release release = releaseRepository.findById(releaseId)
                 .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
         release.setIsDeleted(true);
         releaseRepository.save(release);
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(currentUser)
+                .actionType(AuditAction.RELEASE_DELETE)
+                .targetId(releaseId)
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
     }
 
     @Transactional

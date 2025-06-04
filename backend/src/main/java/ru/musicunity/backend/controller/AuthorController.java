@@ -66,19 +66,6 @@ public class AuthorController {
         return ResponseEntity.ok(authorService.getAuthorById(id));
     }
 
-    @Operation(summary = "Получение автора по имени")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Автор найден"),
-        @ApiResponse(responseCode = "404", description = "Автор не найден")
-    })
-    @GetMapping("/name/{authorName}")
-    public ResponseEntity<AuthorDTO> getAuthorByName(
-        @Parameter(description = "Имя автора") @PathVariable String authorName) {
-        Optional<AuthorDTO> author = authorService.findByAuthorName(authorName);
-        return author.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
     @Operation(summary = "Обновление данных автора")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Данные автора обновлены"),
@@ -131,7 +118,6 @@ public class AuthorController {
             @ApiResponse(responseCode = "401", description = "Требуется авторизация")
     })
     @GetMapping("/artists")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AuthorDTO>> getArtists(
             @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(authorService.findArtists(pageable));
@@ -143,7 +129,6 @@ public class AuthorController {
             @ApiResponse(responseCode = "401", description = "Требуется авторизация")
     })
     @GetMapping("/producers")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AuthorDTO>> getProducers(
             @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(authorService.findProducers(pageable));
@@ -184,46 +169,6 @@ public class AuthorController {
         @Parameter(description = "ID автора") @PathVariable Long id) {
         authorService.softDeleteAuthor(id);
         return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Жесткое удаление автора (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Автор успешно удален"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для удаления автора"),
-        @ApiResponse(responseCode = "404", description = "Автор не найден")
-    })
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> hardDeleteAuthor(
-        @Parameter(description = "ID автора") @PathVariable Long id) {
-        authorService.hardDeleteAuthor(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Восстановление удаленного автора (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Автор успешно восстановлен"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для восстановления автора"),
-        @ApiResponse(responseCode = "404", description = "Автор не найден")
-    })
-    @PatchMapping("/{id}/restore")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> restoreAuthor(
-        @Parameter(description = "ID автора") @PathVariable Long id) {
-        authorService.restoreAuthor(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Получение списка удаленных авторов (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список удаленных авторов"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра удаленных авторов")
-    })
-    @GetMapping("/deleted")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<AuthorDTO>> getDeletedAuthors(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(authorService.getAllDeletedAuthors(pageable));
     }
 
     @Operation(summary = "Обновление ролей автора в релизе")

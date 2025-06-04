@@ -144,16 +144,6 @@ public class AuthorService {
                 .map(authorMapper::toDTO);
     }
 
-    public Page<AuthorDTO> getArtists(Pageable pageable) {
-        return authorRepository.findByIsArtistTrue(pageable)
-                .map(authorMapper::toDTO);
-    }
-
-    public Page<AuthorDTO> getProducers(Pageable pageable) {
-        return authorRepository.findByIsProducerTrue(pageable)
-                .map(authorMapper::toDTO);
-    }
-
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
     public AuthorDTO verifyAuthor(Long authorId) {
@@ -170,10 +160,5 @@ public class AuthorService {
                 .orElseThrow(() -> new AuthorNotFoundException(authorId));
         author.setIsVerified(false);
         return authorMapper.toDTO(authorRepository.save(author));
-    }
-
-    public Page<AuthorDTO> getFollowedAuthors(Long userId, Pageable pageable) {
-        return authorRepository.findByFollowingsUserUserId(userId, pageable)
-                .map(authorMapper::toDTO);
     }
 }

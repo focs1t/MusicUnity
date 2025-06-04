@@ -61,33 +61,13 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @Operation(summary = "Получение пользователей по роли")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список пользователей")
-    })
-    @GetMapping("/role/{role}")
-    public ResponseEntity<Page<UserDTO>> findByRights(
-        @Parameter(description = "Роль пользователя") @PathVariable UserRole role,
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(userService.findByRights(role, pageable));
-    }
-
-    @Operation(summary = "Получение пользователей по роли")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Список пользователей")
-    })
-    @GetMapping("/blocked")
-    public ResponseEntity<Page<UserDTO>> findBlockedUsers(
-            @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(userService.findBlockedUsers(pageable));
-    }
-
     @Operation(summary = "Обновление пароля пользователя")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Пароль успешно обновлен"),
         @ApiResponse(responseCode = "400", description = "Неверный текущий пароль")
     })
     @PatchMapping("/password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateOwnPassword(
         @Parameter(description = "Текущий пароль") @RequestParam String currentPassword,
         @Parameter(description = "Новый пароль") @RequestParam String newPassword) {
@@ -100,6 +80,7 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Данные успешно обновлены")
     })
     @PatchMapping("/data")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateOwnData(
         @Parameter(description = "Биография пользователя") @RequestParam(required = false) String bio,
         @Parameter(description = "URL аватара") @RequestParam(required = false) String avatarUrl) {
@@ -118,20 +99,6 @@ public class UserController {
     public ResponseEntity<Void> banUser(
         @Parameter(description = "ID пользователя") @PathVariable Long id) {
         userService.banUser(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Разблокировка пользователя")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Пользователь разблокирован"),
-            @ApiResponse(responseCode = "403", description = "Нет прав для разблокировки"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    })
-    @PatchMapping("/{id}/unban")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> unbanUser(
-            @Parameter(description = "ID пользователя") @PathVariable Long id) {
-        userService.unbanUser(id);
         return ResponseEntity.ok().build();
     }
 

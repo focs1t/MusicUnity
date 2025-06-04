@@ -38,6 +38,7 @@ public class ReviewController {
         @ApiResponse(responseCode = "400", description = "Некорректные данные оценки")
     })
     @PostMapping("/simple")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReviewDTO> createSimpleReview(
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
         @Parameter(description = "ID релиза") @RequestParam Long releaseId,
@@ -57,6 +58,7 @@ public class ReviewController {
         @ApiResponse(responseCode = "400", description = "Некорректные данные рецензии")
     })
     @PostMapping("/full")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReviewDTO> createFullReview(
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
         @Parameter(description = "ID релиза") @RequestParam Long releaseId,
@@ -137,45 +139,5 @@ public class ReviewController {
         @Parameter(description = "ID отзыва") @PathVariable Long id) {
         reviewService.softDeleteReview(id);
         return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Жесткое удаление отзыва (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Отзыв успешно удален"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для удаления отзыва"),
-        @ApiResponse(responseCode = "404", description = "Отзыв не найден")
-    })
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> hardDeleteReview(
-        @Parameter(description = "ID отзыва") @PathVariable Long id) {
-        reviewService.hardDeleteReview(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Восстановление удаленного отзыва (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Отзыв успешно восстановлен"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для восстановления отзыва"),
-        @ApiResponse(responseCode = "404", description = "Отзыв не найден")
-    })
-    @PatchMapping("/{id}/restore")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> restoreReview(
-        @Parameter(description = "ID отзыва") @PathVariable Long id) {
-        reviewService.restoreReview(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Получение списка удаленных отзывов (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список удаленных отзывов"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра удаленных отзывов")
-    })
-    @GetMapping("/deleted")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<ReviewDTO>> getDeletedReviews(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reviewService.getAllDeletedReviews(pageable));
     }
 } 

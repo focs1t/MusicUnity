@@ -92,14 +92,6 @@ public class ReviewService {
 
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
-    public void deleteReview(Long reviewId) {
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        reviewRepository.delete(review);
-    }
-
-    @Transactional
-    @PreAuthorize("hasRole('MODERATOR')")
     public void softDeleteReview(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
