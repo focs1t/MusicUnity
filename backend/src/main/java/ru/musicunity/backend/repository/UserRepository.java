@@ -28,4 +28,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.isBlocked = true")
     Page<User> findByBlockedStatus(Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.isBlocked = false")
+    Page<User> findByIsBlockedFalse(Pageable pageable);
 }

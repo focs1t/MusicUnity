@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title ?: 'MusicUnity'}">MusicUnity</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+        }
+        .nav-link {
+            color: #333;
+        }
+        .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">MusicUnity</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/web/releases}">Релизы</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/web/authors}">Авторы</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/web/genres}">Жанры</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/web/users}">Пользователи</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/web/audit}">Аудит</a>
+                    </li>
+                </ul>
+                <div class="d-flex" sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/web/auth/login}" class="btn btn-outline-light me-2">Войти</a>
+                    <a th:href="@{/web/auth/register}" class="btn btn-primary">Регистрация</a>
+                </div>
+                <div class="d-flex" sec:authorize="isAuthenticated()">
+                    <span class="navbar-text me-3">
+                        <i class="bi bi-person-circle"></i> 
+                        <span sec:authentication="name">Username</span>
+                    </span>
+                    <form th:action="@{/web/auth/logout}" method="post">
+                        <button type="submit" class="btn btn-outline-light">Выйти</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 col-lg-2 sidebar p-3" sec:authorize="hasRole('ADMIN')">
+                <h5>Администрирование</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/web/users}">Пользователи</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/web/audit}">Аудит</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/web/releases/admin}">Управление релизами</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="col" th:classappend="${#authorization.expression('hasRole(''ADMIN'')')} ? 'col-md-9 col-lg-10' : 'col-12'">
+                <div class="p-4">
+                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <span th:text="${successMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <span th:text="${errorMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <div th:replace="~{:: #content}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

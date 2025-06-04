@@ -32,7 +32,7 @@ public class GenreService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public GenreDTO createGenre(String name) {
         Genre genre = Genre.builder()
                 .name(name)
@@ -41,7 +41,7 @@ public class GenreService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteGenre(Long id) {
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new GenreNotFoundException(id));

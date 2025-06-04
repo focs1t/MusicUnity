@@ -15,8 +15,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import ru.musicunity.backend.pojo.User;
+import ru.musicunity.backend.repository.UserRepository;
 import ru.musicunity.backend.security.JwtAuthenticationFilter;
 import ru.musicunity.backend.security.JwtService;
+import ru.musicunity.backend.security.UserDetailsImpl;
+
+import java.time.LocalDateTime;
 
 @Configuration
 @EnableWebSecurity
@@ -26,6 +32,7 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -36,19 +43,45 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configure(http))
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/**")
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/admin/login", "/css/**", "/js/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/audit/**").hasRole("ADMIN")
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+            .formLogin(form -> form
+                .loginPage("/admin/login")
+                .loginProcessingUrl("/admin/login")
+                .defaultSuccessUrl("/admin/dashboard", true)
+                .failureUrl("/admin/login?error")
+                .successHandler((request, response, authentication) -> {
+                    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                    User user = userDetails.getUser();
+                    user.setLastLogin(LocalDateTime.now());
+                    userRepository.save(user);
+                    response.sendRedirect("/admin/dashboard");
+                })
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutRequestMatcher(new AntPathRequestMatcher("/admin/logout"))
+                .logoutSuccessUrl("/admin/login?logout")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID")
+                .permitAll()
+            );
 
         return http.build();
     }

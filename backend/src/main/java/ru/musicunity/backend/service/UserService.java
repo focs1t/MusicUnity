@@ -3,6 +3,7 @@ package ru.musicunity.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -95,7 +96,6 @@ public class UserService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('MODERATOR')")
     public void banUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
@@ -104,11 +104,18 @@ public class UserService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
     public void unbanUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         user.setIsBlocked(false);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void changeUserRole(Long userId, UserRole role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        user.setRights(role);
         userRepository.save(user);
     }
 
@@ -128,5 +135,50 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         return followedReleasesService.getReleasesByFollowedAuthors(user, pageable);
+    }
+
+    public Page<UserDTO> findByUsernameContaining(String username, Pageable pageable) {
+        return userRepository.findByUsernameContainingIgnoreCase(username, pageable)
+                .map(userMapper::toDTO);
+    }
+
+    public Page<UserDTO> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(userMapper::toDTO);
+    }
+
+    public Page<UserDTO> findActiveUsers(Pageable pageable) {
+        return userRepository.findByIsBlockedFalse(pageable)
+                .map(userMapper::toDTO);
+    }
+
+    public Page<UserDTO> filterByRole(Page<UserDTO> users, UserRole role) {
+        return new PageImpl<>(
+            users.getContent().stream()
+                .filter(user -> user.getRights() == role)
+                .collect(Collectors.toList()),
+            users.getPageable(),
+            users.getTotalElements()
+        );
+    }
+
+    public Page<UserDTO> filterBlocked(Page<UserDTO> users) {
+        return new PageImpl<>(
+            users.getContent().stream()
+                .filter(UserDTO::getIsBlocked)
+                .collect(Collectors.toList()),
+            users.getPageable(),
+            users.getTotalElements()
+        );
+    }
+
+    public Page<UserDTO> filterActive(Page<UserDTO> users) {
+        return new PageImpl<>(
+            users.getContent().stream()
+                .filter(user -> !user.getIsBlocked())
+                .collect(Collectors.toList()),
+            users.getPageable(),
+            users.getTotalElements()
+        );
     }
 }

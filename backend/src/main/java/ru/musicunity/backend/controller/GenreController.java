@@ -48,7 +48,7 @@ public class GenreController {
         @ApiResponse(responseCode = "403", description = "Нет прав для создания жанра")
     })
     @PostMapping
-    @PreAuthorize("hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<GenreDTO> createGenre(
         @Parameter(description = "Название жанра") @RequestParam String name) {
         return ResponseEntity.ok(genreService.createGenre(name));
@@ -61,7 +61,7 @@ public class GenreController {
         @ApiResponse(responseCode = "404", description = "Жанр не найден")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteGenre(
         @Parameter(description = "ID жанра") @PathVariable Long id) {
         genreService.deleteGenre(id);
