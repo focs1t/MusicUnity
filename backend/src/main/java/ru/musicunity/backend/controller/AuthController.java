@@ -8,13 +8,19 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.pojo.records.AuthResponse;
 import ru.musicunity.backend.pojo.records.LoginRequest;
 import ru.musicunity.backend.pojo.records.RegisterRequest;
 import ru.musicunity.backend.service.AuthService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,18 +33,32 @@ public class AuthController {
     @Operation(summary = "Вход в систему", description = "Аутентификация пользователя и получение JWT токена")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Успешная аутентификация"),
-        @ApiResponse(responseCode = "401", description = "Неверные учетные данные")
+        @ApiResponse(responseCode = "401", description = "Неверные учетные данные"),
+        @ApiResponse(responseCode = "403", description = "Аккаунт заблокирован")
     })
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                request.username(),
-                request.password(),
-                null
-            )
-        );
-        return ResponseEntity.ok(authService.generateToken(authentication));
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                    request.username(),
+                    request.password()
+                )
+            );
+            return ResponseEntity.ok(authService.generateToken(authentication));
+        } catch (BadCredentialsException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Неверное имя пользователя или пароль");
+            return ResponseEntity.status(401).body(error);
+        } catch (LockedException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Аккаунт заблокирован");
+            return ResponseEntity.status(403).body(error);
+        } catch (AuthenticationException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Ошибка аутентификации");
+            return ResponseEntity.status(401).body(error);
+        }
     }
 
     @Operation(summary = "Регистрация нового пользователя", description = "Создание нового аккаунта пользователя")

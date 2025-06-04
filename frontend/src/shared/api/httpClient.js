@@ -12,7 +12,15 @@ httpClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // Убираем префикс Bearer если он есть
+      const cleanToken = token.startsWith('Bearer ') ? token.substring(7) : token;
+      // Проверяем что токен валидный
+      if (cleanToken.includes('.')) {
+        config.headers.Authorization = `Bearer ${cleanToken}`;
+      } else {
+        console.error('Invalid token format in localStorage');
+        localStorage.removeItem('token');
+      }
     }
     return config;
   },
@@ -21,16 +29,14 @@ httpClient.interceptors.request.use(
   }
 );
 
-// Интерцептор для обработки ошибок ответа
+// Добавляем интерцептор для обработки ошибок
 httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Если ошибка 401 (Unauthorized), перенаправляем на страницу входа
-    if (error.response && error.response.status === 401) {
+    if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Если необходимо перенаправление при неавторизованном доступе:
-      // window.location.href = '/login';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

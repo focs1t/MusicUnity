@@ -22,12 +22,40 @@ const getUserFromToken = (token) => {
 
 // Функция для сохранения токена в localStorage
 const saveAuthData = (token) => {
-  localStorage.setItem('token', token);
-  const user = getUserFromToken(token);
-  if (user) {
-    localStorage.setItem('user', JSON.stringify(user));
+  try {
+    if (!token || typeof token !== 'string') {
+      console.error('Invalid token: token is empty or not a string');
+      return null;
+    }
+
+    // Убираем префикс Bearer если он есть
+    const cleanToken = token.startsWith('Bearer ') ? token.substring(7) : token;
+
+    // Проверяем формат JWT
+    if (!cleanToken.includes('.')) {
+      console.error('Invalid token format: not a valid JWT');
+      return null;
+    }
+
+    // Сохраняем токен
+    localStorage.setItem('token', cleanToken);
+
+    // Декодируем и сохраняем информацию о пользователе
+    const user = getUserFromToken(cleanToken);
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+      return user;
+    } else {
+      console.error('Failed to decode token');
+      localStorage.removeItem('token');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error saving auth data:', error);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return null;
   }
-  return user;
 };
 
 // Операция входа в систему
@@ -35,12 +63,42 @@ export const login = (username, password) => async (dispatch) => {
   dispatch(loginStart());
   try {
     const response = await authApi.login(username, password);
-    const { token } = response;
+    console.log('Login response:', response);
+
+    // Проверяем наличие токена в ответе
+    if (!response?.token) {
+      throw new Error('Неверное имя пользователя или пароль');
+    }
+
+    const token = response.token;
+    if (!token.includes('.')) {
+      throw new Error('Неверный формат токена');
+    }
+
     const user = saveAuthData(token);
+    if (!user) {
+      throw new Error('Ошибка при обработке токена');
+    }
+
     dispatch(loginSuccess({ token, user }));
     return { success: true };
   } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Ошибка при входе в систему';
+    console.error('Login error:', error);
+    let errorMessage = 'Ошибка при входе в систему';
+
+    if (error.response) {
+      // Обработка ошибок от сервера
+      if (error.response.status === 401) {
+        errorMessage = 'Неверное имя пользователя или пароль';
+      } else if (error.response.status === 403) {
+        errorMessage = 'Доступ запрещен';
+      } else if (error.response.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
     dispatch(loginFailure(errorMessage));
     return { success: false, error: errorMessage };
   }

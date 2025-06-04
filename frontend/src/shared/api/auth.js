@@ -9,8 +9,22 @@ export const authApi = {
         username,
         password
       });
+      
+      // Проверяем наличие токена в ответе
+      if (!response.data || !response.data.token) {
+        throw new Error('Неверное имя пользователя или пароль');
+      }
+      
       return response.data;
     } catch (error) {
+      // Если сервер вернул ошибку с сообщением, используем его
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      // Если сервер вернул 401, значит неверные учетные данные
+      if (error.response?.status === 401) {
+        throw new Error('Неверное имя пользователя или пароль');
+      }
       throw error;
     }
   },
@@ -24,6 +38,9 @@ export const authApi = {
       });
       return response.data;
     } catch (error) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
       throw error;
     }
   },
@@ -41,6 +58,9 @@ export const authApi = {
       await httpClient.post(`${API_URL}/forgot-password?email=${email}`);
       return { success: true };
     } catch (error) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
       throw error;
     }
   },
@@ -55,6 +75,9 @@ export const authApi = {
       });
       return { success: true };
     } catch (error) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
       throw error;
     }
   }

@@ -18,9 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.repository.UserRepository;
-import ru.musicunity.backend.security.JwtAuthenticationFilter;
-import ru.musicunity.backend.security.JwtService;
-import ru.musicunity.backend.security.UserDetailsImpl;
+import ru.musicunity.backend.security.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 
@@ -33,6 +32,8 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final AuthenticationExceptionHandler authenticationExceptionHandler;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -59,17 +60,32 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(authenticationExceptionHandler)
+                .accessDeniedHandler(accessDeniedHandler)
+            )
             .formLogin(form -> form
                 .loginPage("/admin/login")
                 .loginProcessingUrl("/admin/login")
                 .defaultSuccessUrl("/admin/dashboard", true)
-                .failureUrl("/admin/login?error")
+                .failureUrl("/admin/login?error=true")
                 .successHandler((request, response, authentication) -> {
-                    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-                    User user = userDetails.getUser();
-                    user.setLastLogin(LocalDateTime.now());
-                    userRepository.save(user);
-                    response.sendRedirect("/admin/dashboard");
+                    try {
+                        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                        User user = userDetails.getUser();
+                        
+                        if (!user.getRights().name().equals("ADMIN")) {
+                            SecurityContextHolder.clearContext();
+                            response.sendRedirect("/admin/login?error=access");
+                            return;
+                        }
+                        
+                        user.setLastLogin(LocalDateTime.now());
+                        userRepository.save(user);
+                        response.sendRedirect("/admin/dashboard");
+                    } catch (Exception e) {
+                        response.sendRedirect("/admin/login?error=true");
+                    }
                 })
                 .permitAll()
             )

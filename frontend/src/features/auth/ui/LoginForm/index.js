@@ -10,11 +10,14 @@ const LoginForm = ({ onSuccess }) => {
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState('');
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError('');
     
     if (!username || !password) {
+      setFormError('Пожалуйста, заполните все поля');
       return;
     }
     
@@ -29,9 +32,9 @@ const LoginForm = ({ onSuccess }) => {
     <div className="login-form">
       <h2>Вход в систему</h2>
       
-      {error && (
+      {(error || formError) && (
         <div className="error-message">
-          {error}
+          {formError || error}
         </div>
       )}
       

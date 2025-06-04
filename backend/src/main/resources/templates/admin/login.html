@@ -107,8 +107,9 @@
             <div class="card-body">
                 <h2 class="card-title text-center">Вход в админ-панель</h2>
                 
-                <div th:if="${param.error}" class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Неверное имя пользователя или пароль
+                <div th:if="${errorMessage}" class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i> 
+                    <span th:text="${errorMessage}">Ошибка аутентификации</span>
                 </div>
                 
                 <div th:if="${param.logout}" class="alert alert-success">
