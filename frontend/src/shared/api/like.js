@@ -88,6 +88,32 @@ export const likeApi = {
   },
 
   /**
+   * Получение рецензий, лайкнутых пользователем
+   * @param {number} userId - ID пользователя
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getLikedReviewsByUser: async (userId, page = 0, size = 10) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/user/${userId}/reviews`, {
+        params: { page, size }
+      });
+      return response.data;
+    } catch (error) {
+      // Обработка ошибки для отладки
+      console.error('Ошибка при получении лайкнутых рецензий:', error);
+      
+      // Возвращаем заглушку для временного решения
+      return {
+        content: [],
+        totalElements: 0,
+        totalPages: 0
+      };
+    }
+  },
+
+  /**
    * Создание лайка
    * @param {number} reviewId - ID отзыва
    * @param {number} userId - ID пользователя

@@ -44,11 +44,28 @@ export const modalStyles = {
       '&.Mui-focused fieldset': { borderColor: '#333' },
       '&.Mui-error fieldset': { borderColor: '#bf616a' },
       bgcolor: 'rgba(0,0,0,0.3)',
-      borderRadius: 1.5
+      borderRadius: 1.5,
+      // Стили для автозаполнения полей ввода
+      '& input:-webkit-autofill': {
+        WebkitBoxShadow: '0 0 0 100px rgba(50, 50, 50, 0.8) inset !important',
+        WebkitTextFillColor: 'white !important',
+        caretColor: 'white',
+        borderRadius: 'inherit',
+        transition: 'background-color 5000s ease-in-out 0s'
+      },
+      '& input:-webkit-autofill:hover, & input:-webkit-autofill:focus': {
+        WebkitBoxShadow: '0 0 0 100px rgba(60, 60, 60, 0.8) inset !important'
+      }
     },
     '& .MuiInputBase-input': { 
       color: 'white',
       padding: '14px 16px',
+    },
+    '& .MuiFormLabel-root': {
+      color: 'rgba(255,255,255,0.6)',
+      '&.Mui-focused': {
+        color: 'white'
+      }
     },
     '& .MuiFormLabel-asterisk': {
       color: '#bf616a'

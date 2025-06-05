@@ -13,7 +13,7 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
   const [loginData, setLoginData] = useState({
     username: '',
     password: '',
-    rememberMe: false
+    rememberMe: false  // Флаг "Запомнить меня" - по умолчанию выключен
   });
 
   // Локальное состояние для отслеживания успешной авторизации
@@ -27,6 +27,18 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
       setLoginAttempted(false);
     }
   }, [isAuth, open, onClose, loginAttempted]);
+
+  // Сброс формы при закрытии модального окна
+  useEffect(() => {
+    if (!open) {
+      setLoginData({
+        username: '',
+        password: '',
+        rememberMe: false
+      });
+      setLoginAttempted(false);
+    }
+  }, [open]);
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
@@ -47,13 +59,37 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
     // Устанавливаем флаг, что была попытка входа
     setLoginAttempted(true);
     
+    /*
+     * Функция "Запомнить меня" работает следующим образом:
+     * 
+     * 1. Если флаг rememberMe = true:
+     *    - Токен и данные пользователя сохраняются в localStorage
+     *    - Сессия сохраняется даже после закрытия браузера или вкладки
+     *    - Пользователь останется авторизованным до явного выхода из системы
+     * 
+     * 2. Если флаг rememberMe = false:
+     *    - Токен и данные пользователя сохраняются в sessionStorage
+     *    - Сессия активна только до закрытия вкладки или браузера
+     *    - После закрытия браузера пользователю нужно будет войти заново
+     */
     dispatch(authModel.login(loginData.username, loginData.password, loginData.rememberMe));
+  };
+
+  const handleModalClose = () => {
+    // Сбрасываем форму при закрытии
+    setLoginData({
+      username: '',
+      password: '',
+      rememberMe: false
+    });
+    setLoginAttempted(false);
+    onClose();
   };
 
   return (
     <Dialog 
       open={open} 
-      onClose={onClose}
+      onClose={handleModalClose}
       fullWidth
       maxWidth="xs"
       PaperProps={{
@@ -63,7 +99,7 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
       {/* Крестик закрытия (абсолютное позиционирование) */}
       <Box 
         sx={modalStyles.closeButton}
-        onClick={onClose}
+        onClick={handleModalClose}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="#777" strokeWidth="2" strokeLinecap="round"/>
@@ -83,7 +119,7 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
             required
             fullWidth
             id="username"
-            label="Имя пользователя или Email"
+            label="Имя пользователя"
             name="username"
             autoComplete="username"
             autoFocus

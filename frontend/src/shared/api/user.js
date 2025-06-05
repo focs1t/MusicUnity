@@ -34,14 +34,25 @@ export const userApi = {
    * Обновление данных пользователя
    * @param {string} bio - Биография пользователя
    * @param {string} avatarUrl - URL аватара
+   * @param {string} telegramChatId - Telegram ID пользователя
    * @returns {Promise<void>}
    */
-  updateUserData: async (bio, avatarUrl) => {
+  updateUserData: async (bio, avatarUrl, telegramChatId) => {
     try {
-      await httpClient.patch(`${API_URL}/data`, null, {
-        params: { bio, avatarUrl }
+      console.log('Отправляем данные для обновления профиля:', { bio, avatarUrl, telegramChatId });
+      
+      const response = await httpClient.patch(`${API_URL}/data`, null, {
+        params: { bio, avatarUrl, telegramChatId }
       });
+      
+      console.log('Ответ после обновления профиля:', response.data);
+      return response.data;
     } catch (error) {
+      console.error('Ошибка при обновлении данных пользователя:', error);
+      if (error.response) {
+        console.error('Статус ответа:', error.response.status);
+        console.error('Данные ответа:', error.response.data);
+      }
       throw error;
     }
   },

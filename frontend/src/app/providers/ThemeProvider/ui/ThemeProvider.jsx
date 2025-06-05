@@ -63,8 +63,20 @@ const darkTheme = createTheme({
           '& .MuiOutlinedInput-root': {
             borderRadius: 8,
           },
+          '& .MuiInputLabel-root.Mui-focused': {
+            color: 'white'
+          }
         },
       },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          '&.Mui-focused': {
+            color: 'white'
+          }
+        }
+      }
     },
   },
 });

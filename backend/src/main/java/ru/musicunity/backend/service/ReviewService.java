@@ -15,6 +15,8 @@ import ru.musicunity.backend.pojo.Release;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.repository.ReviewRepository;
+import ru.musicunity.backend.repository.UserRepository;
+import ru.musicunity.backend.exception.UserNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,7 @@ public class ReviewService {
     private final ReleaseService releaseService;
     private final ReviewMapper reviewMapper;
     private final UserMapper userMapper;
+    private final UserRepository userRepository;
 
     public ReviewDTO getReviewById(Long id) {
         return reviewRepository.findById(id)
@@ -143,5 +146,20 @@ public class ReviewService {
 
     public long getReviewsCountByRelease(Long releaseId) {
         return reviewRepository.countByRelease(releaseId);
+    }
+
+    /**
+     * Получение списка рецензий, которые лайкнул пользователь
+     * @param userId ID пользователя
+     * @param pageable параметры пагинации
+     * @return страница DTO рецензий
+     */
+    public Page<ReviewDTO> getLikedReviewsByUser(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+                
+        // Получаем ID рецензий, которые лайкнул пользователь
+        Page<Review> likedReviews = reviewRepository.findLikedByUser(userId, pageable);
+        return likedReviews.map(reviewMapper::toDTO);
     }
 }

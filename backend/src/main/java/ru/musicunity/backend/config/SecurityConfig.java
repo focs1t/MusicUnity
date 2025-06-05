@@ -50,6 +50,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/users/**").permitAll()
+                .requestMatchers("/api/files/**").permitAll()
+                .requestMatchers("/api/releases/**").permitAll()
+                .requestMatchers("/api/reports/**").permitAll()
+                .requestMatchers("/api/likes/**").permitAll()
+                .requestMatchers("/api/genres/**").permitAll()
+                .requestMatchers("/api/reviews/**").permitAll()
                 .requestMatchers("/admin/login", "/css/**", "/js/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/audit/**").hasRole("ADMIN")

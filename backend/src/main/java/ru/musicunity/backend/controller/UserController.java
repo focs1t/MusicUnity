@@ -73,8 +73,9 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateOwnData(
         @Parameter(description = "Биография пользователя") @RequestParam(required = false) String bio,
-        @Parameter(description = "URL аватара") @RequestParam(required = false) String avatarUrl) {
-        userService.updateOwnData(bio, avatarUrl);
+        @Parameter(description = "URL аватара") @RequestParam(required = false) String avatarUrl,
+        @Parameter(description = "Telegram ID пользователя") @RequestParam(required = false) String telegramChatId) {
+        userService.updateOwnData(bio, avatarUrl, telegramChatId);
         return ResponseEntity.ok().build();
     }
 

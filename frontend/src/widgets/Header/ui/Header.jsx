@@ -33,6 +33,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { LoginModal, RegisterModal, ForgotPasswordModal, ResetPasswordModal } from '../../AuthModal';
+import { userApi } from '../../../shared/api/user';
 
 // Стилизация поля поиска
 const Search = styled('div')(({ theme }) => ({
@@ -100,6 +101,7 @@ const NavButton = styled(Button)(({ theme }) => ({
 export const Header = () => {
   const { isAuth, user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
   const open = Boolean(anchorEl);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -119,9 +121,25 @@ export const Header = () => {
   const [visible, setVisible] = useState(true);
   const [prevScrollPos, setPrevScrollPos] = useState(0);
 
-  // Проверка состояния авторизации при монтировании
+  // Проверка состояния авторизации и загрузка данных пользователя
   useEffect(() => {
     console.log('Header mounted, isAuth:', isAuth, 'user:', user);
+    if (user) {
+      console.log('User object from token:', JSON.stringify(user, null, 2));
+      
+      // Если пользователь авторизован, запрашиваем полные данные с сервера
+      const fetchUserDetails = async () => {
+        try {
+          const userData = await userApi.getCurrentUser();
+          console.log('Fetched user details:', userData);
+          setUserDetails(userData);
+        } catch (error) {
+          console.error('Ошибка при получении данных пользователя:', error);
+        }
+      };
+      
+      fetchUserDetails();
+    }
   }, [isAuth, user]);
 
   // Проверка токена в URL при монтировании компонента
@@ -277,8 +295,19 @@ export const Header = () => {
 
   // Получаем имя пользователя для отображения в меню
   const getUserDisplayName = () => {
+    if (userDetails?.username) return userDetails.username;
     if (!user) return 'Пользователь';
     return user.username || user.sub || 'Пользователь';
+  };
+
+  // Получаем аватарку пользователя для отображения
+  const getUserAvatar = () => {
+    // Сначала проверяем детальные данные с сервера
+    if (userDetails?.avatarUrl) return userDetails.avatarUrl;
+    
+    // Затем проверяем данные из JWT токена
+    if (!user) return '';
+    return user.avatarUrl || user.avatar || user.picture || '';
   };
 
   // Отображение компонентов в зависимости от статуса авторизации
@@ -295,7 +324,7 @@ export const Header = () => {
           >
             <Avatar
               alt={getUserDisplayName()}
-              src={user?.avatar || ''}
+              src={getUserAvatar()}
               sx={{ 
                 bgcolor: '#333',
                 width: 40,
@@ -321,55 +350,78 @@ export const Header = () => {
             PaperProps={{
               sx: {
                 mt: 1.5,
-                minWidth: 180,
-                bgcolor: '#1a1a1a',
+                minWidth: 220,
+                bgcolor: '#000000',
                 color: 'white',
                 border: '1px solid rgba(255, 255, 255, 0.05)',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
                 '& .MuiMenuItem-root': {
                   px: 2,
-                  py: 1.5,
+                  py: 1.2,
+                  fontSize: '0.9rem',
                   '&:hover': {
                     bgcolor: 'rgba(255, 255, 255, 0.05)'
                   }
+                },
+                '& .MuiDivider-root': {
+                  my: 0.5
+                },
+                '& .MuiTypography-root': {
+                  fontSize: '0.9rem'
+                },
+                '& .MuiListItemIcon-root': {
+                  minWidth: 40
                 }
               }
             }}
           >
             <Box sx={{ 
               px: 2, 
-              py: 1.5, 
-              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-              mb: 1
+              py: 1.2, 
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              mb: 0.5
             }}>
-              <Typography variant="body2" color="text.secondary">
-                Вы вошли как
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
+              <Typography variant="body1" fontWeight="medium" fontSize="0.9rem">
                 {getUserDisplayName()}
               </Typography>
             </Box>
+            
             <MenuItem onClick={() => { handleClose(); navigate('/profile'); }}>
-              <ListItemIcon>
-                <AccountCircleIcon fontSize="small" sx={{ color: '#aaa' }} />
+              <ListItemText>Моя страница</ListItemText>
+              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
+                <AccountCircleIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText>Мой профиль</ListItemText>
             </MenuItem>
+            
+            <MenuItem onClick={() => { handleClose(); navigate('/profile/liked'); }}>
+              <ListItemText>Мне понравилось</ListItemText>
+              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
+                <FavoriteIcon fontSize="small" />
+              </ListItemIcon>
+            </MenuItem>
+            
             <MenuItem onClick={() => { handleClose(); navigate('/settings'); }}>
-              <ListItemIcon>
-                <SettingsIcon fontSize="small" sx={{ color: '#aaa' }} />
+              <ListItemText>Настройки профиля</ListItemText>
+              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
+                <SettingsIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText>Настройки</ListItemText>
             </MenuItem>
-            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)' }} />
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <LogoutIcon fontSize="small" sx={{ color: '#bf616a' }} />
+            
+            <MenuItem onClick={() => { handleClose(); navigate('/following-releases'); }}>
+              <ListItemText>Релизы авторов</ListItemText>
+              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
+                <NotificationsIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText primaryTypographyProps={{ sx: { color: '#bf616a' } }}>
-                Выйти
-              </ListItemText>
             </MenuItem>
+            
+            <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', mt: 0.75, mb: 0.75 }}>
+              <MenuItem onClick={handleLogout}>
+                <ListItemText>Выйти из профиля</ListItemText>
+                <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+              </MenuItem>
+            </Box>
           </Menu>
         </Box>
       );
@@ -511,7 +563,7 @@ export const Header = () => {
           sx: {
             width: '85%',
             maxWidth: 300,
-            backgroundColor: '#1a1a1a',
+            backgroundColor: '#000000',
             color: 'white'
           }
         }}
@@ -538,12 +590,12 @@ export const Header = () => {
         {isAuth && (
           <>
             <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: '0.95rem' }}>
                 {getUserDisplayName()}
               </Typography>
-              {user?.email && (
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem' }}>
-                  {user.email}
+              {(userDetails?.email || user?.email) && (
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>
+                  {userDetails?.email || user?.email}
                 </Typography>
               )}
             </Box>
@@ -551,29 +603,29 @@ export const Header = () => {
         )}
         
         <List sx={{ pt: 0 }}>
-          <ListItem button component={Link} to="/releases" onClick={handleMobileMenuClose}>
-            <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-              <MusicNoteIcon />
+          <ListItem button component={Link} to="/releases" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
+            <ListItemText primary="Релизы" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+            <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+              <MusicNoteIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Релизы" />
           </ListItem>
-          <ListItem button component={Link} to="/authors" onClick={handleMobileMenuClose}>
-            <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-              <AccountCircleIcon />
+          <ListItem button component={Link} to="/authors" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
+            <ListItemText primary="Исполнители" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+            <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+              <AccountCircleIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Исполнители" />
           </ListItem>
-          <ListItem button component={Link} to="/genres" onClick={handleMobileMenuClose}>
-            <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-              <MusicNoteIcon />
+          <ListItem button component={Link} to="/genres" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
+            <ListItemText primary="Жанры" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+            <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+              <MusicNoteIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Жанры" />
           </ListItem>
-          <ListItem button component={Link} to="/about" onClick={handleMobileMenuClose}>
-            <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-              <InfoIcon />
+          <ListItem button component={Link} to="/about" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
+            <ListItemText primary="О нас" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+            <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+              <InfoIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="О нас" />
           </ListItem>
         </List>
         
@@ -581,37 +633,38 @@ export const Header = () => {
         
         {isAuth ? (
           <List>
-            <ListItem button component={Link} to="/profile" onClick={handleMobileMenuClose}>
-              <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-                <AccountCircleIcon />
+            <ListItem button component={Link} to="/profile" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
+              <ListItemText primary="Моя страница" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+                <AccountCircleIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText primary="Моя страница" />
             </ListItem>
-            <ListItem button component={Link} to="/favorites" onClick={handleMobileMenuClose}>
-              <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-                <FavoriteIcon />
+            <ListItem button component={Link} to="/profile/liked" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
+              <ListItemText primary="Мне понравилось" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+                <FavoriteIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText primary="Мне понравилось" />
             </ListItem>
-            <ListItem button component={Link} to="/settings" onClick={handleMobileMenuClose}>
-              <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-                <SettingsIcon />
+            <ListItem button component={Link} to="/settings" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
+              <ListItemText primary="Настройки профиля" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+                <SettingsIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText primary="Настройки" />
             </ListItem>
-            <ListItem button component={Link} to="/new-releases" onClick={handleMobileMenuClose}>
-              <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-                <NotificationsIcon />
+            <ListItem button component={Link} to="/following-releases" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
+              <ListItemText primary="Релизы авторов" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+                <NotificationsIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText primary="Новые релизы" />
             </ListItem>
-            <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-            <ListItem button onClick={handleLogout}>
-              <ListItemIcon sx={{ color: '#90caf9', minWidth: 40 }}>
-                <LogoutIcon />
-              </ListItemIcon>
-              <ListItemText primary="Выйти" />
-            </ListItem>
+            <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', mt: 0.75, mb: 0.75 }}>
+              <ListItem button onClick={handleLogout} sx={{ py: 1.2 }}>
+                <ListItemText primary="Выйти из профиля" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
+                <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+              </ListItem>
+            </Box>
           </List>
         ) : (
           <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>

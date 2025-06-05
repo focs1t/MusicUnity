@@ -6,12 +6,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.LikeDTO;
+import ru.musicunity.backend.dto.ReviewDTO;
 import ru.musicunity.backend.pojo.enums.LikeType;
 import ru.musicunity.backend.service.LikeService;
+import ru.musicunity.backend.service.ReviewService;
 
 import java.util.List;
 
@@ -21,6 +25,7 @@ import java.util.List;
 @Tag(name = "Лайки", description = "API для управления лайками на отзывы")
 public class LikeController {
     private final LikeService likeService;
+    private final ReviewService reviewService;
 
     @Operation(summary = "Получение лайков отзыва")
     @ApiResponses(value = {
@@ -80,6 +85,17 @@ public class LikeController {
     public ResponseEntity<Long> getReceivedAuthorLikesCountByUser(
         @Parameter(description = "ID пользователя") @PathVariable Long userId) {
         return ResponseEntity.ok(likeService.getReceivedAuthorLikesCountByUser(userId));
+    }
+    
+    @Operation(summary = "Получение рецензий, лайкнутых пользователем")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список рецензий, которые лайкнул пользователь")
+    })
+    @GetMapping("/user/{userId}/reviews")
+    public ResponseEntity<Page<ReviewDTO>> getLikedReviewsByUser(
+        @Parameter(description = "ID пользователя") @PathVariable Long userId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(reviewService.getLikedReviewsByUser(userId, pageable));
     }
 
     @Operation(summary = "Создание лайка")

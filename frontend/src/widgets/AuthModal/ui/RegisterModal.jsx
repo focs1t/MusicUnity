@@ -34,6 +34,27 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     }
   }, [isAuth, open, registerAttempted]);
 
+  // Сброс формы при закрытии модального окна
+  useEffect(() => {
+    if (!open) {
+      resetForm();
+    }
+  }, [open]);
+
+  // Функция для сброса формы
+  const resetForm = () => {
+    setRegisterData({
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      agreeTerms: false
+    });
+    setErrors({});
+    setRegistrationSuccess(false);
+    setRegisterAttempted(false);
+  };
+
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
     setRegisterData(prev => ({
@@ -99,15 +120,19 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
   };
   
   const handleCloseAfterSuccess = () => {
-    setRegistrationSuccess(false);
-    setRegisterAttempted(false);
+    resetForm();
+    onClose();
+  };
+
+  const handleModalClose = () => {
+    resetForm();
     onClose();
   };
 
   return (
     <Dialog 
       open={open} 
-      onClose={registrationSuccess ? handleCloseAfterSuccess : onClose}
+      onClose={registrationSuccess ? handleCloseAfterSuccess : handleModalClose}
       fullWidth
       maxWidth="xs"
       PaperProps={{
@@ -117,7 +142,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
       {/* Крестик закрытия (абсолютное позиционирование) */}
       <Box 
         sx={modalStyles.closeButton}
-        onClick={registrationSuccess ? handleCloseAfterSuccess : onClose}
+        onClick={registrationSuccess ? handleCloseAfterSuccess : handleModalClose}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18" stroke="#777" strokeWidth="2" strokeLinecap="round"/>

@@ -2,6 +2,9 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGuard } from '../../AuthProvider';
 import HomePage from '../../../../pages/HomePage';
+import FollowingReleasesPage from '../../../../pages/FollowingReleasesPage';
+import ProfilePage from '../../../../pages/ProfilePage';
+import SettingsPage from '../../../../pages/SettingsPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -20,10 +23,11 @@ const AppRouter = () => {
       <Route path="/" element={<PublicRoute element={<HomePage />} />} />
       
       {/* Защищенные маршруты */}
-      <Route path="/profile" element={<ProtectedRoute element={<div>Моя страница (защищена)</div>} />} />
-      <Route path="/favorites" element={<ProtectedRoute element={<div>Мне понравилось (защищена)</div>} />} />
-      <Route path="/settings" element={<ProtectedRoute element={<div>Настройки (защищена)</div>} />} />
-      <Route path="/new-releases" element={<ProtectedRoute element={<div>Новые релизы (защищена)</div>} />} />
+      <Route path="/profile" element={<ProtectedRoute element={<ProfilePage />} />} />
+      <Route path="/profile/reviews" element={<ProtectedRoute element={<ProfilePage />} />} />
+      <Route path="/profile/liked" element={<ProtectedRoute element={<ProfilePage />} />} />
+      <Route path="/settings" element={<ProtectedRoute element={<SettingsPage />} />} />
+      <Route path="/following-releases" element={<ProtectedRoute element={<FollowingReleasesPage />} />} />
       
       {/* Общедоступные страницы */}
       <Route path="/releases" element={<PublicRoute element={<div>Релизы</div>} />} />
