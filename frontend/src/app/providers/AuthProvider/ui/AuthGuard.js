@@ -7,8 +7,9 @@ const AuthGuard = ({ children }) => {
   const location = useLocation();
 
   if (!isAuthenticated) {
-    // Редирект на страницу входа, с сохранением первоначального маршрута
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Редирект на главную страницу, с сохранением первоначального маршрута
+    // Авторизация будет осуществляться через модальное окно
+    return <Navigate to="/" state={{ from: location, requireAuth: true }} replace />;
   }
 
   return children;

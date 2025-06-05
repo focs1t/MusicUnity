@@ -106,18 +106,6 @@ public class ReportController {
         return ResponseEntity.ok(reportService.rejectReport(reportId, moderatorId));
     }
 
-    @Operation(summary = "Очистка обработанных жалоб")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Жалобы успешно очищены"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для очистки жалоб")
-    })
-    @DeleteMapping("/resolved")
-    @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Void> clearResolvedReports() {
-        reportService.clearResolvedReports();
-        return ResponseEntity.ok().build();
-    }
-
     @Operation(summary = "Получение ожидающих жалоб")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список жалоб"),

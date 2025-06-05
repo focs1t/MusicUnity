@@ -173,48 +173,5 @@ export const reviewApi = {
     } catch (error) {
       throw error;
     }
-  },
-
-  /**
-   * Жесткое удаление отзыва (только для администраторов)
-   * @param {number} id - ID отзыва
-   * @returns {Promise<void>}
-   */
-  hardDeleteReview: async (id) => {
-    try {
-      await httpClient.delete(`${API_URL}/${id}`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Восстановление удаленного отзыва (только для администраторов)
-   * @param {number} id - ID отзыва
-   * @returns {Promise<void>}
-   */
-  restoreReview: async (id) => {
-    try {
-      await httpClient.patch(`${API_URL}/${id}/restore`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Получение списка удаленных отзывов (только для администраторов)
-   * @param {number} page - Номер страницы
-   * @param {number} size - Размер страницы
-   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
-   */
-  getDeletedReviews: async (page = 0, size = 10) => {
-    try {
-      const response = await httpClient.get(`${API_URL}/deleted`, {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
   }
 }; 

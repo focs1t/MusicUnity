@@ -53,20 +53,6 @@ export const authorApi = {
   },
 
   /**
-   * Получение автора по имени
-   * @param {string} authorName - Имя автора
-   * @returns {Promise<Object>}
-   */
-  getAuthorByName: async (authorName) => {
-    try {
-      const response = await httpClient.get(`${API_URL}/name/${authorName}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
    * Обновление данных автора (только для модераторов)
    * @param {number} id - ID автора
    * @param {Object} updatedAuthor - Обновленные данные автора
@@ -188,49 +174,6 @@ export const authorApi = {
   softDeleteAuthor: async (id) => {
     try {
       await httpClient.patch(`${API_URL}/${id}/delete`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Жесткое удаление автора (только для администраторов)
-   * @param {number} id - ID автора
-   * @returns {Promise<void>}
-   */
-  hardDeleteAuthor: async (id) => {
-    try {
-      await httpClient.delete(`${API_URL}/${id}`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Восстановление удаленного автора (только для администраторов)
-   * @param {number} id - ID автора
-   * @returns {Promise<void>}
-   */
-  restoreAuthor: async (id) => {
-    try {
-      await httpClient.patch(`${API_URL}/${id}/restore`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Получение списка удаленных авторов (только для администраторов)
-   * @param {number} page - Номер страницы
-   * @param {number} size - Размер страницы
-   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
-   */
-  getDeletedAuthors: async (page = 0, size = 10) => {
-    try {
-      const response = await httpClient.get(`${API_URL}/deleted`, {
-        params: { page, size }
-      });
-      return response.data;
     } catch (error) {
       throw error;
     }

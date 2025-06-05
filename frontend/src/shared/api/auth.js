@@ -9,21 +9,18 @@ export const authApi = {
         username,
         password
       });
-      
-      // Проверяем наличие токена в ответе
-      if (!response.data || !response.data.token) {
-        throw new Error('Неверное имя пользователя или пароль');
-      }
-      
       return response.data;
     } catch (error) {
-      // Если сервер вернул ошибку с сообщением, используем его
+      console.error('Login error:', error);
+      if (error.response?.status === 401) {
+        const errorMsg = error.response.data?.error || 'Неверное имя пользователя или пароль';
+        throw new Error(errorMsg);
+      }
+      if (error.response?.status === 403) {
+        throw new Error('Аккаунт заблокирован');
+      }
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
-      }
-      // Если сервер вернул 401, значит неверные учетные данные
-      if (error.response?.status === 401) {
-        throw new Error('Неверное имя пользователя или пароль');
       }
       throw error;
     }
@@ -41,21 +38,33 @@ export const authApi = {
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       }
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
       throw error;
     }
   },
 
   logout: async (token) => {
     try {
-      await httpClient.post(`${API_URL}/logout`, { token });
+      await httpClient.post(`${API_URL}/logout`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return { success: true };
     } catch (error) {
-      console.error('Ошибка при выходе из системы:', error);
+      console.error('Ошибка при вызове API logout:', error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
     }
   },
 
   forgotPassword: async (email) => {
     try {
-      await httpClient.post(`${API_URL}/forgot-password?email=${email}`);
+      await httpClient.post(`${API_URL}/forgot-password?email=${encodeURIComponent(email)}`);
       return { success: true };
     } catch (error) {
       if (error.response?.data?.message) {
@@ -67,12 +76,7 @@ export const authApi = {
 
   resetPassword: async (token, newPassword) => {
     try {
-      await httpClient.post(`${API_URL}/reset-password`, null, {
-        params: {
-          token,
-          newPassword
-        }
-      });
+      await httpClient.post(`${API_URL}/reset-password?token=${encodeURIComponent(token)}&newPassword=${encodeURIComponent(newPassword)}`);
       return { success: true };
     } catch (error) {
       if (error.response?.data?.message) {
@@ -80,5 +84,17 @@ export const authApi = {
       }
       throw error;
     }
+  },
+
+  getCurrentUser: async () => {
+    try {
+      const response = await httpClient.get(`${API_URL}/me`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    }
   }
-}; 
+};

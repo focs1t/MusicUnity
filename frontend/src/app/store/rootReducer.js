@@ -6,7 +6,6 @@ import { reviewReducer } from '../../entities/review';
 import { genreReducer } from '../../entities/genre';
 import { likeReducer } from '../../entities/like';
 import { reportReducer } from '../../entities/report';
-import { auditReducer } from '../../entities/audit';
 import { authModel } from '../../entities/auth';
 
 const rootReducer = combineReducers({
@@ -17,8 +16,7 @@ const rootReducer = combineReducers({
   review: reviewReducer,
   genre: genreReducer,
   like: likeReducer,
-  report: reportReducer,
-  audit: auditReducer
+  report: reportReducer
 });
 
 export default rootReducer; 

@@ -183,48 +183,5 @@ export const releaseApi = {
     } catch (error) {
       throw error;
     }
-  },
-
-  /**
-   * Жесткое удаление релиза (только для администраторов)
-   * @param {number} id - ID релиза
-   * @returns {Promise<void>}
-   */
-  hardDeleteRelease: async (id) => {
-    try {
-      await httpClient.delete(`${API_URL}/${id}`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Восстановление удаленного релиза (только для администраторов)
-   * @param {number} id - ID релиза
-   * @returns {Promise<void>}
-   */
-  restoreRelease: async (id) => {
-    try {
-      await httpClient.patch(`${API_URL}/${id}/restore`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Получение списка удаленных релизов (только для администраторов)
-   * @param {number} page - Номер страницы
-   * @param {number} size - Размер страницы
-   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
-   */
-  getDeletedReleases: async (page = 0, size = 10) => {
-    try {
-      const response = await httpClient.get(`${API_URL}/deleted`, {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
   }
 }; 

@@ -128,7 +128,7 @@ public class UserAdminController {
 
     @PostMapping("/{id}/ban")
     public String banUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        userService.banUser(id);
+        userService.banUserAsAdmin(id);
         redirectAttributes.addFlashAttribute("success", "Пользователь успешно заблокирован");
         return "redirect:/admin/users";
     }

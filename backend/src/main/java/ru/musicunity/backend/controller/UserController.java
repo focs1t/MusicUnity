@@ -17,6 +17,7 @@ import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.service.UserService;
+import ru.musicunity.backend.mapper.UserMapper;
 
 import java.util.List;
 
@@ -26,18 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-
-    @Operation(summary = "Поиск пользователя по имени пользователя")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Пользователь найден"),
-        @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    })
-    @GetMapping("/username/{username}")
-    public ResponseEntity<UserDTO> findByUsername(
-        @Parameter(description = "Имя пользователя") @PathVariable String username) {
-        UserDTO user = userService.findByUsername(username);
-        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
-    }
+    private final UserMapper userMapper;
 
     @Operation(summary = "Поиск пользователей по имени пользователя")
     @ApiResponses(value = {
@@ -133,5 +123,16 @@ public class UserController {
         @Parameter(description = "ID пользователя") @PathVariable Long userId,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getReleasesFromFollowedAuthors(userId, pageable));
+    }
+
+    @Operation(summary = "Получение текущего пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Текущий пользователь найден"),
+        @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован")
+    })
+    @GetMapping("/current")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDTO> getCurrentUser() {
+        return ResponseEntity.ok(userMapper.toDTO(userService.getCurrentUser()));
     }
 } 

@@ -100,6 +100,15 @@ public class UserService {
     }
 
     @Transactional
+    public void banUserAsAdmin(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        user.setIsBlocked(true);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
     public void banUser(Long userId) {
         // Получаем текущего пользователя (модератора)
         User currentUser = getCurrentUser();

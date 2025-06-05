@@ -6,7 +6,6 @@ import { genreApi } from './genre';
 import { reviewApi } from './review';
 import { likeApi } from './like';
 import { reportApi } from './report';
-import { auditApi } from './audit';
 import { fileApi } from './file';
 import httpClient from './httpClient';
 
@@ -19,7 +18,6 @@ export {
   reviewApi,
   likeApi,
   reportApi,
-  auditApi,
   fileApi,
   httpClient
 }; 

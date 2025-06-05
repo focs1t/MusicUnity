@@ -31,28 +31,16 @@ export const userApi = {
   },
 
   /**
-   * Получить пользователя по имени пользователя
-   * @param {string} username - Имя пользователя
-   * @returns {Promise<import('../../entities/user/model/types').User>}
+   * Обновление данных пользователя
+   * @param {string} bio - Биография пользователя
+   * @param {string} avatarUrl - URL аватара
+   * @returns {Promise<void>}
    */
-  getUserByUsername: async (username) => {
+  updateUserData: async (bio, avatarUrl) => {
     try {
-      const response = await httpClient.get(`${API_URL}/username/${username}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Обновить профиль пользователя
-   * @param {Object} userData - Данные пользователя для обновления
-   * @returns {Promise<import('../../entities/user/model/types').User>}
-   */
-  updateProfile: async (userData) => {
-    try {
-      const response = await httpClient.put(`${API_URL}/profile`, userData);
-      return response.data;
+      await httpClient.patch(`${API_URL}/data`, null, {
+        params: { bio, avatarUrl }
+      });
     } catch (error) {
       throw error;
     }
@@ -101,57 +89,6 @@ export const userApi = {
   },
   
   /**
-   * Получение пользователей по роли
-   * @param {string} role - Роль пользователя (USER, AUTHOR, MODERATOR, ADMIN)
-   * @param {number} page - Номер страницы
-   * @param {number} size - Размер страницы
-   * @returns {Promise<{content: import('../../entities/user/model/types').User[], totalElements: number, totalPages: number}>}
-   */
-  getUsersByRole: async (role, page = 0, size = 10) => {
-    try {
-      const response = await httpClient.get(`${API_URL}/role/${role}`, {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  /**
-   * Получение заблокированных пользователей
-   * @param {number} page - Номер страницы
-   * @param {number} size - Размер страницы
-   * @returns {Promise<{content: import('../../entities/user/model/types').User[], totalElements: number, totalPages: number}>}
-   */
-  getBlockedUsers: async (page = 0, size = 10) => {
-    try {
-      const response = await httpClient.get(`${API_URL}/blocked`, {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  /**
-   * Обновление данных пользователя
-   * @param {string} bio - Биография пользователя
-   * @param {string} avatarUrl - URL аватара
-   * @returns {Promise<void>}
-   */
-  updateUserData: async (bio, avatarUrl) => {
-    try {
-      await httpClient.patch(`${API_URL}/data`, null, {
-        params: { bio, avatarUrl }
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  /**
    * Блокировка пользователя (только для модераторов)
    * @param {number} userId - ID пользователя
    * @returns {Promise<void>}
@@ -159,19 +96,6 @@ export const userApi = {
   banUser: async (userId) => {
     try {
       await httpClient.patch(`${API_URL}/${userId}/ban`);
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  /**
-   * Разблокировка пользователя (только для администраторов)
-   * @param {number} userId - ID пользователя
-   * @returns {Promise<void>}
-   */
-  unbanUser: async (userId) => {
-    try {
-      await httpClient.patch(`${API_URL}/${userId}/unban`);
     } catch (error) {
       throw error;
     }

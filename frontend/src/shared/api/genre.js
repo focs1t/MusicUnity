@@ -32,34 +32,5 @@ export const genreApi = {
     } catch (error) {
       throw error;
     }
-  },
-
-  /**
-   * Создание нового жанра (только для модераторов)
-   * @param {string} name - Название жанра
-   * @returns {Promise<Object>}
-   */
-  createGenre: async (name) => {
-    try {
-      const response = await httpClient.post(API_URL, null, {
-        params: { name }
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Удаление жанра (только для модераторов)
-   * @param {number} id - ID жанра
-   * @returns {Promise<void>}
-   */
-  deleteGenre: async (id) => {
-    try {
-      await httpClient.delete(`${API_URL}/${id}`);
-    } catch (error) {
-      throw error;
-    }
   }
 }; 

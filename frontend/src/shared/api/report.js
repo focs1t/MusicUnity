@@ -104,18 +104,6 @@ export const reportApi = {
   },
 
   /**
-   * Очистка обработанных жалоб (только для модераторов)
-   * @returns {Promise<void>}
-   */
-  clearResolvedReports: async () => {
-    try {
-      await httpClient.delete(`${API_URL}/resolved`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
    * Получение ожидающих жалоб (только для модераторов)
    * @param {number} page - Номер страницы
    * @param {number} size - Размер страницы
