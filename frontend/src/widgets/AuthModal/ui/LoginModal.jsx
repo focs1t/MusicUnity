@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, Button, TextField, Box, Typography, Checkbox, FormControlLabel } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { authModel } from '../../../entities/auth';
+import { modalStyles } from './styles';
 
 const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPassword }) => {
   const dispatch = useDispatch();
@@ -56,35 +57,12 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
       fullWidth
       maxWidth="xs"
       PaperProps={{
-        sx: {
-          borderRadius: 2,
-          bgcolor: '#121212',
-          color: 'white',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
-          position: 'relative',
-          backgroundImage: 'linear-gradient(135deg, #121212 0%, #1e1e1e 100%)',
-          border: '1px solid rgba(255,255,255,0.05)'
-        }
+        sx: modalStyles.paper
       }}
     >
       {/* Крестик закрытия (абсолютное позиционирование) */}
       <Box 
-        sx={{ 
-          position: 'absolute', 
-          right: 12, 
-          top: 12, 
-          zIndex: 10,
-          cursor: 'pointer',
-          width: 24,
-          height: 24,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '50%',
-          '&:hover': {
-            bgcolor: 'rgba(255,255,255,0.1)'
-          }
-        }}
+        sx={modalStyles.closeButton}
         onClick={onClose}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -93,15 +71,9 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
         </svg>
       </Box>
       
-      <DialogContent sx={{ px: 4, py: 5 }}>
+      <DialogContent sx={modalStyles.dialogContent}>
         {/* Заголовок */}
-        <Typography variant="h5" component="div" sx={{ 
-          textAlign: 'center', 
-          mb: 4, 
-          fontWeight: 600, 
-          color: '#fff',
-          textShadow: '0px 2px 4px rgba(0,0,0,0.3)'
-        }}>
+        <Typography variant="h5" component="div" sx={modalStyles.title}>
           Вход в аккаунт
         </Typography>
         
@@ -119,26 +91,10 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
             onChange={handleChange}
             variant="outlined"
             InputLabelProps={{ 
-              sx: { color: 'rgba(255,255,255,0.6)' },
+              sx: modalStyles.inputLabel,
               required: true
             }}
-            sx={{
-              mb: 2.5,
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                '&.Mui-focused fieldset': { borderColor: '#333' },
-                bgcolor: 'rgba(0,0,0,0.3)',
-                borderRadius: 1.5
-              },
-              '& .MuiInputBase-input': { 
-                color: 'white',
-                padding: '14px 16px',
-              },
-              '& .MuiFormLabel-asterisk': {
-                color: '#bf616a'
-              }
-            }}
+            sx={modalStyles.textField}
           />
           <TextField
             margin="normal"
@@ -153,26 +109,10 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
             onChange={handleChange}
             variant="outlined"
             InputLabelProps={{ 
-              sx: { color: 'rgba(255,255,255,0.6)' },
+              sx: modalStyles.inputLabel,
               required: true
             }}
-            sx={{
-              mb: 2.5,
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                '&.Mui-focused fieldset': { borderColor: '#333' },
-                bgcolor: 'rgba(0,0,0,0.3)',
-                borderRadius: 1.5
-              },
-              '& .MuiInputBase-input': { 
-                color: 'white',
-                padding: '14px 16px',
-              },
-              '& .MuiFormLabel-asterisk': {
-                color: '#bf616a'
-              }
-            }}
+            sx={modalStyles.textField}
           />
           
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5 }}>
@@ -182,28 +122,15 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
                   name="rememberMe" 
                   checked={loginData.rememberMe}
                   onChange={handleChange}
-                  sx={{ 
-                    color: 'rgba(255,255,255,0.3)', 
-                    '&.Mui-checked': { 
-                      color: '#444' 
-                    } 
-                  }}
+                  sx={modalStyles.checkbox}
                 />
               }
               label="Запомнить меня"
-              sx={{ color: 'rgba(255,255,255,0.7)' }}
+              sx={modalStyles.normalText}
             />
             <Typography 
               variant="body2"
-              sx={{ 
-                cursor: 'pointer', 
-                color: '#666',
-                transition: 'color 0.2s',
-                '&:hover': { 
-                  color: '#999', 
-                  textDecoration: 'underline' 
-                } 
-              }}
+              sx={modalStyles.secondaryLinkText}
               onClick={onSwitchToForgotPassword}
             >
               Забыли пароль?
@@ -211,16 +138,7 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
           </Box>
           
           {error && loginAttempted && (
-            <Typography sx={{ 
-              mt: 2.5, 
-              mb: 1, 
-              textAlign: 'center', 
-              color: '#bf616a',
-              bgcolor: 'rgba(191,97,106,0.1)',
-              borderRadius: 1,
-              py: 1,
-              px: 2
-            }}>
+            <Typography sx={modalStyles.errorText}>
               {error}
             </Typography>
           )}
@@ -229,42 +147,19 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ 
-              mt: 3, 
-              mb: 3, 
-              py: 1.5,
-              backgroundColor: '#333',
-              '&:hover': {
-                backgroundColor: '#444'
-              },
-              textTransform: 'none',
-              fontSize: '1rem',
-              fontWeight: 600,
-              borderRadius: 1.5,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-            }}
+            sx={modalStyles.button}
             disabled={loading}
           >
             {loading ? 'Выполняется вход...' : 'Войти'}
           </Button>
           
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+          <Box sx={modalStyles.flexCenter}>
+            <Typography variant="body1" sx={modalStyles.normalText}>
               Нет аккаунта?
             </Typography>
             <Typography 
               variant="body1" 
-              sx={{ 
-                cursor: 'pointer', 
-                ml: 1,
-                fontWeight: 600,
-                color: '#666',
-                transition: 'color 0.2s',
-                '&:hover': { 
-                  color: '#999', 
-                  textDecoration: 'underline' 
-                }
-              }}
+              sx={modalStyles.linkText}
               onClick={onSwitchToRegister}
             >
               Зарегистрироваться

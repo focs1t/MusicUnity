@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, Button, TextField, Box, Typography, Checkbox, FormControlLabel, Alert } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { authModel } from '../../../entities/auth';
+import { modalStyles } from './styles';
 
 const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
   const dispatch = useDispatch();
@@ -110,35 +111,12 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
       fullWidth
       maxWidth="xs"
       PaperProps={{
-        sx: {
-          borderRadius: 2,
-          bgcolor: '#121212',
-          color: 'white',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
-          position: 'relative',
-          backgroundImage: 'linear-gradient(135deg, #121212 0%, #1e1e1e 100%)',
-          border: '1px solid rgba(255,255,255,0.05)'
-        }
+        sx: modalStyles.paper
       }}
     >
       {/* Крестик закрытия (абсолютное позиционирование) */}
       <Box 
-        sx={{ 
-          position: 'absolute', 
-          right: 12, 
-          top: 12, 
-          zIndex: 10,
-          cursor: 'pointer',
-          width: 24,
-          height: 24,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '50%',
-          '&:hover': {
-            bgcolor: 'rgba(255,255,255,0.1)'
-          }
-        }}
+        sx={modalStyles.closeButton}
         onClick={registrationSuccess ? handleCloseAfterSuccess : onClose}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -147,52 +125,26 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
         </svg>
       </Box>
       
-      <DialogContent sx={{ px: 4, py: 5 }}>
+      <DialogContent sx={modalStyles.dialogContent}>
         {/* Заголовок */}
-        <Typography variant="h5" component="div" sx={{ 
-          textAlign: 'center', 
-          mb: 4, 
-          fontWeight: 600,
-          color: '#fff',
-          textShadow: '0px 2px 4px rgba(0,0,0,0.3)'
-        }}>
+        <Typography variant="h5" component="div" sx={modalStyles.title}>
           {registrationSuccess ? 'Регистрация успешна!' : 'Регистрация'}
         </Typography>
         
         {registrationSuccess ? (
           // Сообщение об успешной регистрации
           <Box>
-            <Alert severity="success" sx={{ 
-              mb: 3, 
-              bgcolor: 'rgba(56, 142, 60, 0.15)', 
-              color: '#66bb6a',
-              borderRadius: 1.5,
-              '& .MuiAlert-icon': {
-                color: '#66bb6a'
-              }
-            }}>
+            <Alert severity="success" sx={modalStyles.successAlert}>
               Вы успешно зарегистрировались!
             </Alert>
-            <Typography sx={{ mb: 2, color: 'rgba(255,255,255,0.7)' }}>
+            <Typography sx={modalStyles.normalText}>
               Теперь вы можете использовать все возможности нашего сервиса. Добро пожаловать в MusicUnity!
             </Typography>
             <Button
               fullWidth
               variant="contained"
               onClick={handleCloseAfterSuccess}
-              sx={{ 
-                mt: 2,
-                py: 1.5,
-                backgroundColor: '#333',
-                '&:hover': {
-                  backgroundColor: '#444'
-                },
-                textTransform: 'none',
-                fontSize: '1rem',
-                fontWeight: 600,
-                borderRadius: 1.5,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-              }}
+              sx={modalStyles.button}
             >
               Начать пользоваться сервисом
             </Button>
@@ -215,28 +167,11 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               helperText={errors.username}
               variant="outlined"
               InputLabelProps={{ 
-                sx: { color: 'rgba(255,255,255,0.6)' },
+                sx: modalStyles.inputLabel,
                 required: true
               }}
-              FormHelperTextProps={{ sx: { color: '#bf616a' } }}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                  '&.Mui-focused fieldset': { borderColor: '#333' },
-                  '&.Mui-error fieldset': { borderColor: '#bf616a' },
-                  bgcolor: 'rgba(0,0,0,0.3)',
-                  borderRadius: 1.5
-                },
-                '& .MuiInputBase-input': { 
-                  color: 'white',
-                  padding: '14px 16px',
-                },
-                '& .MuiFormLabel-asterisk': {
-                  color: '#bf616a'
-                }
-              }}
+              FormHelperTextProps={{ sx: modalStyles.helperText }}
+              sx={modalStyles.textField}
             />
             <TextField
               margin="normal"
@@ -252,28 +187,11 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               helperText={errors.email}
               variant="outlined"
               InputLabelProps={{ 
-                sx: { color: 'rgba(255,255,255,0.6)' },
+                sx: modalStyles.inputLabel,
                 required: true
               }}
-              FormHelperTextProps={{ sx: { color: '#bf616a' } }}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                  '&.Mui-focused fieldset': { borderColor: '#333' },
-                  '&.Mui-error fieldset': { borderColor: '#bf616a' },
-                  bgcolor: 'rgba(0,0,0,0.3)',
-                  borderRadius: 1.5
-                },
-                '& .MuiInputBase-input': { 
-                  color: 'white',
-                  padding: '14px 16px',
-                },
-                '& .MuiFormLabel-asterisk': {
-                  color: '#bf616a'
-                }
-              }}
+              FormHelperTextProps={{ sx: modalStyles.helperText }}
+              sx={modalStyles.textField}
             />
             <TextField
               margin="normal"
@@ -290,28 +208,11 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               helperText={errors.password}
               variant="outlined"
               InputLabelProps={{ 
-                sx: { color: 'rgba(255,255,255,0.6)' },
+                sx: modalStyles.inputLabel,
                 required: true
               }}
-              FormHelperTextProps={{ sx: { color: '#bf616a' } }}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                  '&.Mui-focused fieldset': { borderColor: '#333' },
-                  '&.Mui-error fieldset': { borderColor: '#bf616a' },
-                  bgcolor: 'rgba(0,0,0,0.3)',
-                  borderRadius: 1.5
-                },
-                '& .MuiInputBase-input': { 
-                  color: 'white',
-                  padding: '14px 16px',
-                },
-                '& .MuiFormLabel-asterisk': {
-                  color: '#bf616a'
-                }
-              }}
+              FormHelperTextProps={{ sx: modalStyles.helperText }}
+              sx={modalStyles.textField}
             />
             <TextField
               margin="normal"
@@ -328,28 +229,11 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               helperText={errors.confirmPassword}
               variant="outlined"
               InputLabelProps={{ 
-                sx: { color: 'rgba(255,255,255,0.6)' },
+                sx: modalStyles.inputLabel,
                 required: true
               }}
-              FormHelperTextProps={{ sx: { color: '#bf616a' } }}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                  '&.Mui-focused fieldset': { borderColor: '#333' },
-                  '&.Mui-error fieldset': { borderColor: '#bf616a' },
-                  bgcolor: 'rgba(0,0,0,0.3)',
-                  borderRadius: 1.5
-                },
-                '& .MuiInputBase-input': { 
-                  color: 'white',
-                  padding: '14px 16px',
-                },
-                '& .MuiFormLabel-asterisk': {
-                  color: '#bf616a'
-                }
-              }}
+              FormHelperTextProps={{ sx: modalStyles.helperText }}
+              sx={modalStyles.textField}
             />
             
             <FormControlLabel
@@ -358,16 +242,15 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
                   name="agreeTerms" 
                   checked={registerData.agreeTerms}
                   onChange={handleChange}
-                  sx={{ 
-                    color: 'rgba(255,255,255,0.3)', 
-                    '&.Mui-checked': { 
-                      color: '#444' 
-                    } 
-                  }}
+                  sx={modalStyles.checkbox}
                 />
               }
-              label="Я согласен с условиями использования сайта"
-              sx={{ mt: 2, color: 'rgba(255,255,255,0.7)' }}
+              label={
+                <Typography variant="body2" sx={modalStyles.normalText}>
+                  Я согласен с <span style={{ textDecoration: 'underline', cursor: 'pointer', color: 'white' }}>условиями использования</span>
+                </Typography>
+              }
+              sx={{ mt: 2 }}
             />
             {errors.agreeTerms && (
               <Typography variant="caption" sx={{ display: 'block', ml: 2, color: '#bf616a' }}>
@@ -376,16 +259,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
             )}
             
             {error && registerAttempted && (
-              <Typography sx={{ 
-                mt: 2.5, 
-                mb: 1, 
-                textAlign: 'center', 
-                color: '#bf616a',
-                bgcolor: 'rgba(191,97,106,0.1)',
-                borderRadius: 1,
-                py: 1,
-                px: 2
-              }}>
+              <Typography sx={modalStyles.errorText}>
                 {error}
               </Typography>
             )}
@@ -394,42 +268,19 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ 
-                mt: 3, 
-                mb: 3, 
-                py: 1.5,
-                backgroundColor: '#333',
-                '&:hover': {
-                  backgroundColor: '#444'
-                },
-                textTransform: 'none',
-                fontSize: '1rem',
-                fontWeight: 600,
-                borderRadius: 1.5,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-              }}
               disabled={loading}
+              sx={modalStyles.button}
             >
               {loading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>
             
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+            <Box sx={modalStyles.flexCenter}>
+              <Typography variant="body1" sx={modalStyles.normalText}>
                 Уже есть аккаунт?
               </Typography>
               <Typography 
                 variant="body1" 
-                sx={{ 
-                  cursor: 'pointer', 
-                  ml: 1,
-                  fontWeight: 600,
-                  color: '#666',
-                  transition: 'color 0.2s',
-                  '&:hover': { 
-                    color: '#999', 
-                    textDecoration: 'underline' 
-                  }
-                }}
+                sx={modalStyles.linkText}
                 onClick={onSwitchToLogin}
               >
                 Войти
