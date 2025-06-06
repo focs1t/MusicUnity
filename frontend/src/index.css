@@ -8,9 +8,30 @@ body {
 }
 
 .app {
-  min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+}
+
+.content {
+  flex: 1;
+  padding-left: 1rem;
+  transition: padding-left 0.3s ease;
+}
+
+/* Медиа-запрос для мобильных устройств */
+@media (max-width: 768px) {
+  .content {
+    padding-left: 4rem;
+  }
+}
+
+/* Медиа-запрос для больших экранов при наведении на сайдбар */
+@media (min-width: 769px) {
+  .sidebar:hover ~ .content {
+    padding-left: 16rem;
+  }
 }
 
 /* Стили для форм авторизации */
