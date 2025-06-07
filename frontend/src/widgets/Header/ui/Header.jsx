@@ -34,6 +34,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { LoginModal, RegisterModal, ForgotPasswordModal, ResetPasswordModal } from '../../AuthModal';
 import { userApi } from '../../../shared/api/user';
+import styles from './Header.module.css';
 
 // Стилизация поля поиска
 const Search = styled('div')(({ theme }) => ({
@@ -453,278 +454,74 @@ export const Header = () => {
   };
 
   return (
-    <>
-      <AppBar 
-        position="fixed" 
-        elevation={0}
-        sx={{
-          transition: 'transform 0.3s ease',
-          transform: visible ? 'translateY(0)' : 'translateY(-100%)',
-          backgroundColor: '#1a1a1a',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-        }}
-      >
-        <Container maxWidth="xl">
-          <Toolbar disableGutters sx={{ height: 70 }}>
-            {/* Мобильная версия - меню и логотип */}
-            {isMobile && (
-              <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                onClick={handleMobileMenuOpen}
-                edge="start"
-                sx={{ mr: 2 }}
+    <header className={styles.header}>
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <a className={styles.logo} href="/">
+            <img 
+              alt="Риса за Творчество логотип" 
+              width="200" 
+              height="100" 
+              decoding="async" 
+              data-nimg="1" 
+              className={styles.logoImage} 
+              style={{ color: 'transparent' }} 
+              src="/риса за творчество логотип.svg" 
+            />
+          </a>
+          <div className={styles.searchContainer}>
+            <form className={styles.searchForm}>
+              <label htmlFor="search" className={styles.srOnly}>Search</label>
+              <button 
+                className={styles.searchButton} 
+                type="submit"
               >
-                <MenuIcon />
-              </IconButton>
-            )}
-            
-            {/* Логотип */}
-            <Logo
-              component={Link}
-              to="/"
-              sx={{ 
-                mr: 2,
-                display: 'flex',
-                flexGrow: isMobile ? 1 : 0
-              }}
-            >
-              <img src="/logo.png" alt="MusicUnity" />
-              <Typography
-                variant="h5"
-                noWrap
-                sx={{
-                  fontWeight: 700,
-                  letterSpacing: '.1rem',
-                  textDecoration: 'none',
-                  display: { xs: 'none', sm: 'flex' }
-                }}
+                <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className={styles.searchIcon} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M337.509 305.372h-17.501l-6.571-5.486c20.791-25.232 33.922-57.054 33.922-93.257C347.358 127.632 283.896 64 205.135 64 127.452 64 64 127.632 64 206.629s63.452 142.628 142.225 142.628c35.011 0 67.831-13.167 92.991-34.008l6.561 5.487v17.551L415.18 448 448 415.086 337.509 305.372zm-131.284 0c-54.702 0-98.463-43.887-98.463-98.743 0-54.858 43.761-98.742 98.463-98.742 54.7 0 98.462 43.884 98.462 98.742 0 54.856-43.762 98.743-98.462 98.743z"></path>
+                </svg>
+              </button>
+              <button 
+                type="button" 
+                role="combobox" 
+                aria-controls="radix-:Rqakq:" 
+                aria-expanded="false" 
+                aria-autocomplete="none" 
+                dir="ltr" 
+                data-state="closed" 
+                data-placeholder="" 
+                className={styles.searchButton}
               >
-                MusicUnity
-              </Typography>
-            </Logo>
-
-            {/* Навигация - десктоп */}
-            {!isMobile && (
-              <Box sx={{ display: 'flex', flexGrow: 1 }}>
-                <NavButton component={Link} to="/releases">
-                  Релизы
-                </NavButton>
-                <NavButton component={Link} to="/authors">
-                  Исполнители
-                </NavButton>
-                <NavButton component={Link} to="/genres">
-                  Жанры
-                </NavButton>
-                <NavButton component={Link} to="/about">
-                  О нас
-                </NavButton>
-              </Box>
-            )}
-            
-            {/* Поиск */}
-            <Search sx={{ 
-              flexGrow: 0, 
-              display: { xs: 'none', md: 'flex' },
-              marginLeft: 'auto',
-              marginRight: 2
-            }}>
-              <SearchIconWrapper>
-                <SearchIcon />
-              </SearchIconWrapper>
-              <StyledInputBase
-                placeholder="Поиск музыки..."
-                inputProps={{ 'aria-label': 'search' }}
+                <span style={{ pointerEvents: 'none' }}>
+                  <div>
+                    <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className={styles.searchIcon} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2 7v10"></path>
+                      <path d="M6 5v14"></path>
+                      <rect width="12" height="18" x="10" y="3" rx="2"></rect>
+                    </svg> 
+                    <span className={styles.searchText}>Авторы и релизы</span>
+                  </div>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.chevronIcon} aria-hidden="true">
+                  <path d="m6 9 6 6 6-6"></path>
+                </svg>
+              </button>
+              <select aria-hidden="true" tabIndex="-1" style={{ position: 'absolute', border: '0px', width: '1px', height: '1px', padding: '0px', margin: '-1px', overflow: 'hidden', clip: 'rect(0px, 0px, 0px, 0px)', whiteSpace: 'nowrap', overflowWrap: 'normal' }}>
+                <option value=""></option>
+                <option value="releases"> Авторы и релизы</option>
+                <option value="users"> Пользователи</option>
+              </select>
+              <input 
+                className={styles.searchInput} 
+                placeholder="Поиск..." 
+                value=""
               />
-            </Search>
-            
-            {/* Поиск для мобильных - иконка */}
-            {isMobile && (
-              <IconButton color="inherit" sx={{ ml: 'auto', mr: 1 }}>
-                <SearchIcon />
-              </IconButton>
-            )}
-
-            {/* Авторизация/Профиль */}
+            </form>
+          </div>
+          <div className={styles.authContainer}>
             {renderAuthButtons()}
-          </Toolbar>
-        </Container>
-      </AppBar>
-      
-      {/* Пустое пространство под фиксированную шапку */}
-      <Toolbar sx={{ height: 70 }} />
-      
-      {/* Мобильное меню */}
-      <Drawer
-        anchor="left"
-        open={mobileMenuOpen}
-        onClose={handleMobileMenuClose}
-        PaperProps={{
-          sx: {
-            width: '85%',
-            maxWidth: 300,
-            backgroundColor: '#000000',
-            color: 'white'
-          }
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            p: 2
-          }}
-        >
-          <Logo component={Link} to="/" onClick={handleMobileMenuClose}>
-            <img src="/logo.png" alt="MusicUnity" style={{ height: 40 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              MusicUnity
-            </Typography>
-          </Logo>
-          <IconButton color="inherit" onClick={handleMobileMenuClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        
-        {isAuth && (
-          <>
-            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                {getUserDisplayName()}
-              </Typography>
-              {(userDetails?.email || user?.email) && (
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>
-                  {userDetails?.email || user?.email}
-                </Typography>
-              )}
-            </Box>
-          </>
-        )}
-        
-        <List sx={{ pt: 0 }}>
-          <ListItem button component={Link} to="/releases" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
-            <ListItemText primary="Релизы" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-            <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-              <MusicNoteIcon fontSize="small" />
-            </ListItemIcon>
-          </ListItem>
-          <ListItem button component={Link} to="/authors" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
-            <ListItemText primary="Исполнители" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-            <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-              <AccountCircleIcon fontSize="small" />
-            </ListItemIcon>
-          </ListItem>
-          <ListItem button component={Link} to="/genres" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
-            <ListItemText primary="Жанры" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-            <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-              <MusicNoteIcon fontSize="small" />
-            </ListItemIcon>
-          </ListItem>
-          <ListItem button component={Link} to="/about" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
-            <ListItemText primary="О нас" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-            <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-              <InfoIcon fontSize="small" />
-            </ListItemIcon>
-          </ListItem>
-        </List>
-        
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-        
-        {isAuth ? (
-          <List>
-            <ListItem button component={Link} to="/profile" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
-              <ListItemText primary="Моя страница" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-                <AccountCircleIcon fontSize="small" />
-              </ListItemIcon>
-            </ListItem>
-            <ListItem button component={Link} to="/profile/liked" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
-              <ListItemText primary="Мне понравилось" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-                <FavoriteIcon fontSize="small" />
-              </ListItemIcon>
-            </ListItem>
-            <ListItem button component={Link} to="/settings" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
-              <ListItemText primary="Настройки профиля" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-                <SettingsIcon fontSize="small" />
-              </ListItemIcon>
-            </ListItem>
-            <ListItem button component={Link} to="/following-releases" onClick={handleMobileMenuClose} sx={{ py: 1.2 }}>
-              <ListItemText primary="Релизы авторов" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-                <NotificationsIcon fontSize="small" />
-              </ListItemIcon>
-            </ListItem>
-            <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', mt: 0.75, mb: 0.75 }}>
-              <ListItem button onClick={handleLogout} sx={{ py: 1.2 }}>
-                <ListItemText primary="Выйти из профиля" primaryTypographyProps={{ sx: { fontSize: '0.9rem' } }} />
-                <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end', minWidth: 40 }}>
-                  <LogoutIcon fontSize="small" />
-                </ListItemIcon>
-              </ListItem>
-            </Box>
-          </List>
-        ) : (
-          <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-            <Button 
-              fullWidth 
-              variant="contained" 
-              color="primary" 
-              onClick={handleOpenRegisterModal}
-              sx={{ 
-                py: 1, 
-                mb: 1.5, 
-                textTransform: 'none',
-                fontWeight: 600
-              }}
-            >
-              Регистрация
-            </Button>
-            <Button 
-              fullWidth 
-              variant="outlined" 
-              color="primary" 
-              onClick={handleOpenLoginModal}
-              sx={{ 
-                py: 1, 
-                textTransform: 'none',
-                fontWeight: 500
-              }}
-            >
-              Войти
-            </Button>
-          </Box>
-        )}
-      </Drawer>
-      
-      {/* Модальные окна авторизации и регистрации */}
-      <LoginModal 
-        open={loginModalOpen} 
-        onClose={handleCloseLoginModal}
-        onSwitchToRegister={handleSwitchToRegister}
-        onSwitchToForgotPassword={handleSwitchToForgotPassword}
-      />
-      
-      <RegisterModal 
-        open={registerModalOpen} 
-        onClose={handleCloseRegisterModal}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
-      
-      <ForgotPasswordModal
-        open={forgotPasswordModalOpen}
-        onClose={handleCloseForgotPasswordModal}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
-      
-      <ResetPasswordModal 
-        open={resetPasswordModalOpen} 
-        onClose={handleCloseResetPasswordModal}
-        token={resetToken}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
-    </>
+          </div>
+        </div>
+      </div>
+    </header>
   );
 }; 

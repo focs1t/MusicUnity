@@ -1,0 +1,172 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  width: 100%;
+  border-bottom: 1px solid rgba(39, 39, 42, 0.4);
+  backdrop-filter: blur(8px);
+  background-color: rgba(9, 9, 11, 0.6);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 12px;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 20px;
+  }
+}
+
+.content {
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  width: 150px;
+  height: 50px;
+  margin-right: 40px;
+  flex-shrink: 0;
+}
+
+.logoImage {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  max-width: 100px;
+  margin-right: 40px;
+}
+
+@media (min-width: 1024px) {
+  .logoImage {
+    max-width: 150px;
+  }
+}
+
+.searchContainer {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .searchContainer {
+    display: block;
+  }
+}
+
+.searchForm {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .searchForm {
+    width: 380px;
+  }
+}
+
+.searchButton {
+  position: absolute;
+  padding: 0;
+  inset: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.searchButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.searchIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.searchInput {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background-color: #18181b;
+  color: white;
+  width: 100%;
+  padding-left: 44px;
+  transition: all 0.3s;
+  outline: none;
+}
+
+.searchInput:focus {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.searchInput::placeholder {
+  color: #6b7280;
+}
+
+.searchText {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .searchText {
+    display: block;
+  }
+}
+
+.chevronIcon {
+  height: 16px;
+  width: 16px;
+  opacity: 0.5;
+}
+
+.authContainer {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 1023px) {
+  .authContainer {
+    display: none;
+  }
+}
+
+.mobileControls {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (min-width: 1024px) {
+  .mobileControls {
+    display: none;
+  }
+} 
