@@ -3,7 +3,7 @@ export const ROUTES = {
   NEWS: '/news',
   FAQ: '/faq',
   ABOUT: '/about',
-  TOP_90: '/top-90',
+  TOP_100: '/top-100',
   ALBUM_VALUE: '/albumvalue',
   RATING: '/rating',
   RZT_AWARDS: '/rztawards',

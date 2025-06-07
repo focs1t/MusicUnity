@@ -13,17 +13,23 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
+import ru.musicunity.backend.dto.UserRatingDTO;
 import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Audit;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.AuditAction;
+import ru.musicunity.backend.pojo.enums.LikeType;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.repository.AuditRepository;
+import ru.musicunity.backend.repository.LikeRepository;
+import ru.musicunity.backend.repository.ReviewRepository;
 import ru.musicunity.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,11 +39,71 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final AuditRepository auditRepository;
+    private final LikeRepository likeRepository;
+    private final ReviewRepository reviewRepository;
     private final PasswordEncoder passwordEncoder;
     private final FavoriteService favoriteService;
     private final AuthorFollowingService authorFollowingService;
     private final FollowedReleasesService followedReleasesService;
     private final UserMapper userMapper;
+
+    /**
+     * Получение топ-100 пользователей по рейтингу
+     * @return Список из 100 пользователей, отсортированных по рейтингу
+     */
+    public List<UserRatingDTO> getTop100Users() {
+        // Получаем всех не заблокированных пользователей
+        List<User> activeUsers = userRepository.findByIsBlockedFalse(Pageable.unpaged()).getContent();
+        
+        // Создаем список DTO с рейтингом
+        List<UserRatingDTO> ratingList = new ArrayList<>();
+        
+        for (User user : activeUsers) {
+            // Пропускаем пользователей с ролью ADMIN
+            if (user.getRights() == UserRole.ADMIN) {
+                continue;
+            }
+            
+            // Количество авторских лайков (лайки, которые получили рецензии пользователя)
+            Long authorLikes = likeRepository.countByReviewAuthorUserId(user.getUserId());
+            
+            // Количество рецензий пользователя
+            Long reviews = reviewRepository.countByUser(user.getUserId());
+            
+            // Количество поставленных лайков
+            Long likesGiven = likeRepository.countByUserUserId(user.getUserId());
+            
+            // Количество полученных лайков
+            Long likesReceived = likeRepository.countByReviewAuthorUserIdAndType(user.getUserId(), LikeType.REGULAR);
+            
+            // Расчет общего количества баллов
+            int points = (authorLikes.intValue() * 5) + 
+                          (reviews.intValue() * 3) + 
+                          (likesGiven.intValue() * 1) + 
+                          (likesReceived.intValue() * 2);
+            
+            UserRatingDTO ratingDTO = UserRatingDTO.builder()
+                    .id(user.getUserId())
+                    .username(user.getUsername())
+                    .avatarUrl(user.getAvatarUrl())
+                    .points(points)
+                    .authorLikes(authorLikes.intValue())
+                    .reviews(reviews.intValue())
+                    .likesGiven(likesGiven.intValue())
+                    .likesReceived(likesReceived.intValue())
+                    .build();
+            
+            ratingList.add(ratingDTO);
+        }
+        
+        // Сортируем по количеству баллов (по убыванию)
+        List<UserRatingDTO> top100 = ratingList.stream()
+                .sorted(Comparator.comparing(UserRatingDTO::getPoints).reversed())
+                .limit(100)
+                .collect(Collectors.toList());
+        
+        return top100;
+    }
 
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)

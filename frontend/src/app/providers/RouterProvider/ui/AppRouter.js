@@ -5,6 +5,8 @@ import HomePage from '../../../../pages/HomePage';
 import FollowingReleasesPage from '../../../../pages/FollowingReleasesPage';
 import ProfilePage from '../../../../pages/ProfilePage';
 import SettingsPage from '../../../../pages/SettingsPage';
+import Top100Page from '../../../../pages/Top100Page';
+import { ROUTES } from '../../../../shared/config/routes';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -20,7 +22,7 @@ const AppRouter = () => {
   return (
     <Routes>
       {/* Публичные маршруты */}
-      <Route path="/" element={<PublicRoute element={<HomePage />} />} />
+      <Route path={ROUTES.HOME} element={<PublicRoute element={<HomePage />} />} />
       
       {/* Защищенные маршруты */}
       <Route path="/profile" element={<ProtectedRoute element={<ProfilePage />} />} />
@@ -30,10 +32,17 @@ const AppRouter = () => {
       <Route path="/following-releases" element={<ProtectedRoute element={<FollowingReleasesPage />} />} />
       
       {/* Общедоступные страницы */}
-      <Route path="/releases" element={<PublicRoute element={<div>Релизы</div>} />} />
-      <Route path="/authors" element={<PublicRoute element={<div>Исполнители</div>} />} />
+      <Route path={ROUTES.RELEASES} element={<PublicRoute element={<div>Релизы</div>} />} />
+      <Route path={ROUTES.AUTHORS} element={<PublicRoute element={<div>Исполнители</div>} />} />
       <Route path="/genres" element={<PublicRoute element={<div>Жанры</div>} />} />
-      <Route path="/about" element={<PublicRoute element={<div>О нас</div>} />} />
+      <Route path={ROUTES.ABOUT} element={<PublicRoute element={<div>О нас</div>} />} />
+      <Route path={ROUTES.TOP_100} element={<PublicRoute element={<Top100Page />} />} />
+      <Route path={ROUTES.FAQ} element={<PublicRoute element={<div>Часто задаваемые вопросы</div>} />} />
+      <Route path={ROUTES.RATING} element={<PublicRoute element={<div>Рейтинг</div>} />} />
+      <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<div>Авторские лайки</div>} />} />
+      <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<div>Зарегистрированные авторы</div>} />} />
+      <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<div>Рецензии</div>} />} />
+      <Route path={ROUTES.CONTACT} element={<PublicRoute element={<div>Обратная связь</div>} />} />
       
       {/* Редирект на главную при переходе на неизвестный маршрут */}
       <Route path="*" element={<Navigate to="/" replace />} />

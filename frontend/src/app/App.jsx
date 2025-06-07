@@ -8,7 +8,7 @@ const Home = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>Глав
 const News = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>Новости</div>;
 const FAQ = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>Часто задаваемые вопросы</div>;
 const About = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>О нас</div>;
-const Top90 = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>ТОП-90 пользователей</div>;
+const Top100 = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>ТОП-100 пользователей</div>;
 const AlbumValue = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>Ценность альбомов</div>;
 const Rating = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>Рейтинг</div>;
 const RztAwards = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>Премия РЗТ</div>;
@@ -33,7 +33,7 @@ function App() {
             <Route path={ROUTES.NEWS} element={<News />} />
             <Route path={ROUTES.FAQ} element={<FAQ />} />
             <Route path={ROUTES.ABOUT} element={<About />} />
-            <Route path={ROUTES.TOP_90} element={<Top90 />} />
+            <Route path={ROUTES.TOP_100} element={<Top100 />} />
             <Route path={ROUTES.ALBUM_VALUE} element={<AlbumValue />} />
             <Route path={ROUTES.RATING} element={<Rating />} />
             <Route path={ROUTES.RZT_AWARDS} element={<RztAwards />} />

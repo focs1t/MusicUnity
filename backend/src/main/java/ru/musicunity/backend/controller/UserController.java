@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
+import ru.musicunity.backend.dto.UserRatingDTO;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.service.UserService;
@@ -28,6 +29,15 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;
+
+    @Operation(summary = "Получение топ-100 пользователей")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список топ-100 пользователей")
+    })
+    @GetMapping("/top-100")
+    public ResponseEntity<List<UserRatingDTO>> getTop100Users() {
+        return ResponseEntity.ok(userService.getTop100Users());
+    }
 
     @Operation(summary = "Поиск пользователей по имени пользователя")
     @ApiResponses(value = {

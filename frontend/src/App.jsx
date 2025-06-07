@@ -6,11 +6,13 @@ import { Footer } from './widgets/Footer';
 import { ROUTES } from './shared/config/routes';
 import './index.css';
 
+// Импорт страницы Top100Page
+import Top100Page from './pages/Top100Page';
+
 // Заглушки для страниц
 const Home = () => <div>Главная страница</div>;
 const FAQ = () => <div>Часто задаваемые вопросы</div>;
 const About = () => <div>О нас</div>;
-const Top90 = () => <div>ТОП-90 пользователей</div>;
 const Rating = () => <div>Рейтинг</div>;
 const AuthorLikes = () => <div>Авторские лайки</div>;
 const AuthorsVerified = () => <div>Зарегистрированные авторы</div>;
@@ -31,7 +33,7 @@ function App() {
               <Route path={ROUTES.HOME} element={<Home />} />
               <Route path={ROUTES.FAQ} element={<FAQ />} />
               <Route path={ROUTES.ABOUT} element={<About />} />
-              <Route path={ROUTES.TOP_90} element={<Top90 />} />
+              <Route path={ROUTES.TOP_100} element={<Top100Page />} />
               <Route path={ROUTES.RATING} element={<Rating />} />
               <Route path={ROUTES.AUTHOR_LIKES} element={<AuthorLikes />} />
               <Route path={ROUTES.AUTHORS_VERIFIED} element={<AuthorsVerified />} />

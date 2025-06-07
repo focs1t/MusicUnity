@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../shared/config/routes';
 import styles from './Sidebar.module.css';
 
@@ -17,6 +17,8 @@ import AlbumIcon from '@mui/icons-material/Album';
 import EditIcon from '@mui/icons-material/Edit';
 
 export const Sidebar = () => {
+  const navigate = useNavigate();
+
   // Структура навигации
   const navigationGroups = [
     {
@@ -28,7 +30,7 @@ export const Sidebar = () => {
     },
     {
       items: [
-        { icon: <EmojiEventsIcon />, text: 'ТОП-90 пользователей', path: ROUTES.TOP_90 },
+        { icon: <EmojiEventsIcon />, text: 'ТОП-100 пользователей', path: ROUTES.TOP_100 },
         { icon: <BarChartIcon />, text: 'Рейтинг', path: ROUTES.RATING },
       ]
     },
@@ -48,16 +50,27 @@ export const Sidebar = () => {
     }
   ];
 
+  const handleNavigation = (path) => {
+    navigate(path);
+  };
+
   return (
     <aside className={styles.sidebar}>
       {navigationGroups.map((group, groupIndex) => (
         <React.Fragment key={groupIndex}>
           <nav className={styles.navGroup}>
             {group.items.map((item, itemIndex) => (
-              <Link 
+              <div 
                 key={itemIndex} 
-                to={item.path} 
+                onClick={() => handleNavigation(item.path)} 
                 className={styles.navLink}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleNavigation(item.path);
+                  }
+                }}
               >
                 <span className={styles.iconWrapper}>
                   {item.icon}
@@ -65,7 +78,7 @@ export const Sidebar = () => {
                 <span className={styles.textWrapper}>
                   {item.text}
                 </span>
-              </Link>
+              </div>
             ))}
           </nav>
           {groupIndex < navigationGroups.length - 1 && <div className={styles.divider} />}

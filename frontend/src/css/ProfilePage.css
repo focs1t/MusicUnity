@@ -1,0 +1,12 @@
+/* Обновленный блок статистики без золотого сердечка */
+.gold-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Ссылки в ТОП-100 */
+.rank-link a {
+  text-decoration: none;
+  color: white;
+} 

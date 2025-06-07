@@ -4,6 +4,71 @@ const API_URL = '/api/users';
 
 export const userApi = {
   /**
+   * Получить топ-100 пользователей
+   * @returns {Promise<Array<{id: number, username: string, avatarUrl: string, points: number, authorLikes: number, reviews: number, likesGiven: number, likesReceived: number}>>}
+   */
+  getTop100Users: async () => {
+    try {
+      const response = await httpClient.get(`${API_URL}/top-100`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Получить ранг пользователя в топ-100
+   * @param {number} userId - ID пользователя
+   * @returns {Promise<{rank: number, points: number}>}
+   */
+  getUserRank: async (userId) => {
+    try {
+      // Прямой запрос к API для получения ранга пользователя
+      const response = await httpClient.get(`${API_URL}/${userId}/rank`);
+      const rankData = response.data;
+      
+      // Проверяем, что пользователь в топ-100
+      if (rankData && rankData.rank) {
+        return {
+          rank: rankData.rank,
+          points: rankData.points,
+          isInTop100: true
+        };
+      } else {
+        return {
+          rank: null,
+          points: rankData?.points || 0,
+          isInTop100: false
+        };
+      }
+    } catch (error) {
+      console.error('Ошибка при получении ранга пользователя:', error);
+      
+      // Альтернативный способ через получение всего списка
+      try {
+        const top100 = await userApi.getTop100Users();
+        const userIndex = top100.findIndex(user => user.id === userId);
+        
+        if (userIndex !== -1) {
+          return {
+            rank: userIndex + 1,
+            points: top100[userIndex].points,
+            isInTop100: true
+          };
+        }
+      } catch (fallbackError) {
+        console.error('Ошибка при получении ранга через запасной метод:', fallbackError);
+      }
+      
+      return {
+        rank: null,
+        points: null,
+        isInTop100: false
+      };
+    }
+  },
+
+  /**
    * Получить текущего пользователя
    * @returns {Promise<import('../../entities/user/model/types').User>}
    */

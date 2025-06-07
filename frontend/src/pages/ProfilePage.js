@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
 import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
+import { releaseApi } from '../shared/api/release';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VkIcon from '@mui/icons-material/Facebook'; // Используем Facebook как заменитель VK
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -105,6 +106,18 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
   console.log('Данные пользователя в ReviewCard:', userDetails);
   console.log('Данные релиза в ReviewCard:', review.release);
 
+  // Получение имени пользователя с учетом разных форматов данных
+  const getUserName = () => {
+    if (!userDetails) return "Пользователь";
+    
+    // Проверяем разные возможные поля с именем пользователя
+    if (userDetails.username) return userDetails.username;
+    if (userDetails.name) return userDetails.name;
+    if (userDetails.displayName) return userDetails.displayName;
+    
+    return "Пользователь";
+  };
+
   // Используем кешированный URL аватара или резервное значение
   const getAvatarUrl = () => {
     if (cachedAvatarUrl) {
@@ -117,8 +130,12 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
   useEffect(() => {
     if (!review.release) {
       console.warn(`ReviewCard: Отсутствуют данные релиза для рецензии ID ${review.reviewId}`);
+      if (review.releaseId) {
+        console.warn(`ReviewCard: Известен ID релиза: ${review.releaseId}, но нет полных данных релиза`);
+      }
     } else if (!review.release.coverUrl) {
       console.warn(`ReviewCard: Отсутствует URL обложки для релиза рецензии ID ${review.reviewId}`);
+      console.warn(`ReviewCard: Данные релиза:`, JSON.stringify(review.release, null, 2));
     }
   }, [review]);
 
@@ -153,7 +170,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
           <div className="flex items-start space-x-2 lg:space-x-3 w-full">
             <Link to={`/profile/${review.userId}`} className="relative">
               <img 
-                alt={userDetails?.username || "Пользователь"} 
+                alt={getUserName()} 
                 loading="lazy" 
                 width="40" 
                 height="40" 
@@ -166,13 +183,15 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
             <div className="flex flex-col gap-1 items-start">
               <div className="flex items-center gap-1 md:gap-2 max-sm:flex-wrap">
                 <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
-                  {userDetails?.username || "Пользователь"}
+                  {getUserName()}
                 </Link>
               </div>
               <div className="text-[12px] flex items-center space-x-1.5">
-                <div className="inline-flex items-center text-center bg-red-500 rounded-full font-semibold px-1.5">
-                  ТОП-82
-                </div>
+                {(userDetails?.rank || (review.user && review.user.rank)) && (
+                  <div className="inline-flex items-center text-center bg-red-500 rounded-full font-semibold px-1.5">
+                    ТОП-{userDetails?.rank || review.user?.rank}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -245,6 +264,118 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
   );
 };
 
+// Компонент для отображения рецензии с проверкой данных релиза
+const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl }) => {
+  const [enhancedReview, setEnhancedReview] = useState(review);
+  const [userRank, setUserRank] = useState(null);
+  
+  // Логирование входных данных
+  useEffect(() => {
+    console.log(`EnhancedReviewCard: Рецензия ID ${review.reviewId}`);
+    console.log(`EnhancedReviewCard: Данные пользователя:`, JSON.stringify(userDetails, null, 2));
+  }, [review, userDetails]);
+  
+  // Эффект для получения ранга пользователя
+  useEffect(() => {
+    const fetchUserRank = async () => {
+      try {
+        // Определяем ID пользователя для получения ранга
+        const userId = review.userId || (review.user && review.user.userId) || (userDetails && userDetails.userId);
+        
+        if (userId) {
+          console.log(`EnhancedReviewCard: Запрашиваем ранг для пользователя ID ${userId}`);
+          const rankData = await userApi.getUserRank(userId);
+          console.log(`EnhancedReviewCard: Получены данные о ранге:`, rankData);
+          
+          if (rankData && rankData.isInTop100) {
+            setUserRank(rankData.rank);
+          }
+        }
+      } catch (error) {
+        console.error(`EnhancedReviewCard: Ошибка при получении ранга пользователя:`, error);
+      }
+    };
+    
+    fetchUserRank();
+  }, [review, userDetails]);
+  
+  // Эффект для проверки и загрузки данных релиза, если они отсутствуют
+  useEffect(() => {
+    const loadReleaseData = async () => {
+      let releaseId = review.releaseId;
+      let currentRelease = review.release;
+      
+      // Если у рецензии есть ID релиза, но нет полных данных о релизе, или данные неполные
+      if (releaseId && (!currentRelease || !currentRelease.coverUrl)) {
+        console.log(`EnhancedReviewCard: Загружаем данные релиза по ID ${releaseId} для рецензии ID ${review.reviewId}`);
+        try {
+          // Делаем запрос к API релизов для получения полных данных
+          const releaseData = await releaseApi.getReleaseById(releaseId);
+          console.log(`EnhancedReviewCard: Полученные данные релиза для рецензии ID ${review.reviewId}:`, releaseData);
+          
+          if (releaseData) {
+            setEnhancedReview(prev => ({
+              ...prev,
+              release: releaseData
+            }));
+          }
+        } catch (releaseError) {
+          console.error(`EnhancedReviewCard: Не удалось загрузить данные релиза для рецензии ID ${review.reviewId}:`, releaseError);
+        }
+      }
+    };
+    
+    loadReleaseData();
+  }, [review]);
+  
+  // Подготавливаем улучшенные данные пользователя
+  const enhancedUserDetails = useMemo(() => {
+    if (!userDetails) {
+      // Если нет данных пользователя в пропсах, используем данные из рецензии
+      if (review.user) {
+        return {
+          ...review.user,
+          rank: userRank || review.user.rank
+        };
+      }
+      return null;
+    }
+    
+    // Добавляем ранг к данным пользователя
+    return {
+      ...userDetails,
+      rank: userRank || userDetails.rank
+    };
+  }, [userDetails, review.user, userRank]);
+  
+  // Подготавливаем улучшенные данные рецензии
+  const fullEnhancedReview = useMemo(() => {
+    let updatedReview = { ...enhancedReview };
+    
+    // Добавляем или обновляем информацию о пользователе в рецензии
+    if (updatedReview.user) {
+      updatedReview.user = {
+        ...updatedReview.user,
+        rank: userRank || updatedReview.user.rank
+      };
+    } else if (enhancedUserDetails) {
+      updatedReview.user = enhancedUserDetails;
+    }
+    
+    return updatedReview;
+  }, [enhancedReview, enhancedUserDetails, userRank]);
+  
+  return (
+    <ReviewCard 
+      review={fullEnhancedReview}
+      userDetails={enhancedUserDetails}
+      isLiked={isLiked}
+      onLikeToggle={onLikeToggle}
+      cachedAvatarUrl={cachedAvatarUrl}
+    />
+  );
+};
+
 // Отладочный компонент для проверки данных
 const DebugInfo = ({ isVisible, data }) => {
   if (!isVisible) return null;
@@ -276,9 +407,17 @@ const ProfilePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // Для хранения ранга пользователя
+  const [userRank, setUserRank] = useState({
+    rank: null,
+    points: 0,
+    isInTop100: false
+  });
+  
   // Для кеширования URL аватара
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [authorAvatarUrls, setAuthorAvatarUrls] = useState({});
+  const [reviewAuthorAvatarUrls, setReviewAuthorAvatarUrls] = useState({});
   
   // Определение активной вкладки на основе URL
   const getTabValueFromPath = () => {
@@ -343,6 +482,17 @@ const ProfilePage = () => {
         // Сохраняем URL аватара в кеш при первой загрузке
         if (!avatarUrl && userData?.avatarUrl) {
           setAvatarUrl(userData.avatarUrl);
+        }
+        
+        // Получение ранга пользователя
+        try {
+          if (userData && userData.userId) {
+            const rankData = await userApi.getUserRank(userData.userId);
+            console.log('Получены данные о ранге пользователя:', rankData);
+            setUserRank(rankData);
+          }
+        } catch (rankError) {
+          console.error('Ошибка при получении ранга пользователя:', rankError);
         }
         
         // Получение статистики
@@ -518,20 +668,21 @@ const ProfilePage = () => {
                 
                 // Проверяем и исправляем данные релиза, если они отсутствуют или неполные
                 let updatedRelease = review.release;
+                let releaseId = review.releaseId;
                 
-                if (!updatedRelease || !updatedRelease.releaseId) {
-                  console.warn(`Для рецензии ID ${review.reviewId} отсутствуют данные релиза, пытаемся получить...`);
+                // Если у рецензии есть поле releaseId, но нет полных данных о релизе, или данные неполные
+                if (releaseId && (!updatedRelease || !updatedRelease.coverUrl)) {
+                  console.log(`Загружаем данные релиза по ID ${releaseId} для рецензии ID ${review.reviewId}`);
                   try {
-                    // Здесь можно попытаться получить данные релиза с сервера, если API это поддерживает
-                    // Или установить заглушку
-                    updatedRelease = {
-                      releaseId: review.releaseId || 0,
-                      title: "Неизвестный релиз",
-                      coverUrl: null,
-                      releaseType: "UNKNOWN"
-                    };
+                    // Делаем запрос к API релизов для получения полных данных
+                    const releaseData = await releaseApi.getReleaseById(releaseId);
+                    console.log(`Полученные данные релиза для рецензии ID ${review.reviewId}:`, releaseData);
+                    
+                    if (releaseData) {
+                      updatedRelease = releaseData;
+                    }
                   } catch (releaseError) {
-                    console.error(`Не удалось получить данные релиза для рецензии ID ${review.reviewId}:`, releaseError);
+                    console.error(`Не удалось загрузить данные релиза для рецензии ID ${review.reviewId}:`, releaseError);
                   }
                 }
                 
@@ -555,10 +706,22 @@ const ProfilePage = () => {
             const userLikedReviews = await likeApi.getLikedReviewsByUser(userDetails.userId, page - 1, 5);
             console.log('Полученные лайкнутые рецензии:', JSON.stringify(userLikedReviews.content, null, 2));
             
+            // Кеширование аватаров авторов рецензий
+            let newReviewAuthorAvatarUrls = {...reviewAuthorAvatarUrls};
+            
             // Проверяем наличие totalScore и likesCount
             if (userLikedReviews.content && userLikedReviews.content.length > 0) {
               userLikedReviews.content.forEach(review => {
                 console.log(`Лайкнутая рецензия ID ${review.reviewId}: totalScore=${review.totalScore}, likesCount=${review.likesCount}`);
+                
+                // Детальный вывод данных пользователя для отладки
+                console.log(`Данные пользователя для рецензии ID ${review.reviewId}:`, JSON.stringify(review.user, null, 2));
+                
+                // Кешируем аватар автора рецензии, если он есть
+                if (review.user && review.user.userId && review.user.avatarUrl) {
+                  newReviewAuthorAvatarUrls[review.user.userId] = review.user.avatarUrl;
+                }
+                
                 // Добавляем проверку данных релиза
                 if (review.release) {
                   console.log(`Релиз для лайкнутой рецензии ID ${review.reviewId}:`, JSON.stringify(review.release, null, 2));
@@ -566,6 +729,9 @@ const ProfilePage = () => {
                   console.warn(`Релиз для лайкнутой рецензии ID ${review.reviewId} отсутствует!`);
                 }
               });
+              
+              // Обновляем кеш аватаров авторов рецензий
+              setReviewAuthorAvatarUrls(newReviewAuthorAvatarUrls);
               
               // Обновляем данные лайков для каждой рецензии и проверяем данные релиза
               const updatedLikedReviews = await Promise.all(
@@ -575,27 +741,51 @@ const ProfilePage = () => {
                     
                     // Проверяем и исправляем данные релиза, если они отсутствуют или неполные
                     let updatedRelease = review.release;
+                    let releaseId = review.releaseId;
                     
-                    if (!updatedRelease || !updatedRelease.releaseId) {
-                      console.warn(`Для лайкнутой рецензии ID ${review.reviewId} отсутствуют данные релиза, пытаемся получить...`);
+                    // Проверяем и нормализуем данные пользователя
+                    let updatedUser = review.user;
+                    
+                    // Если данные пользователя отсутствуют или неполные, используем данные из ответа API
+                    if (!updatedUser || !updatedUser.username) {
+                      console.log(`Дополняем данные пользователя для рецензии ID ${review.reviewId}`);
+                      
+                      // Попытка получить данные пользователя из API, если их нет
+                      if (review.userId) {
+                        try {
+                          const userData = await userApi.getUserById(review.userId);
+                          console.log(`Полученные данные пользователя для рецензии ID ${review.reviewId}:`, userData);
+                          
+                          if (userData) {
+                            updatedUser = userData;
+                          }
+                        } catch (userError) {
+                          console.error(`Не удалось загрузить данные пользователя для рецензии ID ${review.reviewId}:`, userError);
+                        }
+                      }
+                    }
+                    
+                    // Если у рецензии есть поле releaseId, но нет полных данных о релизе, или данные неполные
+                    if (releaseId && (!updatedRelease || !updatedRelease.coverUrl)) {
+                      console.log(`Загружаем данные релиза по ID ${releaseId} для лайкнутой рецензии ID ${review.reviewId}`);
                       try {
-                        // Здесь можно попытаться получить данные релиза с сервера, если API это поддерживает
-                        // Или установить заглушку
-                        updatedRelease = {
-                          releaseId: review.releaseId || 0,
-                          title: "Неизвестный релиз",
-                          coverUrl: null,
-                          releaseType: "UNKNOWN"
-                        };
+                        // Делаем запрос к API релизов для получения полных данных
+                        const releaseData = await releaseApi.getReleaseById(releaseId);
+                        console.log(`Полученные данные релиза для лайкнутой рецензии ID ${review.reviewId}:`, releaseData);
+                        
+                        if (releaseData) {
+                          updatedRelease = releaseData;
+                        }
                       } catch (releaseError) {
-                        console.error(`Не удалось получить данные релиза для лайкнутой рецензии ID ${review.reviewId}:`, releaseError);
+                        console.error(`Не удалось загрузить данные релиза для лайкнутой рецензии ID ${review.reviewId}:`, releaseError);
                       }
                     }
                     
                     return { 
                       ...review, 
                       likesCount,
-                      release: updatedRelease 
+                      release: updatedRelease,
+                      user: updatedUser
                     };
                   } catch (error) {
                     console.error(`Ошибка при обновлении данных для лайкнутой рецензии ID ${review.reviewId}:`, error);
@@ -800,6 +990,14 @@ const ProfilePage = () => {
     return author.avatarUrl ? author.avatarUrl : '/default-avatar.jpg';
   };
   
+  // Получение URL аватара автора рецензии из кеша или данных пользователя
+  const getCachedReviewAuthorAvatarUrl = (user) => {
+    if (user && user.userId && reviewAuthorAvatarUrls[user.userId]) {
+      return reviewAuthorAvatarUrls[user.userId];
+    }
+    return user?.avatarUrl ? user.avatarUrl : '/default-avatar.jpg';
+  };
+  
   // Функция для обработки ошибок изображений
   const handleImageError = (e) => {
     console.log('Ошибка загрузки изображения профиля, замена на заглушку');
@@ -959,21 +1157,20 @@ const ProfilePage = () => {
               <div className="stats-card">
                 <div className="relative">
                   <div className="gold-badge">
-                    <img 
-                      alt="user avatar" 
-                      loading="lazy" 
-                      width="73" 
-                      height="73" 
-                      src="/gold_heart_3.png"
-                    />
                     <div>
                       <div className="points-container">
-                        <div className="points-badge">24201</div>
+                        <div className="points-badge">{userRank.points || 0}</div>
                         <div className="points-text">баллов сообщества</div>
                       </div>
                       <div className="rank-container">
-                        <div className="rank-badge">ТОП 82</div>
-                        <div className="rank-link"><Link to="/top-90">в ТОП-90</Link></div>
+                        {userRank.isInTop100 ? (
+                          <>
+                            <div className="rank-badge">ТОП {userRank.rank}</div>
+                            <div className="rank-link"><Link to="/top-100">в ТОП-100</Link></div>
+                          </>
+                        ) : (
+                          <div className="rank-link"><Link to="/top-100">Рейтинг пользователей</Link></div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1156,7 +1353,7 @@ const ProfilePage = () => {
                     <div className="reviews-list">
                       {userReviews && userReviews.length > 0 ? (
                         userReviews.map((review) => (
-                          <ReviewCard 
+                          <EnhancedReviewCard 
                             key={review.reviewId}
                             review={review}
                             userDetails={userDetails}
@@ -1200,13 +1397,13 @@ const ProfilePage = () => {
                     <div className="reviews-list">
                       {likedReviews && likedReviews.length > 0 ? (
                         likedReviews.map((review) => (
-                          <ReviewCard 
+                          <EnhancedReviewCard
                             key={review.reviewId}
                             review={review}
                             userDetails={review.user}
                             isLiked={true}
                             onLikeToggle={handleLikeToggle}
-                            cachedAvatarUrl={getCachedAvatarUrl()}
+                            cachedAvatarUrl={getCachedReviewAuthorAvatarUrl(review.user)}
                           />
                         ))
                       ) : (
