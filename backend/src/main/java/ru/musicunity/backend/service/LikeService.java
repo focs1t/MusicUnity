@@ -1,13 +1,17 @@
 package ru.musicunity.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.LikeDTO;
+import ru.musicunity.backend.dto.ReviewDTO;
 import ru.musicunity.backend.exception.LikeExistsException;
 import ru.musicunity.backend.exception.ReviewNotFoundException;
 import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.LikeMapper;
+import ru.musicunity.backend.mapper.ReviewMapper;
 import ru.musicunity.backend.pojo.Like;
 import ru.musicunity.backend.pojo.Review;
 import ru.musicunity.backend.pojo.User;
@@ -26,6 +30,7 @@ public class LikeService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final LikeMapper likeMapper;
+    private final ReviewMapper reviewMapper;
 
     public List<LikeDTO> getLikesByReview(Long reviewId) {
         return likeRepository.findAllByReviewId(reviewId)
@@ -39,6 +44,11 @@ public class LikeService {
                 .stream()
                 .map(likeMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+    
+    public Page<ReviewDTO> getAllReviewsWithAuthorLikes(Pageable pageable) {
+        return likeRepository.findAllReviewsByLikeType(LikeType.AUTHOR, pageable)
+                .map(reviewMapper::toDTO);
     }
 
     public Long getLikesCountByReview(Long reviewId) {

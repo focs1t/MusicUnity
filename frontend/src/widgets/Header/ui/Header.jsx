@@ -482,14 +482,14 @@ export const Header = () => {
           <div className={styles.content}>
             <a className={styles.logo} href="/">
               <img 
-                alt="Риса за Творчество логотип" 
+                alt="MusicUnity"
                 width="200" 
                 height="100" 
                 decoding="async" 
                 data-nimg="1" 
                 className={styles.logoImage} 
                 style={{ color: 'transparent' }} 
-                src="/риса за творчество логотип.svg" 
+                src="/musicUnity.svg"
               />
             </a>
             <div className={styles.searchContainer}>

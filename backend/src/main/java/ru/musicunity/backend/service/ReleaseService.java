@@ -49,6 +49,7 @@ public class ReleaseService {
                 .coverUrl(request.getCoverUrl())
                 .releaseLink(request.getReleaseLink())
                 .favoritesCount(0)
+                .isDeleted(false)
                 .build();
         
         release = releaseRepository.save(release);
@@ -77,6 +78,7 @@ public class ReleaseService {
                         .isProducer(authorRequest.isProducer())
                         .isVerified(false)
                         .followingCount(0)
+                        .isDeleted(false)
                         .build();
                 author = authorRepository.save(author);
             }
@@ -134,6 +136,7 @@ public class ReleaseService {
                 .coverUrl(request.getCoverUrl())
                 .releaseLink(request.getReleaseLink())
                 .favoritesCount(0)
+                .isDeleted(false)
                 .build();
         
         release = releaseRepository.save(release);
@@ -173,6 +176,7 @@ public class ReleaseService {
                             .isProducer(authorRequest.isProducer())
                             .isVerified(false)
                             .followingCount(0)
+                            .isDeleted(false)
                             .build();
                     author = authorRepository.save(author);
                 }

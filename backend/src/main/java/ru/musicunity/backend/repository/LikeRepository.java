@@ -20,6 +20,15 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     @Query("SELECT l FROM Like l WHERE l.review.reviewId = :reviewId AND l.type = :type")
     List<Like> findAllByReviewIdAndType(@Param("reviewId") Long reviewId, @Param("type") LikeType type);
+    
+    @Query("SELECT l FROM Like l WHERE l.type = :type ORDER BY l.createdAt DESC")
+    List<Like> findAllByType(@Param("type") LikeType type);
+    
+    @Query("SELECT l FROM Like l WHERE l.type = :type ORDER BY l.createdAt DESC")
+    Page<Like> findAllByType(@Param("type") LikeType type, Pageable pageable);
+    
+    @Query("SELECT DISTINCT l.review FROM Like l WHERE l.type = :type ORDER BY l.createdAt DESC")
+    Page<Review> findAllReviewsByLikeType(@Param("type") LikeType type, Pageable pageable);
 
     Long countByReviewReviewId(Long reviewId);
 

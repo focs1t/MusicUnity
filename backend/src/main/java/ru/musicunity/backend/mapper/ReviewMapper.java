@@ -25,6 +25,15 @@ public class ReviewMapper {
         dto.setIndividuality(review.getIndividuality());
         dto.setVibe(review.getVibe());
         dto.setLikesCount(review.getLikesCount());
+        
+        // Явно устанавливаем значение totalScore из entity
+        Integer totalScore = review.getTotalScore();
+        dto.setTotalScore(totalScore != null ? totalScore : 
+            // Если значение null, вычисляем по формуле
+            Math.round((review.getRhymeImagery() + review.getStructureRhythm() + 
+                      review.getStyleExecution() + review.getIndividuality()) * 
+                      (1 + (review.getVibe() / 10.0f) * 1.5f)));
+            
         dto.setCreatedAt(review.getCreatedAt());
         
         return dto;
@@ -47,6 +56,7 @@ public class ReviewMapper {
         review.setVibe(dto.getVibe());
         review.setLikesCount(dto.getLikesCount());
         review.setCreatedAt(dto.getCreatedAt());
+        review.setIsDeleted(false);
         
         return review;
     }

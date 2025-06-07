@@ -16,6 +16,12 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import ChatIcon from '@mui/icons-material/Chat';
 import './ProfilePage.css';
 
+// Встроенный плейсхолдер в формате data URI для аватара
+const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
+
+// Встроенный плейсхолдер в формате data URI для обложки релиза
+const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMyMjIyMjIiLz48cGF0aCBkPSJNNzAgODBIMTMwVjEyMEg3MFY4MFoiIGZpbGw9IiM0NDQ0NDQiLz48cGF0aCBkPSJNNTAgMTUwSDE1MFYxNjBINTBWMTUwWiIgZmlsbD0iIzQ0NDQ0NCIvPjwvc3ZnPg==';
+
 // Компонент для TabPanel (содержимое вкладки)
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -37,6 +43,231 @@ function TabPanel(props) {
   );
 }
 
+// Обновляю компонент карточки рецензии
+const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl }) => {
+  // Вспомогательная функция для вычисления totalScore внутри компонента
+  const calculateReviewScore = (review) => {
+    if (review.totalScore !== undefined && review.totalScore !== null) {
+      return review.totalScore;
+    }
+    
+    // Вычисляем по формуле как на бэкенде
+    const baseScore = (review.rhymeImagery || 0) + 
+                      (review.structureRhythm || 0) + 
+                      (review.styleExecution || 0) + 
+                      (review.individuality || 0);
+    const vibeMultiplier = 1 + ((review.vibe || 0) / 10) * 1.5;
+    return Math.round(baseScore * vibeMultiplier);
+  };
+
+  // Функция для обработки ошибок изображений
+  const handleImageError = (e) => {
+    console.log('Ошибка загрузки изображения, замена на заглушку');
+    
+    // Прекращаем обработку ошибок для этого элемента
+    e.target.onerror = null;
+    
+    // Проверяем, была ли уже попытка загрузить заглушку
+    const hasTriedPlaceholder = e.target.getAttribute('data-tried-placeholder') === 'true';
+    
+    if (!hasTriedPlaceholder) {
+      // Отмечаем, что мы пытались загрузить заглушку
+      e.target.setAttribute('data-tried-placeholder', 'true');
+      e.target.src = '/default-avatar.jpg';
+    } else {
+      // Если заглушка тоже не загрузилась, используем встроенный data URI
+      console.log('Не удалось загрузить заглушку, использую встроенный placeholder');
+      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+    }
+  };
+  
+  // Функция для обработки ошибок изображений релизов
+  const handleReleaseImageError = (e) => {
+    console.log('Ошибка загрузки обложки релиза, замена на заглушку');
+    
+    // Прекращаем обработку ошибок для этого элемента
+    e.target.onerror = null;
+    
+    // Проверяем, была ли уже попытка загрузить заглушку
+    const hasTriedPlaceholder = e.target.getAttribute('data-tried-placeholder') === 'true';
+    
+    if (!hasTriedPlaceholder) {
+      // Отмечаем, что мы пытались загрузить заглушку
+      e.target.setAttribute('data-tried-placeholder', 'true');
+      e.target.src = '/default-cover.avif';
+    } else {
+      // Если заглушка тоже не загрузилась, используем встроенный data URI
+      console.log('Не удалось загрузить заглушку, использую встроенный placeholder');
+      e.target.src = DEFAULT_COVER_PLACEHOLDER;
+    }
+  };
+
+  console.log('Данные пользователя в ReviewCard:', userDetails);
+  console.log('Данные релиза в ReviewCard:', review.release);
+
+  // Используем кешированный URL аватара или резервное значение
+  const getAvatarUrl = () => {
+    if (cachedAvatarUrl) {
+      return cachedAvatarUrl;
+    }
+    return userDetails?.avatarUrl ? userDetails.avatarUrl : '/default-avatar.jpg';
+  };
+
+  // Проверяем данные релиза и логируем подробности
+  useEffect(() => {
+    if (!review.release) {
+      console.warn(`ReviewCard: Отсутствуют данные релиза для рецензии ID ${review.reviewId}`);
+    } else if (!review.release.coverUrl) {
+      console.warn(`ReviewCard: Отсутствует URL обложки для релиза рецензии ID ${review.reviewId}`);
+    }
+  }, [review]);
+
+  // Безопасное получение URL обложки релиза
+  const getReleaseCoverUrl = () => {
+    if (!review || !review.release) {
+      return '/default-cover.avif';
+    }
+    return review.release.coverUrl ? review.release.coverUrl : '/default-cover.avif';
+  };
+  
+  // Безопасное получение ID релиза
+  const getReleaseId = () => {
+    if (!review || !review.release) {
+      return review.releaseId || 0; // Пытаемся использовать ID из самой рецензии, если есть
+    }
+    return review.release.releaseId || 0;
+  };
+  
+  // Безопасное получение заголовка релиза
+  const getReleaseTitle = () => {
+    if (!review || !review.release) {
+      return "Релиз";
+    }
+    return review.release.title || "Релиз";
+  };
+
+  return (
+    <div className="review-card">
+      <div className="relative">
+        <div className="bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3">
+          <div className="flex items-start space-x-2 lg:space-x-3 w-full">
+            <Link to={`/profile/${review.userId}`} className="relative">
+              <img 
+                alt={userDetails?.username || "Пользователь"} 
+                loading="lazy" 
+                width="40" 
+                height="40" 
+                className="shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full"
+                src={getAvatarUrl()} 
+                onError={handleImageError}
+              />
+            </Link>
+            
+            <div className="flex flex-col gap-1 items-start">
+              <div className="flex items-center gap-1 md:gap-2 max-sm:flex-wrap">
+                <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
+                  {userDetails?.username || "Пользователь"}
+                </Link>
+              </div>
+              <div className="text-[12px] flex items-center space-x-1.5">
+                <div className="inline-flex items-center text-center bg-red-500 rounded-full font-semibold px-1.5">
+                  ТОП-82
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-end gap-2 lg:gap-4">
+            <div className="text-right flex flex-col h-full justify-center">
+              <div className="text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right">
+                <span className="no-callout">{calculateReviewScore(review)}</span>
+              </div>
+              <div className="flex gap-x-1.5 font-bold text-xs lg:text-sm justify-end">
+                <div className="no-callout text-userColor" data-state="closed">{review.rhymeImagery || 0}</div>
+                <div className="no-callout text-userColor" data-state="closed">{review.structureRhythm || 0}</div>
+                <div className="no-callout text-userColor" data-state="closed">{review.styleExecution || 0}</div>
+                <div className="no-callout text-userColor" data-state="closed">{review.individuality || 0}</div>
+                <div className="no-callout text-ratingVibe" data-state="closed">{review.vibe || 0}</div>
+              </div>
+            </div>
+            
+            <Link to={`/releases/${getReleaseId()}`} className="shrink-0 size-10 lg:size-10 block" data-state="closed">
+              <img 
+                alt={getReleaseTitle()} 
+                loading="lazy" 
+                width="40" 
+                height="40" 
+                className="rounded-md w-full h-full object-cover"
+                src={getReleaseCoverUrl()} 
+                onError={handleReleaseImageError}
+              />
+            </Link>
+          </div>
+        </div>
+      </div>
+      
+      <div className="review-content-preview">
+        <div className="review-title">
+          {review.title || `Рецензия на ${getReleaseTitle()}`}
+        </div>
+        {review.content && (
+          <div className="review-text">
+            {review.content.substring(0, 150)}...
+          </div>
+        )}
+      </div>
+      
+      <div className="review-footer">
+        <div className="review-actions">
+          <button 
+            className="review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5"
+            onClick={() => onLikeToggle(review.reviewId)}
+          >
+            <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center">
+              {isLiked ? 
+                <FavoriteIcon style={{ color: '#FF5252', fontSize: '22px' }} /> : 
+                <FavoriteBorderIcon style={{ color: '#AAAAAA', fontSize: '22px' }} />
+              }
+            </div>
+            <span className="font-bold text-base lg:text-base">{review.likesCount !== undefined ? review.likesCount : 0}</span>
+          </button>
+        </div>
+        
+        <div className="review-links">
+          <Link to={`/reviews/${review.reviewId}`} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground size-8 md:size-10 bg-transparent hover:bg-white/10">
+            <svg viewBox="0 0 15 15" className="size-6 text-zinc-400 stroke-white fill-zinc-400">
+              <path fillRule="evenodd" clipRule="evenodd" d="M12 13C12.5523 13 13 12.5523 13 12V3C13 2.44771 12.5523 2 12 2H3C2.44771 2 2 2.44771 2 3V6.5C2 6.77614 2.22386 7 2.5 7C2.77614 7 3 6.77614 3 6.5V3H12V12H8.5C8.22386 12 8 12.2239 8 12.5C8 12.7761 8.22386 13 8.5 13H12ZM9 6.5C9 6.5001 9 6.50021 9 6.50031V6.50035V9.5C9 9.77614 8.77614 10 8.5 10C8.22386 10 8 9.77614 8 9.5V7.70711L2.85355 12.8536C2.65829 13.0488 2.34171 13.0488 2.14645 12.8536C1.95118 12.6583 1.95118 12.3417 2.14645 12.1464L7.29289 7H5.5C5.22386 7 5 6.77614 5 6.5C5 6.22386 5.22386 6 5.5 6H8.5C8.56779 6 8.63244 6.01349 8.69139 6.03794C8.74949 6.06198 8.80398 6.09744 8.85143 6.14433C8.94251 6.23434 8.9992 6.35909 8.99999 6.49708L8.99999 6.49738" fill="currentColor"></path>
+            </svg>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Отладочный компонент для проверки данных
+const DebugInfo = ({ isVisible, data }) => {
+  if (!isVisible) return null;
+  
+  return (
+    <div style={{ 
+      position: 'fixed', 
+      bottom: '10px', 
+      right: '10px', 
+      background: 'rgba(0,0,0,0.8)', 
+      color: 'white', 
+      padding: '10px', 
+      borderRadius: '5px',
+      maxHeight: '300px',
+      overflow: 'auto',
+      zIndex: 1000,
+      fontSize: '12px'
+    }}>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
+    </div>
+  );
+};
+
 const ProfilePage = () => {
   const { user: authUser } = useAuth();
   const [userDetails, setUserDetails] = useState(null);
@@ -44,6 +275,10 @@ const ProfilePage = () => {
   const [error, setError] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Для кеширования URL аватара
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [authorAvatarUrls, setAuthorAvatarUrls] = useState({});
   
   // Определение активной вкладки на основе URL
   const getTabValueFromPath = () => {
@@ -71,8 +306,22 @@ const ProfilePage = () => {
   // Данные для вкладок
   const [followedAuthors, setFollowedAuthors] = useState([]);
   const [favoriteReleases, setFavoriteReleases] = useState([]);
+  const [processedReleases, setProcessedReleases] = useState([]);
   const [userReviews, setUserReviews] = useState([]);
   const [likedReviews, setLikedReviews] = useState([]);
+  const [likedReviewIds, setLikedReviewIds] = useState([]);
+  
+  // Группировка релизов по типам
+  const [albumReleases, setAlbumReleases] = useState([]);
+  const [singleReleases, setSingleReleases] = useState([]);
+  const [epReleases, setEpReleases] = useState([]);
+  const [mixtapeReleases, setMixtapeReleases] = useState([]);
+  const [compilationReleases, setCompilationReleases] = useState([]);
+  const [otherReleases, setOtherReleases] = useState([]);
+  
+  // Состояние для отладки
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugData, setDebugData] = useState({});
   
   // Загрузка данных при монтировании компонента
   useEffect(() => {
@@ -87,7 +336,14 @@ const ProfilePage = () => {
         } else {
           userData = await userApi.getCurrentUser();
         }
+        
+        console.log('Получены данные пользователя:', userData);
         setUserDetails(userData);
+        
+        // Сохраняем URL аватара в кеш при первой загрузке
+        if (!avatarUrl && userData?.avatarUrl) {
+          setAvatarUrl(userData.avatarUrl);
+        }
         
         // Получение статистики
         const [
@@ -96,15 +352,23 @@ const ProfilePage = () => {
           authorLikes,
           reviewsCount,
           followedAuthorsData,
-          favoritesData
+          favoritesData,
+          likedReviewsData
         ] = await Promise.all([
           likeApi.getReceivedLikesCountByUser(userData.userId),
           likeApi.getGivenLikesCountByUser(userData.userId),
           likeApi.getReceivedAuthorLikesCountByUser(userData.userId),
           reviewApi.getReviewsCountByUser(userData.userId),
           userApi.getUserFollowedAuthors(userData.userId, 0, 5),
-          userApi.getUserFavorites(userData.userId, 0, 5)
+          userApi.getUserFavorites(userData.userId, 0, 5),
+          likeApi.getLikedReviewsByUser(userData.userId, 0, 100)
         ]);
+        
+        // Получаем список ID рецензий, которые пользователь лайкнул
+        if (likedReviewsData && likedReviewsData.content) {
+          const reviewIds = likedReviewsData.content.map(review => review.reviewId);
+          setLikedReviewIds(reviewIds);
+        }
         
         // Обновление статистики
         setStats({
@@ -112,14 +376,100 @@ const ProfilePage = () => {
           givenLikes,
           receivedAuthorLikes: authorLikes,
           totalReviews: reviewsCount,
-          followedAuthors: followedAuthorsData.totalElements,
-          favorites: favoritesData.totalElements
+          followedAuthors: followedAuthorsData.totalElements || 0,
+          favorites: favoritesData.totalElements || 0
         });
         
-        // Загрузка данных
-        setFollowedAuthors(followedAuthorsData.content);
-        setFavoriteReleases(favoritesData.content);
-        setTotalPages(Math.max(followedAuthorsData.totalPages, favoritesData.totalPages));
+        // Детальное логирование данных
+        console.log('Авторы (оригинальные данные):', followedAuthorsData);
+        console.log('Релизы (оригинальные данные):', favoritesData);
+        
+        // Обработка и нормализация данных авторов
+        let processedAuthors = [];
+        let newAuthorAvatarUrls = {};
+        
+        if (followedAuthorsData && followedAuthorsData.content) {
+          processedAuthors = followedAuthorsData.content.map(author => {
+            console.log('Обрабатываем автора:', author);
+            
+            // Сохраняем URL аватара автора в кеш
+            if (author.authorId && author.avatarUrl) {
+              newAuthorAvatarUrls[author.authorId] = author.avatarUrl;
+            }
+            
+            // Проверяем, что автор имеет все необходимые поля
+            return {
+              authorId: author.authorId || 0,
+              name: author.name || author.authorName || "Неизвестный автор",
+              avatarUrl: author.avatarUrl || null,
+              isArtist: author.isArtist || false,
+              isProducer: author.isProducer || false
+            };
+          });
+          
+          // Обновляем кеш URL аватаров авторов
+          setAuthorAvatarUrls(prev => ({...prev, ...newAuthorAvatarUrls}));
+        }
+        
+        // Обработка и нормализация данных релизов
+        let processedReleasesData = [];
+        if (favoritesData && favoritesData.content) {
+          processedReleasesData = favoritesData.content.map(release => {
+            console.log('Обрабатываем релиз:', release);
+            
+            // Определяем тип релиза, учитывая разные форматы данных
+            let releaseType = 'UNKNOWN';
+            if (release.releaseType) {
+              releaseType = release.releaseType;
+            } else if (release.type) {
+              releaseType = release.type;
+            } else if (typeof release.isSingle !== 'undefined') {
+              releaseType = release.isSingle ? 'SINGLE' : 'ALBUM';
+            }
+            
+            // Нормализуем тип релиза к верхнему регистру для единообразия
+            releaseType = typeof releaseType === 'string' ? releaseType.toUpperCase() : 'UNKNOWN';
+            
+            console.log(`Определен тип релиза "${release.title}": ${releaseType}`);
+            
+            // Проверяем, что релиз имеет все необходимые поля
+            return {
+              releaseId: release.releaseId || 0,
+              title: release.title || "Неизвестный релиз",
+              coverUrl: release.coverUrl || null,
+              releaseDate: release.releaseDate || null,
+              authors: release.authors || [],
+              releaseType: releaseType
+            };
+          });
+        }
+        
+        console.log('Авторы (обработанные):', processedAuthors);
+        console.log('Релизы (обработанные):', processedReleasesData);
+        
+        // Дополнительно группируем релизы по типам
+        const albums = processedReleasesData.filter(r => r.releaseType === 'ALBUM');
+        const singlesAndEps = processedReleasesData.filter(r => r.releaseType === 'SINGLE' || r.releaseType === 'EP');
+        const unknownReleases = processedReleasesData.filter(r => 
+          !['ALBUM', 'SINGLE', 'EP'].includes(r.releaseType)
+        );
+        
+        console.log('Разбивка релизов по типам:');
+        console.log('Альбомы:', albums.length);
+        console.log('Синглы и EP:', singlesAndEps.length);
+        console.log('Неизвестные:', unknownReleases.length);
+        
+        setFollowedAuthors(processedAuthors);
+        setFavoriteReleases(favoritesData.content || []);
+        setProcessedReleases(processedReleasesData);
+        setAlbumReleases(albums);
+        setSingleReleases(singlesAndEps);
+        setEpReleases([]);  // Больше не используем отдельно
+        setOtherReleases(unknownReleases);
+        setTotalPages(Math.max(
+          followedAuthorsData.totalPages || 1,
+          favoritesData.totalPages || 1
+        ));
         
         setError(null);
       } catch (err) {
@@ -147,18 +497,176 @@ const ProfilePage = () => {
             5, 
             reviewFilter === 'author_liked' ? true : null
           );
-          setUserReviews(userReviewsData.content);
+          console.log('Полученные рецензии пользователя:', JSON.stringify(userReviewsData.content, null, 2));
+          
+          // Проверяем наличие totalScore и likesCount
+          userReviewsData.content.forEach(review => {
+            console.log(`Рецензия ID ${review.reviewId}: totalScore=${review.totalScore}, likesCount=${review.likesCount}`);
+            // Добавляем проверку данных релиза
+            if (review.release) {
+              console.log(`Релиз для рецензии ID ${review.reviewId}:`, JSON.stringify(review.release, null, 2));
+            } else {
+              console.warn(`Релиз для рецензии ID ${review.reviewId} отсутствует!`);
+            }
+          });
+          
+          // Обновляем данные лайков для каждой рецензии и проверяем/дополняем данные релиза
+          const updatedReviews = await Promise.all(
+            userReviewsData.content.map(async (review) => {
+              try {
+                const likesCount = await likeApi.getLikesCountByReview(review.reviewId);
+                
+                // Проверяем и исправляем данные релиза, если они отсутствуют или неполные
+                let updatedRelease = review.release;
+                
+                if (!updatedRelease || !updatedRelease.releaseId) {
+                  console.warn(`Для рецензии ID ${review.reviewId} отсутствуют данные релиза, пытаемся получить...`);
+                  try {
+                    // Здесь можно попытаться получить данные релиза с сервера, если API это поддерживает
+                    // Или установить заглушку
+                    updatedRelease = {
+                      releaseId: review.releaseId || 0,
+                      title: "Неизвестный релиз",
+                      coverUrl: null,
+                      releaseType: "UNKNOWN"
+                    };
+                  } catch (releaseError) {
+                    console.error(`Не удалось получить данные релиза для рецензии ID ${review.reviewId}:`, releaseError);
+                  }
+                }
+                
+                return { 
+                  ...review, 
+                  likesCount,
+                  release: updatedRelease
+                };
+              } catch (error) {
+                console.error(`Ошибка при обновлении данных для рецензии ID ${review.reviewId}:`, error);
+                return review;
+              }
+            })
+          );
+          
+          setUserReviews(updatedReviews);
           setTotalPages(userReviewsData.totalPages);
         } else if (tabValue === 2) {
           try {
             // Загружаем лайкнутые рецензии с бэкенда
             const userLikedReviews = await likeApi.getLikedReviewsByUser(userDetails.userId, page - 1, 5);
-            setLikedReviews(userLikedReviews.content || []);
+            console.log('Полученные лайкнутые рецензии:', JSON.stringify(userLikedReviews.content, null, 2));
+            
+            // Проверяем наличие totalScore и likesCount
+            if (userLikedReviews.content && userLikedReviews.content.length > 0) {
+              userLikedReviews.content.forEach(review => {
+                console.log(`Лайкнутая рецензия ID ${review.reviewId}: totalScore=${review.totalScore}, likesCount=${review.likesCount}`);
+                // Добавляем проверку данных релиза
+                if (review.release) {
+                  console.log(`Релиз для лайкнутой рецензии ID ${review.reviewId}:`, JSON.stringify(review.release, null, 2));
+                } else {
+                  console.warn(`Релиз для лайкнутой рецензии ID ${review.reviewId} отсутствует!`);
+                }
+              });
+              
+              // Обновляем данные лайков для каждой рецензии и проверяем данные релиза
+              const updatedLikedReviews = await Promise.all(
+                userLikedReviews.content.map(async (review) => {
+                  try {
+                    const likesCount = await likeApi.getLikesCountByReview(review.reviewId);
+                    
+                    // Проверяем и исправляем данные релиза, если они отсутствуют или неполные
+                    let updatedRelease = review.release;
+                    
+                    if (!updatedRelease || !updatedRelease.releaseId) {
+                      console.warn(`Для лайкнутой рецензии ID ${review.reviewId} отсутствуют данные релиза, пытаемся получить...`);
+                      try {
+                        // Здесь можно попытаться получить данные релиза с сервера, если API это поддерживает
+                        // Или установить заглушку
+                        updatedRelease = {
+                          releaseId: review.releaseId || 0,
+                          title: "Неизвестный релиз",
+                          coverUrl: null,
+                          releaseType: "UNKNOWN"
+                        };
+                      } catch (releaseError) {
+                        console.error(`Не удалось получить данные релиза для лайкнутой рецензии ID ${review.reviewId}:`, releaseError);
+                      }
+                    }
+                    
+                    return { 
+                      ...review, 
+                      likesCount,
+                      release: updatedRelease 
+                    };
+                  } catch (error) {
+                    console.error(`Ошибка при обновлении данных для лайкнутой рецензии ID ${review.reviewId}:`, error);
+                    return review;
+                  }
+                })
+              );
+              
+              setLikedReviews(updatedLikedReviews);
+            } else {
+              setLikedReviews([]);
+            }
+            
             setTotalPages(userLikedReviews.totalPages || 0);
           } catch (error) {
             console.error('Ошибка при загрузке лайкнутых рецензий:', error);
             setLikedReviews([]);
             setTotalPages(0);
+          }
+        } else if (tabValue === 0) {
+          // Дополнительная загрузка авторов и релизов для вкладки "Предпочтения"
+          try {
+            console.log('Загружаем данные для вкладки Предпочтения...');
+            
+            // Получаем отслеживаемых авторов
+            const followedAuthorsData = await userApi.getUserFollowedAuthors(userDetails.userId, 0, 10);
+            console.log('Ответ сервера для авторов:', followedAuthorsData);
+            
+            if (followedAuthorsData && followedAuthorsData.content) {
+              console.log('Количество авторов:', followedAuthorsData.content.length);
+              
+              // Проверяем каждого автора на наличие необходимых полей
+              const validAuthors = followedAuthorsData.content.map(author => {
+                console.log('Автор:', author);
+                return {
+                  authorId: author.authorId || 0,
+                  name: author.name || author.authorName || "Неизвестный автор",
+                  avatarUrl: author.avatarUrl || null,
+                  isArtist: author.isArtist || false,
+                  isProducer: author.isProducer || false
+                };
+              });
+              
+              console.log('Обработанные авторы:', validAuthors);
+              setFollowedAuthors(validAuthors);
+            }
+            
+            // Получаем избранные релизы
+            const favoritesData = await userApi.getUserFavorites(userDetails.userId, 0, 10);
+            console.log('Ответ сервера для релизов:', favoritesData);
+            
+            if (favoritesData && favoritesData.content) {
+              console.log('Количество релизов:', favoritesData.content.length);
+              
+              // Проверяем каждый релиз на наличие необходимых полей
+              const validReleases = favoritesData.content.map(release => {
+                console.log('Релиз:', release);
+                return {
+                  releaseId: release.releaseId || 0,
+                  title: release.title || "Неизвестный релиз",
+                  coverUrl: release.coverUrl || null,
+                  releaseDate: release.releaseDate || null,
+                  authors: release.authors || []
+                };
+              });
+              
+              console.log('Обработанные релизы:', validReleases);
+              setFavoriteReleases(validReleases);
+            }
+          } catch (error) {
+            console.error('Ошибка при загрузке данных предпочтений:', error);
           }
         }
       } catch (err) {
@@ -207,6 +715,188 @@ const ProfilePage = () => {
     });
   };
   
+  // Проверка лайкнута ли отзыв текущим пользователем
+  const isReviewLiked = (reviewId) => {
+    return likedReviewIds.includes(reviewId);
+  };
+  
+  // Функция для лайка/анлайка рецензии
+  const handleLikeToggle = async (reviewId) => {
+    if (!authUser) {
+      // Если пользователь не авторизован, перенаправляем на страницу логина
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      if (isReviewLiked(reviewId)) {
+        // Удаляем лайк
+        await likeApi.removeLike(reviewId, userDetails.userId);
+        
+        // Обновляем список лайкнутых рецензий
+        setLikedReviewIds(prevIds => prevIds.filter(id => id !== reviewId));
+        
+        // Получаем актуальное количество лайков
+        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+        
+        // Обновляем количество лайков в рецензии
+        setUserReviews(prevReviews => 
+          prevReviews.map(review => 
+            review.reviewId === reviewId 
+              ? { ...review, likesCount: updatedLikesCount } 
+              : review
+          )
+        );
+        
+        setLikedReviews(prevReviews => 
+          prevReviews.map(review => 
+            review.reviewId === reviewId 
+              ? { ...review, likesCount: updatedLikesCount } 
+              : review
+          )
+        );
+      } else {
+        // Добавляем лайк
+        await likeApi.createLike(reviewId, userDetails.userId, 'USER');
+        
+        // Обновляем список лайкнутых рецензий
+        setLikedReviewIds(prevIds => [...prevIds, reviewId]);
+        
+        // Получаем актуальное количество лайков
+        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+        
+        // Обновляем количество лайков в рецензии
+        setUserReviews(prevReviews => 
+          prevReviews.map(review => 
+            review.reviewId === reviewId 
+              ? { ...review, likesCount: updatedLikesCount } 
+              : review
+          )
+        );
+        
+        setLikedReviews(prevReviews => 
+          prevReviews.map(review => 
+            review.reviewId === reviewId 
+              ? { ...review, likesCount: updatedLikesCount } 
+              : review
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении лайка:', error);
+    }
+  };
+  
+  // Получение URL аватара из кеша или данных пользователя
+  const getCachedAvatarUrl = () => {
+    return avatarUrl || (userDetails?.avatarUrl ? userDetails.avatarUrl : '/default-avatar.jpg');
+  };
+  
+  // Получение URL аватара автора из кеша или данных автора
+  const getCachedAuthorAvatarUrl = (author) => {
+    if (author.authorId && authorAvatarUrls[author.authorId]) {
+      return authorAvatarUrls[author.authorId];
+    }
+    return author.avatarUrl ? author.avatarUrl : '/default-avatar.jpg';
+  };
+  
+  // Функция для обработки ошибок изображений
+  const handleImageError = (e) => {
+    console.log('Ошибка загрузки изображения профиля, замена на заглушку');
+    
+    // Прекращаем обработку ошибок для этого элемента
+    e.target.onerror = null;
+    
+    // Проверяем, была ли уже попытка загрузить заглушку
+    const hasTriedPlaceholder = e.target.getAttribute('data-tried-placeholder') === 'true';
+    
+    if (!hasTriedPlaceholder) {
+      // Отмечаем, что мы пытались загрузить заглушку
+      e.target.setAttribute('data-tried-placeholder', 'true');
+      e.target.src = '/default-avatar.jpg';
+    } else {
+      // Если заглушка тоже не загрузилась, используем встроенный data URI
+      console.log('Не удалось загрузить заглушку, использую встроенный placeholder');
+      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+    }
+  };
+
+  // Функция для обработки ошибок изображений релизов
+  const handleReleaseImageError = (e) => {
+    console.log('Ошибка загрузки обложки релиза, замена на заглушку');
+    
+    // Прекращаем обработку ошибок для этого элемента
+    e.target.onerror = null;
+    
+    // Проверяем, была ли уже попытка загрузить заглушку
+    const hasTriedPlaceholder = e.target.getAttribute('data-tried-placeholder') === 'true';
+    
+    if (!hasTriedPlaceholder) {
+      // Отмечаем, что мы пытались загрузить заглушку
+      e.target.setAttribute('data-tried-placeholder', 'true');
+      e.target.src = '/default-cover.avif';
+    } else {
+      // Если заглушка тоже не загрузилась, используем встроенный data URI
+      console.log('Не удалось загрузить заглушку, использую встроенный placeholder');
+      e.target.src = DEFAULT_COVER_PLACEHOLDER;
+    }
+  };
+  
+  // Функция для отображения релизов по категории
+  const renderReleaseCategory = (releases, emptyMessage) => {
+    if (releases.length === 0) {
+      return <div className="no-items">{emptyMessage}</div>;
+    }
+    
+    return releases.map((release) => {
+      console.log('Отображение релиза:', release);
+      let altText = "Релиз";
+      switch(release.releaseType) {
+        case 'ALBUM': altText = "Альбом"; break;
+        case 'SINGLE': altText = "Сингл"; break;
+        case 'EP': altText = "EP"; break;
+        default: altText = "Релиз";
+      }
+      
+      return (
+        <div key={release.releaseId} className="album-item">
+          <Link className="album-link" to={`/releases/${release.releaseId}`}>
+            <img 
+              alt={release.title || altText} 
+              loading="lazy" 
+              className="album-image equal-size" 
+              src={release.coverUrl ? release.coverUrl : '/default-cover.avif'} 
+              onError={handleReleaseImageError}
+            />
+          </Link>
+          <Link className="album-name text-white no-underline" to={`/releases/${release.releaseId}`}>
+            {release.title || altText}
+          </Link>
+        </div>
+      );
+    });
+  };
+  
+  // Обработчик для переключения отладочной информации (можно вызвать Alt+D)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.altKey && e.key === 'd') {
+        setShowDebug(prev => !prev);
+        setDebugData({
+          releasesData: processedReleases,
+          releasesByType: {
+            albums: albumReleases,
+            singlesAndEps: singleReleases,
+            unknown: otherReleases
+          }
+        });
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [processedReleases, albumReleases, singleReleases, otherReleases]);
+  
   if (loading) {
     return (
       <div className="loading-container">
@@ -234,16 +924,17 @@ const ProfilePage = () => {
               <div className="profile-card">
                 <div className="relative">
                   <img 
-                    alt="user avatar" 
+                    alt={userDetails?.username || "Пользователь"} 
                     loading="lazy" 
                     width="130" 
                     height="130" 
                     className="profile-avatar" 
-                    src={userDetails?.avatarUrl || '/default-avatar.jpg'}
+                    src={getCachedAvatarUrl()}
+                    onError={handleImageError}
                   />
                 </div>
-                <h1 className="profile-username">{userDetails?.username}</h1>
-                <div className="profile-date">Дата регистрации: {formatDate(userDetails?.createdAt)}</div>
+                <h1 className="profile-username">{userDetails?.username || "Пользователь"}</h1>
+                <div className="profile-date">Дата регистрации: {formatDate(userDetails?.createdAt) || "Нет данных"}</div>
                 
                 <div className="social-links">
                   {userDetails?.telegramChatId && (
@@ -276,7 +967,6 @@ const ProfilePage = () => {
                       src="/gold_heart_3.png"
                     />
                     <div>
-                      <div className="gold-level">Золотой уровень</div>
                       <div className="points-container">
                         <div className="points-badge">24201</div>
                         <div className="points-text">баллов сообщества</div>
@@ -388,21 +1078,25 @@ const ProfilePage = () => {
                         
                         <div className="items-grid">
                           {followedAuthors.length > 0 ? (
-                            followedAuthors.map((author) => (
-                              <div key={author.authorId} className="artist-item">
-                                <Link className="artist-link" to={`/authors/${author.authorId}`}>
-                                  <img 
-                                    alt={author.name} 
-                                    loading="lazy" 
-                                    className="artist-image" 
-                                    src={author.avatarUrl || '/default-author.jpg'}
-                                  />
-                                </Link>
-                                <Link className="artist-name" to={`/authors/${author.authorId}`}>
-                                  {author.name}
-                                </Link>
-                              </div>
-                            ))
+                            followedAuthors.map((author) => {
+                              console.log('Отображение автора:', author);
+                              return (
+                                <div key={author.authorId} className="artist-item">
+                                  <Link className="artist-link" to={`/authors/${author.authorId}`}>
+                                    <img 
+                                      alt={author.name || "Автор"} 
+                                      loading="lazy" 
+                                      className="artist-image equal-size" 
+                                      src={getCachedAuthorAvatarUrl(author)} 
+                                      onError={handleImageError}
+                                    />
+                                  </Link>
+                                  <Link className="artist-name text-white no-underline" to={`/authors/${author.authorId}`}>
+                                    {author.name || "Автор"}
+                                  </Link>
+                                </div>
+                              );
+                            })
                           ) : (
                             <div className="no-items">Нет отслеживаемых авторов</div>
                           )}
@@ -419,41 +1113,39 @@ const ProfilePage = () => {
                         </div>
                         
                         <div className="items-grid">
-                          {favoriteReleases.length > 0 ? (
-                            favoriteReleases.map((release) => (
-                              <div key={release.releaseId} className="album-item">
-                                <Link className="album-link" to={`/releases/${release.releaseId}`}>
-                                  <img 
-                                    alt={release.title} 
-                                    loading="lazy" 
-                                    className="album-image" 
-                                    src={release.coverUrl || '/default-cover.jpg'}
-                                  />
-                                </Link>
-                                <Link className="album-name" to={`/releases/${release.releaseId}`}>
-                                  {release.title}
-                                </Link>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="no-items">Нет избранных альбомов</div>
-                          )}
+                          {renderReleaseCategory(albumReleases, "Нет избранных альбомов")}
                         </div>
                       </div>
                       
-                      {/* Треки */}
+                      {/* Синглы и EP */}
                       <div className="category-block">
                         <div className="category-header">
-                          <Link to="/tracks" className="category-title">
+                          <Link to="/singles" className="category-title">
                             <MusicNoteIcon className="category-icon" />
-                            Треки
+                            Синглы и EP
                           </Link>
                         </div>
                         
                         <div className="items-grid">
-                          <div className="no-items">Нет избранных треков</div>
+                          {renderReleaseCategory(singleReleases, "Нет избранных синглов и EP")}
                         </div>
                       </div>
+                      
+                      {/* Неизвестные релизы (только если есть) */}
+                      {otherReleases.length > 0 && (
+                        <div className="category-block">
+                          <div className="category-header">
+                            <Link to="/releases" className="category-title">
+                              <LibraryMusicIcon className="category-icon" />
+                              Другие релизы
+                            </Link>
+                          </div>
+                          
+                          <div className="items-grid">
+                            {renderReleaseCategory(otherReleases, "Нет других релизов")}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </section>
                 </TabPanel>
@@ -464,74 +1156,14 @@ const ProfilePage = () => {
                     <div className="reviews-list">
                       {userReviews && userReviews.length > 0 ? (
                         userReviews.map((review) => (
-                          <div key={review.reviewId} className="review-card">
-                            <div className="review-header">
-                              <div className="review-user-info">
-                                <Link to={`/profile`} className="review-user-avatar">
-                                  <img 
-                                    alt={userDetails.username} 
-                                    src={userDetails.avatarUrl || '/default-avatar.jpg'} 
-                                  />
-                                  <img 
-                                    alt="Уровень" 
-                                    className="review-user-level" 
-                                    src="/gold_heart_3.png" 
-                                  />
-                                </Link>
-                                
-                                <div className="review-user-details">
-                                  <Link to={`/profile`} className="review-username">
-                                    {userDetails.username}
-                                  </Link>
-                                  <div className="review-user-rank">
-                                    <div className="review-rank-badge">ТОП-82</div>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className="review-meta">
-                                <div className="review-rating">
-                                  <span className="review-rating-value">{review.rating || 0}</span>
-                                </div>
-                                
-                                <Link to={`/releases/${review.release?.releaseId}`} className="review-album-cover">
-                                  <img 
-                                    alt={review.release?.title} 
-                                    src={review.release?.coverUrl || '/default-cover.jpg'} 
-                                  />
-                                </Link>
-                              </div>
-                            </div>
-                            
-                            <div className="review-content-preview">
-                              <div className="review-title">
-                                {review.title || `Рецензия на ${review.release?.title}`}
-                              </div>
-                              {review.content && (
-                                <div className="review-text">
-                                  {review.content.substring(0, 150)}...
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="review-footer">
-                              <div className="review-actions">
-                                <button className="review-like-button">
-                                  <div className="review-like-icon">
-                                    <img src="/hearts/heart24.png" alt="Like" />
-                                  </div>
-                                  <span className="review-likes-count">{review.likesCount || 0}</span>
-                                </button>
-                              </div>
-                              <div className="review-links">
-                                <Link to={`/reviews/${review.reviewId}`} className="review-permalink">
-                                  <svg viewBox="0 0 15 15" className="review-link-icon">
-                                    <path fillRule="evenodd" clipRule="evenodd" d="M12 13C12.5523 13 13 12.5523 13 12V3C13 2.44771 12.5523 2 12 2H3C2.44771 2 2 2.44771 2 3V6.5C2 6.77614 2.22386 7 2.5 7C2.77614 7 3 6.77614 3 6.5V3H12V12H8.5C8.22386 12 8 12.2239 8 12.5C8 12.7761 8.22386 13 8.5 13H12ZM9 6.5C9 6.5001 9 6.50021 9 6.50031V6.50035V9.5C9 9.77614 8.77614 10 8.5 10C8.22386 10 8 9.77614 8 9.5V7.70711L2.85355 12.8536C2.65829 13.0488 2.34171 13.0488 2.14645 12.8536C1.95118 12.6583 1.95118 12.3417 2.14645 12.1464L7.29289 7H5.5C5.22386 7 5 6.77614 5 6.5C5 6.22386 5.22386 6 5.5 6H8.5C8.56779 6 8.63244 6.01349 8.69139 6.03794C8.74949 6.06198 8.80398 6.09744 8.85143 6.14433C8.94251 6.23434 8.9992 6.35909 8.99999 6.49708L8.99999 6.49738" fill="currentColor"></path>
-                                  </svg>
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
+                          <ReviewCard 
+                            key={review.reviewId}
+                            review={review}
+                            userDetails={userDetails}
+                            isLiked={isReviewLiked(review.reviewId)}
+                            onLikeToggle={handleLikeToggle}
+                            cachedAvatarUrl={getCachedAvatarUrl()}
+                          />
                         ))
                       ) : (
                         <div className="no-reviews">
@@ -568,66 +1200,14 @@ const ProfilePage = () => {
                     <div className="reviews-list">
                       {likedReviews && likedReviews.length > 0 ? (
                         likedReviews.map((review) => (
-                          <div key={review.reviewId} className="review-card">
-                            <div className="review-header">
-                              <div className="review-user-info">
-                                <Link to={`/profile/${review.user?.userId}`} className="review-user-avatar">
-                                  <img 
-                                    alt={review.user?.username} 
-                                    src={review.user?.avatarUrl || '/default-avatar.jpg'} 
-                                  />
-                                </Link>
-                                
-                                <div className="review-user-details">
-                                  <Link to={`/profile/${review.user?.userId}`} className="review-username">
-                                    {review.user?.username}
-                                  </Link>
-                                </div>
-                              </div>
-                              
-                              <div className="review-meta">
-                                <div className="review-rating">
-                                  <span className="review-rating-value">{review.rating || 0}</span>
-                                </div>
-                                
-                                <Link to={`/releases/${review.release?.releaseId}`} className="review-album-cover">
-                                  <img 
-                                    alt={review.release?.title} 
-                                    src={review.release?.coverUrl || '/default-cover.jpg'} 
-                                  />
-                                </Link>
-                              </div>
-                            </div>
-                            
-                            <div className="review-content-preview">
-                              <div className="review-title">
-                                {review.title || `Рецензия на ${review.release?.title}`}
-                              </div>
-                              {review.content && (
-                                <div className="review-text">
-                                  {review.content.substring(0, 150)}...
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="review-footer">
-                              <div className="review-actions">
-                                <button className="review-like-button active">
-                                  <div className="review-like-icon">
-                                    <img src="/hearts/heart24.png" alt="Like" />
-                                  </div>
-                                  <span className="review-likes-count">{review.likesCount || 0}</span>
-                                </button>
-                              </div>
-                              <div className="review-links">
-                                <Link to={`/reviews/${review.reviewId}`} className="review-permalink">
-                                  <svg viewBox="0 0 15 15" className="review-link-icon">
-                                    <path fillRule="evenodd" clipRule="evenodd" d="M12 13C12.5523 13 13 12.5523 13 12V3C13 2.44771 12.5523 2 12 2H3C2.44771 2 2 2.44771 2 3V6.5C2 6.77614 2.22386 7 2.5 7C2.77614 7 3 6.77614 3 6.5V3H12V12H8.5C8.22386 12 8 12.2239 8 12.5C8 12.7761 8.22386 13 8.5 13H12ZM9 6.5C9 6.5001 9 6.50021 9 6.50031V6.50035V9.5C9 9.77614 8.77614 10 8.5 10C8.22386 10 8 9.77614 8 9.5V7.70711L2.85355 12.8536C2.65829 13.0488 2.34171 13.0488 2.14645 12.8536C1.95118 12.6583 1.95118 12.3417 2.14645 12.1464L7.29289 7H5.5C5.22386 7 5 6.77614 5 6.5C5 6.22386 5.22386 6 5.5 6H8.5C8.56779 6 8.63244 6.01349 8.69139 6.03794C8.74949 6.06198 8.80398 6.09744 8.85143 6.14433C8.94251 6.23434 8.9992 6.35909 8.99999 6.49708L8.99999 6.49738" fill="currentColor"></path>
-                                  </svg>
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
+                          <ReviewCard 
+                            key={review.reviewId}
+                            review={review}
+                            userDetails={review.user}
+                            isLiked={true}
+                            onLikeToggle={handleLikeToggle}
+                            cachedAvatarUrl={getCachedAvatarUrl()}
+                          />
                         ))
                       ) : (
                         <div className="no-reviews">
@@ -660,6 +1240,9 @@ const ProfilePage = () => {
           </div>
         </div>
       </main>
+      
+      {/* Отладочная информация (Alt+D для отображения) */}
+      <DebugInfo isVisible={showDebug} data={debugData} />
     </div>
   );
 };

@@ -19,5 +19,6 @@ public class ReviewDTO {
     private Integer individuality;
     private Integer vibe;
     private Integer likesCount;
+    private Integer totalScore;
     private LocalDateTime createdAt;
 } 

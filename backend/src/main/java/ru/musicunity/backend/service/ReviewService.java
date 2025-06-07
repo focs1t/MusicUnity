@@ -64,6 +64,7 @@ public class ReviewService {
                 .individuality(individuality)
                 .vibe(vibe)
                 .likesCount(0)
+                .isDeleted(false)
                 .build();
 
         return reviewMapper.toDTO(reviewRepository.save(review));
@@ -88,6 +89,7 @@ public class ReviewService {
                 .individuality(individuality)
                 .vibe(vibe)
                 .likesCount(0)
+                .isDeleted(false)
                 .build();
 
         return reviewMapper.toDTO(reviewRepository.save(review));

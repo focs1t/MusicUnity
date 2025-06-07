@@ -39,9 +39,11 @@ export const likeApi = {
   getLikesCountByReview: async (reviewId) => {
     try {
       const response = await httpClient.get(`${API_URL}/review/${reviewId}/count`);
+      console.log(`Получено количество лайков для рецензии ${reviewId}:`, response.data);
       return response.data;
     } catch (error) {
-      throw error;
+      console.error(`Ошибка при получении количества лайков для рецензии ${reviewId}:`, error);
+      return 0;
     }
   },
 

@@ -76,6 +76,7 @@ public class ReleaseMapper {
         release.setReleaseLink(dto.getReleaseLink());
         release.setFavoritesCount(dto.getFavoritesCount());
         release.setAddedAt(dto.getAddedAt());
+        release.setIsDeleted(false);
 
         return release;
     }
