@@ -99,6 +99,46 @@ const NavButton = styled(Button)(({ theme }) => ({
   }
 }));
 
+// Обновляем StyledMenu для соответствия новому дизайну
+const StyledMenu = styled(Menu)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    backgroundColor: '#000 !important',
+    color: 'white !important',
+    border: '2px solid rgba(255, 255, 255, 0.1) !important',
+    borderRadius: '12px !important',
+    boxSizing: 'border-box !important',
+    boxShadow: 'none !important',
+    width: '300px !important',
+    padding: '0 !important',
+    fontSize: '15px !important',
+    fontWeight: '500 !important',
+    zIndex: '50 !important',
+    background: 'black !important',
+    backgroundImage: 'none !important',
+    '& .MuiMenuItem-root': {
+      minHeight: '36px !important',
+      padding: '0 20px !important',
+      color: '#a1a1aa !important',
+      transition: 'all 0.3s !important',
+      display: 'flex !important',
+      justifyContent: 'space-between !important',
+      alignItems: 'center !important',
+      '&:hover': {
+        backgroundColor: 'rgba(255, 255, 255, 0.05) !important',
+        color: 'white !important'
+      }
+    },
+    '& .MuiListItemIcon-root': {
+      color: '#a1a1aa !important',
+      minWidth: 'auto !important',
+      margin: '0 !important',
+      display: 'flex !important',
+      alignItems: 'center !important',
+      justifyContent: 'center !important'
+    }
+  }
+}));
+
 export const Header = () => {
   const { isAuth, user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -315,7 +355,7 @@ export const Header = () => {
   const renderAuthButtons = () => {
     if (isAuth) {
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex' }}>
           <IconButton
             onClick={handleMenu}
             color="inherit"
@@ -327,14 +367,14 @@ export const Header = () => {
               alt={getUserDisplayName()}
               src={getUserAvatar()}
               sx={{ 
-                bgcolor: '#333',
+                bgcolor: '#000',
                 width: 40,
                 height: 40,
                 border: '2px solid rgba(255,255,255,0.1)'
               }}
             />
           </IconButton>
-          <Menu
+          <StyledMenu
             id="menu-appbar"
             anchorEl={anchorEl}
             anchorOrigin={{
@@ -348,82 +388,64 @@ export const Header = () => {
             }}
             open={open}
             onClose={handleClose}
-            PaperProps={{
-              sx: {
-                mt: 1.5,
-                minWidth: 220,
-                bgcolor: '#000000',
-                color: 'white',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                '& .MuiMenuItem-root': {
-                  px: 2,
-                  py: 1.2,
-                  fontSize: '0.9rem',
-                  '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.05)'
-                  }
-                },
-                '& .MuiDivider-root': {
-                  my: 0.5
-                },
-                '& .MuiTypography-root': {
-                  fontSize: '0.9rem'
-                },
-                '& .MuiListItemIcon-root': {
-                  minWidth: 40
-                }
-              }
-            }}
           >
             <Box sx={{ 
-              px: 2, 
-              py: 1.2, 
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-              mb: 0.5
+              p: 2.5, 
+              pb: 1,
+              borderBottom: 'none'
             }}>
-              <Typography variant="body1" fontWeight="medium" fontSize="0.9rem">
+              <Typography variant="body1" sx={{ color: 'white' }}>
                 {getUserDisplayName()}
               </Typography>
             </Box>
             
-            <MenuItem onClick={() => { handleClose(); navigate('/profile'); }}>
-              <ListItemText>Моя страница</ListItemText>
-              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
-                <AccountCircleIcon fontSize="small" />
-              </ListItemIcon>
-            </MenuItem>
-            
-            <MenuItem onClick={() => { handleClose(); navigate('/profile/liked'); }}>
-              <ListItemText>Мне понравилось</ListItemText>
-              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
-                <FavoriteIcon fontSize="small" />
-              </ListItemIcon>
-            </MenuItem>
-            
-            <MenuItem onClick={() => { handleClose(); navigate('/settings'); }}>
-              <ListItemText>Настройки профиля</ListItemText>
-              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
-                <SettingsIcon fontSize="small" />
-              </ListItemIcon>
-            </MenuItem>
-            
-            <MenuItem onClick={() => { handleClose(); navigate('/following-releases'); }}>
-              <ListItemText>Релизы авторов</ListItemText>
-              <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
-                <NotificationsIcon fontSize="small" />
-              </ListItemIcon>
-            </MenuItem>
-            
-            <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', mt: 0.75, mb: 0.75 }}>
-              <MenuItem onClick={handleLogout}>
-                <ListItemText>Выйти из профиля</ListItemText>
-                <ListItemIcon sx={{ color: 'white', justifyContent: 'flex-end' }}>
-                  <LogoutIcon fontSize="small" />
+            <Box sx={{ pb: 1.5 }}>
+              <MenuItem onClick={() => { handleClose(); navigate('/profile'); }}>
+                Моя страница
+                <ListItemIcon>
+                  <AccountCircleIcon sx={{ fontSize: 20 }} />
+                </ListItemIcon>
+              </MenuItem>
+              
+              <MenuItem onClick={() => { handleClose(); navigate('/profile/liked'); }}>
+                Мне понравилось
+                <ListItemIcon>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <g clipPath="url(#clip0_4127_2080)">
+                      <path d="M15.18 2.5L17.5 4.83V7.75L10 15.44L2.5 7.75V4.83L4.82 2.5H7.74L8.23 2.99L10.01 4.78L11.79 2.99L12.28 2.5H15.2M16.24 0H11.24L10.02 1.23L8.8 0H3.78L0 3.8V8.77L10 19.02L20 8.77V3.8L16.22 0H16.24Z" fill="currentColor" />
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_4127_2080">
+                        <rect width="20" height="19.02" fill="white" />
+                      </clipPath>
+                    </defs>
+                  </svg>
+                </ListItemIcon>
+              </MenuItem>
+              
+              <MenuItem onClick={() => { handleClose(); navigate('/settings'); }}>
+                Настройки профиля
+                <ListItemIcon>
+                  <SettingsIcon sx={{ fontSize: 25 }} />
+                </ListItemIcon>
+              </MenuItem>
+              
+              <MenuItem onClick={() => { handleClose(); navigate('/following-releases'); }}>
+                Релизы авторов
+                <ListItemIcon>
+                  <NotificationsIcon sx={{ fontSize: 20 }} />
                 </ListItemIcon>
               </MenuItem>
             </Box>
-          </Menu>
+            
+            <Divider sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', height: '1px', width: '100%' }} />
+            
+            <Box sx={{ py: 1 }}>
+              <MenuItem onClick={handleLogout}>
+                Выйти из профиля
+              </MenuItem>
+            </Box>
+          </StyledMenu>
         </Box>
       );
     } else {
@@ -472,50 +494,65 @@ export const Header = () => {
             </a>
             <div className={styles.searchContainer}>
               <form className={styles.searchForm}>
-                <label htmlFor="search" className={styles.srOnly}>Search</label>
-                <button 
-                  className={styles.searchButton} 
-                  type="submit"
-                >
-                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className={styles.searchIcon} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                <button className={styles.searchButton} type="submit">
+                  <svg 
+                    stroke="currentColor" 
+                    fill="currentColor" 
+                    strokeWidth="0" 
+                    viewBox="0 0 512 512" 
+                    className={styles.searchIcon} 
+                    height="1em" 
+                    width="1em" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path d="M337.509 305.372h-17.501l-6.571-5.486c20.791-25.232 33.922-57.054 33.922-93.257C347.358 127.632 283.896 64 205.135 64 127.452 64 64 127.632 64 206.629s63.452 142.628 142.225 142.628c35.011 0 67.831-13.167 92.991-34.008l6.561 5.487v17.551L415.18 448 448 415.086 337.509 305.372zm-131.284 0c-54.702 0-98.463-43.887-98.463-98.743 0-54.858 43.761-98.742 98.463-98.742 54.7 0 98.462 43.884 98.462 98.742 0 54.856-43.762 98.743-98.462 98.743z"></path>
                   </svg>
+                  <span className={styles.searchText}>Поиск</span>
                 </button>
+                
+                <input 
+                  className={styles.searchInput} 
+                  placeholder="Поиск авторов и релизов..." 
+                  value=""
+                />
+                
                 <button 
                   type="button" 
-                  role="combobox" 
-                  aria-controls="radix-:Rqakq:" 
-                  aria-expanded="false" 
-                  aria-autocomplete="none" 
-                  dir="ltr" 
-                  data-state="closed" 
-                  data-placeholder="" 
                   className={styles.searchButton}
                 >
-                  <span style={{ pointerEvents: 'none' }}>
-                    <div>
-                      <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className={styles.searchIcon} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2 7v10"></path>
-                        <path d="M6 5v14"></path>
-                        <rect width="12" height="18" x="10" y="3" rx="2"></rect>
-                      </svg> 
-                      <span className={styles.searchText}>Авторы и релизы</span>
-                    </div>
-                  </span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.chevronIcon} aria-hidden="true">
+                  <svg 
+                    stroke="currentColor" 
+                    fill="none" 
+                    strokeWidth="2" 
+                    viewBox="0 0 24 24" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={styles.searchIcon} 
+                    height="1em" 
+                    width="1em" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M2 7v10"></path>
+                    <path d="M6 5v14"></path>
+                    <rect width="12" height="18" x="10" y="3" rx="2"></rect>
+                  </svg> 
+                  <span className={styles.searchText}>Авторы и релизы</span>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={styles.chevronIcon} 
+                    aria-hidden="true"
+                  >
                     <path d="m6 9 6 6 6-6"></path>
                   </svg>
                 </button>
-                <select aria-hidden="true" tabIndex="-1" style={{ position: 'absolute', border: '0px', width: '1px', height: '1px', padding: '0px', margin: '-1px', overflow: 'hidden', clip: 'rect(0px, 0px, 0px, 0px)', whiteSpace: 'nowrap', overflowWrap: 'normal' }}>
-                  <option value=""></option>
-                  <option value="releases"> Авторы и релизы</option>
-                  <option value="users"> Пользователи</option>
-                </select>
-                <input 
-                  className={styles.searchInput} 
-                  placeholder="Поиск..." 
-                  value=""
-                />
               </form>
             </div>
             <div className={styles.authContainer}>
@@ -545,11 +582,10 @@ export const Header = () => {
         onSwitchToLogin={handleSwitchToLogin}
       />
       
-      <ResetPasswordModal 
-        open={resetPasswordModalOpen} 
+      <ResetPasswordModal
+        open={resetPasswordModalOpen}
         onClose={handleCloseResetPasswordModal}
         token={resetToken}
-        onSwitchToLogin={handleSwitchToLogin}
       />
     </>
   );

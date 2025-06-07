@@ -1,23 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Box, 
-  Typography, 
-  Paper, 
-  Avatar, 
-  Grid, 
-  Tabs, 
-  Tab, 
-  Divider, 
-  Chip,
-  Link as MuiLink,
-  CircularProgress,
-  Card,
-  CardContent,
-  Button,
-  Pagination,
-  IconButton
-} from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
@@ -28,10 +9,12 @@ import VkIcon from '@mui/icons-material/Facebook'; // Используем Faceb
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import RateReviewIcon from '@mui/icons-material/RateReview';
-import StarIcon from '@mui/icons-material/Star';
 import PersonIcon from '@mui/icons-material/Person';
 import AlbumIcon from '@mui/icons-material/Album';
 import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import ChatIcon from '@mui/icons-material/Chat';
+import './ProfilePage.css';
 
 // Компонент для TabPanel (содержимое вкладки)
 function TabPanel(props) {
@@ -46,9 +29,9 @@ function TabPanel(props) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ py: 3 }}>
+        <div className="py-3">
           {children}
-        </Box>
+        </div>
       )}
     </div>
   );
@@ -73,6 +56,7 @@ const ProfilePage = () => {
   const [tabValue, setTabValue] = useState(getTabValueFromPath());
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [reviewFilter, setReviewFilter] = useState('all'); // all или author_liked
   
   // Статистика пользователя
   const [stats, setStats] = useState({
@@ -80,8 +64,6 @@ const ProfilePage = () => {
     givenLikes: 0,
     receivedAuthorLikes: 0,
     totalReviews: 0,
-    simpleReviews: 0,
-    fullReviews: 0,
     followedAuthors: 0,
     favorites: 0
   });
@@ -91,9 +73,6 @@ const ProfilePage = () => {
   const [favoriteReleases, setFavoriteReleases] = useState([]);
   const [userReviews, setUserReviews] = useState([]);
   const [likedReviews, setLikedReviews] = useState([]);
-  
-  // Фильтры для рецензий
-  const [reviewFilter, setReviewFilter] = useState('all'); // all, full, simple, withAuthorLike
   
   // Загрузка данных при монтировании компонента
   useEffect(() => {
@@ -123,8 +102,8 @@ const ProfilePage = () => {
           likeApi.getGivenLikesCountByUser(userData.userId),
           likeApi.getReceivedAuthorLikesCountByUser(userData.userId),
           reviewApi.getReviewsCountByUser(userData.userId),
-          userApi.getUserFollowedAuthors(userData.userId, 0, 6),
-          userApi.getUserFavorites(userData.userId, 0, 6)
+          userApi.getUserFollowedAuthors(userData.userId, 0, 5),
+          userApi.getUserFavorites(userData.userId, 0, 5)
         ]);
         
         // Обновление статистики
@@ -133,7 +112,6 @@ const ProfilePage = () => {
           givenLikes,
           receivedAuthorLikes: authorLikes,
           totalReviews: reviewsCount,
-          simpleReviews: 1696, // Для демонстрации
           followedAuthors: followedAuthorsData.totalElements,
           favorites: favoritesData.totalElements
         });
@@ -162,7 +140,13 @@ const ProfilePage = () => {
       
       try {
         if (tabValue === 1) {
-          const userReviewsData = await reviewApi.getReviewsByUser(userDetails.userId, page - 1, 5);
+          // Для рецензий используем фильтр
+          const userReviewsData = await reviewApi.getReviewsByUser(
+            userDetails.userId, 
+            page - 1, 
+            5, 
+            reviewFilter === 'author_liked' ? true : null
+          );
           setUserReviews(userReviewsData.content);
           setTotalPages(userReviewsData.totalPages);
         } else if (tabValue === 2) {
@@ -186,9 +170,10 @@ const ProfilePage = () => {
   }, [userDetails, tabValue, page, reviewFilter]);
 
   // Обработчик изменения вкладки
-  const handleTabChange = (event, newValue) => {
+  const handleTabChange = (newValue) => {
     setPage(1); // Сбрасываем страницу при смене вкладки
     setTabValue(newValue);
+    setReviewFilter('all'); // Сбрасываем фильтр рецензий при смене вкладки
     
     // Обновляем URL в соответствии с выбранной вкладкой
     if (newValue === 0) {
@@ -200,29 +185,15 @@ const ProfilePage = () => {
     }
   };
   
-  // Обработчик изменения страницы
-  const handlePageChange = (event, value) => {
-    setPage(value);
-  };
-  
-  // Обработчик фильтрации рецензий
+  // Обработчик изменения фильтра рецензий
   const handleReviewFilterChange = (filter) => {
-    setReviewFilter(filter);
     setPage(1); // Сбрасываем страницу при смене фильтра
+    setReviewFilter(filter);
   };
   
-  // Фильтрация рецензий
-  const getFilteredReviews = () => {
-    if (reviewFilter === 'all') {
-      return userReviews;
-    } else if (reviewFilter === 'full') {
-      return userReviews.filter(review => review.content);
-    } else if (reviewFilter === 'simple') {
-      return userReviews.filter(review => !review.content);
-    } else if (reviewFilter === 'withAuthorLike') {
-      return userReviews.filter(review => review.authorLikesCount > 0);
-    }
-    return userReviews;
+  // Обработчик изменения страницы
+  const handlePageChange = (value) => {
+    setPage(value);
   };
   
   // Форматирование даты
@@ -238,454 +209,458 @@ const ProfilePage = () => {
   
   if (loading) {
     return (
-      <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
-          <CircularProgress />
-        </Box>
-      </Container>
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
     );
   }
   
   if (error) {
     return (
-      <Container maxWidth="lg">
-        <Box sx={{ my: 4, textAlign: 'center' }}>
-          <Typography variant="h5" color="error" paragraph>
-            {error}
-          </Typography>
-        </Box>
-      </Container>
+      <div className="error-container">
+        <div className="error-message">{error}</div>
+      </div>
     );
   }
   
   return (
-    <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
-      <Grid container spacing={3} sx={{ mt: 1 }}>
-        {/* Левая колонка: профиль и статистика */}
-        <Grid item xs={12} md={4}>
-          {/* Профиль */}
-          <Paper sx={{ 
-            p: 3, 
-            mb: 3, 
-            bgcolor: '#111', 
-            color: 'white', 
-            borderRadius: 2,
-            textAlign: 'center',
-            width: '100%'
-          }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Avatar
-                src={userDetails?.avatarUrl}
-                alt={userDetails?.username}
-                sx={{ width: 120, height: 120 }}
-              />
-              <Typography variant="h4" sx={{ mt: 2, mb: 1 }}>
-                {userDetails?.username}
-              </Typography>
-              <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center' }}>
-                {userDetails?.bio || 'Пользователь не указал информацию о себе.'}
-              </Typography>
+    <div className="site-content">
+      <main>
+        <div className="container">
+          <div className="grid">
+            {/* Левая колонка: профиль и статистика */}
+            <div className="left-column">
+              {/* Профиль пользователя */}
+              <div className="profile-card">
+                <div className="relative">
+                  <img 
+                    alt="user avatar" 
+                    loading="lazy" 
+                    width="130" 
+                    height="130" 
+                    className="profile-avatar" 
+                    src={userDetails?.avatarUrl || '/default-avatar.jpg'}
+                  />
+                </div>
+                <h1 className="profile-username">{userDetails?.username}</h1>
+                <div className="profile-date">Дата регистрации: {formatDate(userDetails?.createdAt)}</div>
+                
+                <div className="social-links">
+                  {userDetails?.telegramChatId && (
+                    <button className="social-button">
+                      <a target="_blank" href={`https://t.me/${userDetails.telegramChatId}`} rel="noopener noreferrer">
+                        <TelegramIcon />
+                      </a>
+                    </button>
+                  )}
+                  
+                  {userDetails?.vkId && (
+                    <button className="social-button">
+                      <a target="_blank" href={`https://vk.com/${userDetails.vkId}`} rel="noopener noreferrer">
+                        <VkIcon />
+                      </a>
+                    </button>
+                  )}
+                </div>
+              </div>
               
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mt: 2 }}>
-                Дата регистрации: {formatDate(userDetails?.createdAt)}
-              </Typography>
-              
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 2 }}>
-                {userDetails?.telegramChatId && (
-                  <IconButton 
-                    href={`https://t.me/${userDetails.telegramChatId}`}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    sx={{ 
-                      color: '#29b6f6',
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                      '&:hover': {
-                        bgcolor: 'rgba(255,255,255,0.2)'
-                      }
-                    }}
-                    size="large"
+              {/* Статистика пользователя */}
+              <div className="stats-card">
+                <div className="relative">
+                  <div className="gold-badge">
+                    <img 
+                      alt="user avatar" 
+                      loading="lazy" 
+                      width="73" 
+                      height="73" 
+                      src="/gold_heart_3.png"
+                    />
+                    <div>
+                      <div className="gold-level">Золотой уровень</div>
+                      <div className="points-container">
+                        <div className="points-badge">24201</div>
+                        <div className="points-text">баллов сообщества</div>
+                      </div>
+                      <div className="rank-container">
+                        <div className="rank-badge">ТОП 82</div>
+                        <div className="rank-link"><Link to="/top-90">в ТОП-90</Link></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="divider"></div>
+                
+                {/* Блок рецензий */}
+                <div>
+                  <div className="stats-row">
+                    <div className="stats-label">
+                      <ChatIcon className="stats-icon" />
+                      <span className="font-semibold">Рецензий</span>
+                    </div>
+                    <div className="stats-value">{stats.totalReviews}</div>
+                  </div>
+                </div>
+                
+                <div className="divider"></div>
+                
+                {/* Блок лайков */}
+                <div>
+                  <div className="stats-row">
+                    <div className="stats-label">
+                      <FavoriteIcon className="stats-icon heart-full" />
+                      <span className="font-semibold">Получено лайков</span>
+                    </div>
+                    <div className="stats-value">{stats.receivedLikes}</div>
+                  </div>
+                  
+                  <div className="stats-row">
+                    <div className="stats-label">
+                      <FavoriteBorderIcon className="stats-icon heart-outline" />
+                      <span className="font-semibold">Поставлено лайков</span>
+                    </div>
+                    <div className="stats-value">{stats.givenLikes}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Правая колонка: вкладки с контентом */}
+            <div className="right-column">
+              <div className="tabs-container">
+                {/* Основные вкладки */}
+                <div className="main-tabs">
+                  <a 
+                    className={`tab-link ${tabValue === 0 ? 'active' : ''}`}
+                    onClick={() => handleTabChange(0)}
+                    href="#"
                   >
-                    <TelegramIcon />
-                  </IconButton>
+                    Предпочтения
+                  </a>
+                  <a 
+                    className={`tab-link ${tabValue === 1 ? 'active' : ''}`}
+                    onClick={() => handleTabChange(1)}
+                    href="#"
+                  >
+                    Рецензии и оценки
+                  </a>
+                  <a 
+                    className={`tab-link ${tabValue === 2 ? 'active' : ''}`}
+                    onClick={() => handleTabChange(2)}
+                    href="#"
+                  >
+                    Понравилось
+                  </a>
+                </div>
+                
+                {/* Подвкладки для фильтрации рецензий (отображаются только на вкладке рецензий) */}
+                {tabValue === 1 && (
+                  <div className="sub-tabs">
+                    <a 
+                      className={`tab-link ${reviewFilter === 'all' ? 'active' : ''}`}
+                      onClick={() => handleReviewFilterChange('all')}
+                      href="#"
+                    >
+                      Все рецензии
+                    </a>
+                    <a 
+                      className={`tab-link ${reviewFilter === 'author_liked' ? 'active' : ''}`}
+                      onClick={() => handleReviewFilterChange('author_liked')}
+                      href="#"
+                    >
+                      Рецензии с авторскими лайками
+                    </a>
+                  </div>
                 )}
                 
-                {userDetails?.vkId && (
-                  <IconButton 
-                    href={`https://vk.com/${userDetails.vkId}`}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    sx={{ 
-                      color: '#4c75a3',
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                      '&:hover': {
-                        bgcolor: 'rgba(255,255,255,0.2)'
-                      }
-                    }}
-                    size="large"
-                  >
-                    <VkIcon />
-                  </IconButton>
-                )}
-              </Box>
-            </Box>
-          </Paper>
-          
-          {/* Статистика */}
-          <Paper sx={{ 
-            p: 3, 
-            bgcolor: '#111', 
-            color: 'white', 
-            borderRadius: 2, 
-            mb: 3,
-            width: '100%'
-          }}>
-            {/* Блок лайков */}
-            <Box sx={{ mb: 2 }}>              
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <FavoriteIcon sx={{ color: '#ffffff', mr: 1, fontSize: 20 }} />
-                  <Typography variant="body1">Поставлено лайков</Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{stats.givenLikes}</Typography>
-              </Box>
-              
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <FavoriteBorderIcon sx={{ color: '#ffffff', mr: 1, fontSize: 20 }} />
-                  <Typography variant="body1">Получено лайков</Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{stats.receivedLikes}</Typography>
-              </Box>
-            </Box>
-            
-            <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.2)' }} />
-            
-            {/* Блок авторских лайков */}
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <FavoriteIcon sx={{ color: '#f44336', mr: 1, fontSize: 20 }} />
-                  <Typography variant="body1">Получено авторских лайков</Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{stats.receivedAuthorLikes}</Typography>
-              </Box>
-            </Box>
-            
-            <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.2)' }} />
-            
-            {/* Блок рецензий */}
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <RateReviewIcon sx={{ color: '#ffffff', mr: 1, fontSize: 20 }} />
-                  <Typography variant="body1">Всего рецензий</Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{stats.totalReviews}</Typography>
-              </Box>
-            </Box>
-          </Paper>
-        </Grid>
-        
-        {/* Правая колонка: вкладки с контентом */}
-        <Grid item xs={12} md={8}>
-          <Paper 
-            sx={{ 
-              bgcolor: '#111', 
-              color: 'white', 
-              borderRadius: 2, 
-              minHeight: '680px',
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              overflow: 'hidden'
-            }}
-          >
-            <Tabs 
-              value={tabValue} 
-              onChange={handleTabChange}
-              variant="fullWidth"
-              sx={{ 
-                borderBottom: 1, 
-                borderColor: 'rgba(255,255,255,0.1)',
-                '& .MuiTab-root': { 
-                  color: 'rgba(255,255,255,0.7)',
-                  textTransform: 'none',
-                  py: 2,
-                  fontSize: '1rem',
-                  borderRadius: '8px 8px 0 0',
-                },
-                '& .Mui-selected': { color: 'white' },
-                '& .MuiTabs-indicator': { backgroundColor: 'white' }
-              }}
-            >
-              <Tab 
-                label="Предпочтения" 
-                sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '8px 8px 0 0' } }}
-              />
-              <Tab 
-                label="Рецензии и оценки" 
-                sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '8px 8px 0 0' } }}
-              />
-              <Tab 
-                label="Понравилось" 
-                sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '8px 8px 0 0' } }}
-              />
-            </Tabs>
-            
-            {/* Предпочтения: отслеживаемые авторы и избранные релизы */}
-            <TabPanel value={tabValue} index={0}>
-              <Box sx={{ p: 3 }}>
-                {/* Авторы */}
-                <Box sx={{ mb: 4 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <PersonIcon sx={{ mr: 1, color: '#999' }} />
-                      <Typography variant="h6">
-                        Авторы ({stats.followedAuthors})
-                      </Typography>
-                    </Box>
-                    <Link to="/authors" style={{ textDecoration: 'none', color: '#2196f3' }}>
-                      Все авторы
-                    </Link>
-                  </Box>
-                  
-                  {followedAuthors.length > 0 ? (
-                    <Grid container spacing={2}>
-                      {followedAuthors.slice(0, 5).map((author) => (
-                        <Grid item xs={12} sm={6} md={4} lg={2.4} key={author.authorId}>
-                          <Card sx={{ bgcolor: '#1e1e1e', color: 'white' }}>
-                            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, '&:last-child': { pb: 2 } }}>
-                              <Avatar 
-                                src={author.avatarUrl} 
-                                alt={author.name}
-                                sx={{ width: 60, height: 60 }}
-                              />
-                              <Box>
-                                <Typography 
-                                  variant="h6" 
-                                  component={Link} 
-                                  to={`/authors/${author.authorId}`} 
-                                  sx={{ color: 'white', textDecoration: 'none' }}
-                                >
+                {/* Предпочтения: отслеживаемые авторы и избранные релизы */}
+                <TabPanel value={tabValue} index={0}>
+                  <section className="content-section">
+                    <div className="content-grid">
+                      {/* Авторы (объединенные артисты и продюсеры) */}
+                      <div className="category-block">
+                        <div className="category-header">
+                          <Link to="/authors" className="category-title">
+                            <PersonIcon className="category-icon" />
+                            Авторы
+                          </Link>
+                        </div>
+                        
+                        <div className="items-grid">
+                          {followedAuthors.length > 0 ? (
+                            followedAuthors.map((author) => (
+                              <div key={author.authorId} className="artist-item">
+                                <Link className="artist-link" to={`/authors/${author.authorId}`}>
+                                  <img 
+                                    alt={author.name} 
+                                    loading="lazy" 
+                                    className="artist-image" 
+                                    src={author.avatarUrl || '/default-author.jpg'}
+                                  />
+                                </Link>
+                                <Link className="artist-name" to={`/authors/${author.authorId}`}>
                                   {author.name}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                                  {author.releasesCount} релизов
-                                </Typography>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  ) : (
-                    <Box sx={{ p: 2, textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-                      Нет отслеживаемых авторов
-                    </Box>
-                  )}
-                </Box>
-                
-                <Divider sx={{ my: 3, borderColor: 'rgba(255,255,255,0.1)' }} />
-                
-                {/* Альбомы */}
-                <Box sx={{ mb: 4 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <AlbumIcon sx={{ mr: 1, color: '#999' }} />
-                      <Typography variant="h6">
-                        Альбомы ({stats.favorites})
-                      </Typography>
-                    </Box>
-                    <Link to="/albums" style={{ textDecoration: 'none', color: '#2196f3' }}>
-                      Все альбомы
-                    </Link>
-                  </Box>
-                  
-                  {favoriteReleases.length > 0 ? (
-                    <Grid container spacing={2}>
-                      {favoriteReleases.slice(0, 5).map((release) => (
-                        <Grid item xs={12} sm={6} md={4} lg={2.4} key={release.releaseId}>
-                          <Card sx={{ bgcolor: '#1e1e1e', color: 'white' }}>
-                            <CardContent sx={{ display: 'flex', gap: 2, p: 2, '&:last-child': { pb: 2 } }}>
-                              <img 
-                                src={release.coverUrl || '/default-cover.jpg'} 
-                                alt={release.title}
-                                style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4 }}
-                              />
-                              <Box>
-                                <Typography 
-                                  variant="h6" 
-                                  component={Link} 
-                                  to={`/releases/${release.releaseId}`} 
-                                  sx={{ color: 'white', textDecoration: 'none' }}
-                                >
+                                </Link>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="no-items">Нет отслеживаемых авторов</div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Альбомы */}
+                      <div className="category-block">
+                        <div className="category-header">
+                          <Link to="/albums" className="category-title">
+                            <AlbumIcon className="category-icon" />
+                            Альбомы
+                          </Link>
+                        </div>
+                        
+                        <div className="items-grid">
+                          {favoriteReleases.length > 0 ? (
+                            favoriteReleases.map((release) => (
+                              <div key={release.releaseId} className="album-item">
+                                <Link className="album-link" to={`/releases/${release.releaseId}`}>
+                                  <img 
+                                    alt={release.title} 
+                                    loading="lazy" 
+                                    className="album-image" 
+                                    src={release.coverUrl || '/default-cover.jpg'}
+                                  />
+                                </Link>
+                                <Link className="album-name" to={`/releases/${release.releaseId}`}>
                                   {release.title}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                                  {release.authors?.map(a => a.name).join(', ') || 'Неизвестный исполнитель'}
-                                </Typography>
-                                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block' }}>
-                                  {new Date(release.releaseDate).getFullYear()}
-                                </Typography>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  ) : (
-                    <Box sx={{ p: 2, textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-                      Нет избранных альбомов
-                    </Box>
-                  )}
-                </Box>
+                                </Link>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="no-items">Нет избранных альбомов</div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Треки */}
+                      <div className="category-block">
+                        <div className="category-header">
+                          <Link to="/tracks" className="category-title">
+                            <MusicNoteIcon className="category-icon" />
+                            Треки
+                          </Link>
+                        </div>
+                        
+                        <div className="items-grid">
+                          <div className="no-items">Нет избранных треков</div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </TabPanel>
                 
-                <Divider sx={{ my: 3, borderColor: 'rgba(255,255,255,0.1)' }} />
+                {/* Рецензии и оценки */}
+                <TabPanel value={tabValue} index={1}>
+                  <div className="reviews-container">
+                    <div className="reviews-list">
+                      {userReviews && userReviews.length > 0 ? (
+                        userReviews.map((review) => (
+                          <div key={review.reviewId} className="review-card">
+                            <div className="review-header">
+                              <div className="review-user-info">
+                                <Link to={`/profile`} className="review-user-avatar">
+                                  <img 
+                                    alt={userDetails.username} 
+                                    src={userDetails.avatarUrl || '/default-avatar.jpg'} 
+                                  />
+                                  <img 
+                                    alt="Уровень" 
+                                    className="review-user-level" 
+                                    src="/gold_heart_3.png" 
+                                  />
+                                </Link>
+                                
+                                <div className="review-user-details">
+                                  <Link to={`/profile`} className="review-username">
+                                    {userDetails.username}
+                                  </Link>
+                                  <div className="review-user-rank">
+                                    <div className="review-rank-badge">ТОП-82</div>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="review-meta">
+                                <div className="review-rating">
+                                  <span className="review-rating-value">{review.rating || 0}</span>
+                                </div>
+                                
+                                <Link to={`/releases/${review.release?.releaseId}`} className="review-album-cover">
+                                  <img 
+                                    alt={review.release?.title} 
+                                    src={review.release?.coverUrl || '/default-cover.jpg'} 
+                                  />
+                                </Link>
+                              </div>
+                            </div>
+                            
+                            <div className="review-content-preview">
+                              <div className="review-title">
+                                {review.title || `Рецензия на ${review.release?.title}`}
+                              </div>
+                              {review.content && (
+                                <div className="review-text">
+                                  {review.content.substring(0, 150)}...
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="review-footer">
+                              <div className="review-actions">
+                                <button className="review-like-button">
+                                  <div className="review-like-icon">
+                                    <img src="/hearts/heart24.png" alt="Like" />
+                                  </div>
+                                  <span className="review-likes-count">{review.likesCount || 0}</span>
+                                </button>
+                              </div>
+                              <div className="review-links">
+                                <Link to={`/reviews/${review.reviewId}`} className="review-permalink">
+                                  <svg viewBox="0 0 15 15" className="review-link-icon">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M12 13C12.5523 13 13 12.5523 13 12V3C13 2.44771 12.5523 2 12 2H3C2.44771 2 2 2.44771 2 3V6.5C2 6.77614 2.22386 7 2.5 7C2.77614 7 3 6.77614 3 6.5V3H12V12H8.5C8.22386 12 8 12.2239 8 12.5C8 12.7761 8.22386 13 8.5 13H12ZM9 6.5C9 6.5001 9 6.50021 9 6.50031V6.50035V9.5C9 9.77614 8.77614 10 8.5 10C8.22386 10 8 9.77614 8 9.5V7.70711L2.85355 12.8536C2.65829 13.0488 2.34171 13.0488 2.14645 12.8536C1.95118 12.6583 1.95118 12.3417 2.14645 12.1464L7.29289 7H5.5C5.22386 7 5 6.77614 5 6.5C5 6.22386 5.22386 6 5.5 6H8.5C8.56779 6 8.63244 6.01349 8.69139 6.03794C8.74949 6.06198 8.80398 6.09744 8.85143 6.14433C8.94251 6.23434 8.9992 6.35909 8.99999 6.49708L8.99999 6.49738" fill="currentColor"></path>
+                                  </svg>
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-reviews">
+                          {reviewFilter === 'all' 
+                            ? 'У вас пока нет рецензий.' 
+                            : 'У вас нет рецензий с авторскими лайками.'}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {totalPages > 1 && (
+                      <nav className="pagination">
+                        <ul className="pagination-list">
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <li key={i + 1} className="pagination-item">
+                              <a
+                                className={`pagination-link ${page === i + 1 ? 'active' : ''}`}
+                                onClick={() => handlePageChange(i + 1)}
+                                href="#"
+                              >
+                                {i + 1}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </nav>
+                    )}
+                  </div>
+                </TabPanel>
                 
-                {/* EP и синглы */}
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <LibraryMusicIcon sx={{ mr: 1, color: '#999' }} />
-                      <Typography variant="h6">
-                        EP и синглы (0)
-                      </Typography>
-                    </Box>
-                    <Link to="/eps" style={{ textDecoration: 'none', color: '#2196f3' }}>
-                      Все EP и синглы
-                    </Link>
-                  </Box>
-                  
-                  <Box sx={{ p: 2, textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-                    Нет избранных EP и синглов
-                  </Box>
-                </Box>
-                
-                {totalPages > 1 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                    <Pagination 
-                      count={totalPages} 
-                      page={page} 
-                      onChange={handlePageChange} 
-                      color="primary"
-                      sx={{
-                        '& .MuiPaginationItem-root': { color: 'white' },
-                        '& .Mui-selected': { bgcolor: 'rgba(255,255,255,0.1)' }
-                      }}
-                    />
-                  </Box>
-                )}
-              </Box>
-            </TabPanel>
-            
-            {/* Рецензии */}
-            <TabPanel value={tabValue} index={1}>
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Ваши рецензии ({stats.totalReviews})
-                </Typography>
-                {userReviews && userReviews.length > 0 ? (
-                  <Grid container spacing={2}>
-                    {userReviews.map((review) => (
-                      <Grid item xs={12} key={review.reviewId}>
-                        <Card sx={{ bgcolor: '#1e1e1e', color: 'white' }}>
-                          <CardContent>
-                            <Typography variant="h6" component={Link} to={`/reviews/${review.reviewId}`} sx={{ color: 'white', textDecoration: 'none' }}>
-                              {review.title || `Рецензия на ${review.release?.title}`}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
-                              Релиз: {review.release?.title}
-                            </Typography>
-                            {review.content && (
-                              <Typography variant="body2" sx={{ mt: 2, color: 'rgba(255,255,255,0.9)' }}>
-                                {review.content.substring(0, 150)}...
-                              </Typography>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
-                  </Grid>
-                ) : (
-                  <Box sx={{ p: 2, textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-                    У вас пока нет рецензий.
-                  </Box>
-                )}
-                
-                {totalPages > 1 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                    <Pagination 
-                      count={totalPages} 
-                      page={page} 
-                      onChange={handlePageChange} 
-                      color="primary"
-                      sx={{
-                        '& .MuiPaginationItem-root': { color: 'white' },
-                        '& .Mui-selected': { bgcolor: 'rgba(255,255,255,0.1)' }
-                      }}
-                    />
-                  </Box>
-                )}
-              </Box>
-            </TabPanel>
-            
-            {/* Понравилось */}
-            <TabPanel value={tabValue} index={2}>
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Понравившиеся рецензии ({stats.givenLikes})
-                </Typography>
-                {likedReviews && likedReviews.length > 0 ? (
-                  <Grid container spacing={2}>
-                    {likedReviews.map((review) => (
-                      <Grid item xs={12} key={review.reviewId}>
-                        <Card sx={{ bgcolor: '#1e1e1e', color: 'white' }}>
-                          <CardContent>
-                            <Typography variant="h6" component={Link} to={`/reviews/${review.reviewId}`} sx={{ color: 'white', textDecoration: 'none' }}>
-                              {review.title || `Рецензия на ${review.release.title}`}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
-                              Автор: {review.user.username}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                              Релиз: {review.release.title}
-                            </Typography>
-                            {review.content && (
-                              <Typography variant="body2" sx={{ mt: 2, color: 'rgba(255,255,255,0.9)' }}>
-                                {review.content.substring(0, 150)}...
-                              </Typography>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
-                  </Grid>
-                ) : (
-                  <Box sx={{ p: 2, textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-                    У вас нет понравившихся рецензий.
-                  </Box>
-                )}
-                
-                {totalPages > 1 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                    <Pagination 
-                      count={totalPages} 
-                      page={page} 
-                      onChange={handlePageChange} 
-                      color="primary"
-                      sx={{
-                        '& .MuiPaginationItem-root': { color: 'white' },
-                        '& .Mui-selected': { bgcolor: 'rgba(255,255,255,0.1)' }
-                      }}
-                    />
-                  </Box>
-                )}
-              </Box>
-            </TabPanel>
-          </Paper>
-        </Grid>
-      </Grid>
-    </Container>
+                {/* Понравилось */}
+                <TabPanel value={tabValue} index={2}>
+                  <div className="reviews-container">
+                    <div className="reviews-list">
+                      {likedReviews && likedReviews.length > 0 ? (
+                        likedReviews.map((review) => (
+                          <div key={review.reviewId} className="review-card">
+                            <div className="review-header">
+                              <div className="review-user-info">
+                                <Link to={`/profile/${review.user?.userId}`} className="review-user-avatar">
+                                  <img 
+                                    alt={review.user?.username} 
+                                    src={review.user?.avatarUrl || '/default-avatar.jpg'} 
+                                  />
+                                </Link>
+                                
+                                <div className="review-user-details">
+                                  <Link to={`/profile/${review.user?.userId}`} className="review-username">
+                                    {review.user?.username}
+                                  </Link>
+                                </div>
+                              </div>
+                              
+                              <div className="review-meta">
+                                <div className="review-rating">
+                                  <span className="review-rating-value">{review.rating || 0}</span>
+                                </div>
+                                
+                                <Link to={`/releases/${review.release?.releaseId}`} className="review-album-cover">
+                                  <img 
+                                    alt={review.release?.title} 
+                                    src={review.release?.coverUrl || '/default-cover.jpg'} 
+                                  />
+                                </Link>
+                              </div>
+                            </div>
+                            
+                            <div className="review-content-preview">
+                              <div className="review-title">
+                                {review.title || `Рецензия на ${review.release?.title}`}
+                              </div>
+                              {review.content && (
+                                <div className="review-text">
+                                  {review.content.substring(0, 150)}...
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="review-footer">
+                              <div className="review-actions">
+                                <button className="review-like-button active">
+                                  <div className="review-like-icon">
+                                    <img src="/hearts/heart24.png" alt="Like" />
+                                  </div>
+                                  <span className="review-likes-count">{review.likesCount || 0}</span>
+                                </button>
+                              </div>
+                              <div className="review-links">
+                                <Link to={`/reviews/${review.reviewId}`} className="review-permalink">
+                                  <svg viewBox="0 0 15 15" className="review-link-icon">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M12 13C12.5523 13 13 12.5523 13 12V3C13 2.44771 12.5523 2 12 2H3C2.44771 2 2 2.44771 2 3V6.5C2 6.77614 2.22386 7 2.5 7C2.77614 7 3 6.77614 3 6.5V3H12V12H8.5C8.22386 12 8 12.2239 8 12.5C8 12.7761 8.22386 13 8.5 13H12ZM9 6.5C9 6.5001 9 6.50021 9 6.50031V6.50035V9.5C9 9.77614 8.77614 10 8.5 10C8.22386 10 8 9.77614 8 9.5V7.70711L2.85355 12.8536C2.65829 13.0488 2.34171 13.0488 2.14645 12.8536C1.95118 12.6583 1.95118 12.3417 2.14645 12.1464L7.29289 7H5.5C5.22386 7 5 6.77614 5 6.5C5 6.22386 5.22386 6 5.5 6H8.5C8.56779 6 8.63244 6.01349 8.69139 6.03794C8.74949 6.06198 8.80398 6.09744 8.85143 6.14433C8.94251 6.23434 8.9992 6.35909 8.99999 6.49708L8.99999 6.49738" fill="currentColor"></path>
+                                  </svg>
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-reviews">
+                          У вас нет понравившихся рецензий.
+                        </div>
+                      )}
+                    </div>
+                    
+                    {totalPages > 1 && (
+                      <nav className="pagination">
+                        <ul className="pagination-list">
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <li key={i + 1} className="pagination-item">
+                              <a
+                                className={`pagination-link ${page === i + 1 ? 'active' : ''}`}
+                                onClick={() => handlePageChange(i + 1)}
+                                href="#"
+                              >
+                                {i + 1}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </nav>
+                    )}
+                  </div>
+                </TabPanel>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 

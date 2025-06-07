@@ -50,6 +50,7 @@
 
 .searchContainer {
   display: none;
+  flex: 1;
 }
 
 @media (min-width: 1024px) {
@@ -61,29 +62,28 @@
 .searchForm {
   position: relative;
   display: flex;
-  flex: 1;
-  flex-shrink: 0;
+  gap: 8px;
+  max-width: 450px;
 }
 
 @media (min-width: 1024px) {
   .searchForm {
-    width: 380px;
+    width: 100%;
   }
 }
 
 .searchButton {
-  position: absolute;
-  padding: 0;
-  inset: 0;
-  width: 40px;
-  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: #a1a1aa;
   cursor: pointer;
   border: none;
   background: transparent;
+  height: 40px;
+  border-radius: 6px;
+  padding: 0 10px;
+  transition: all 0.2s;
 }
 
 .searchButton:hover {
@@ -94,6 +94,7 @@
 .searchIcon {
   width: 16px;
   height: 16px;
+  margin-right: 6px;
 }
 
 .srOnly {
@@ -110,39 +111,37 @@
 
 .searchInput {
   height: 40px;
-  padding: 0 12px;
+  padding: 0 16px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  background-color: #18181b;
+  border-radius: 9999px;
+  background-color: rgba(24, 24, 27, 0.3);
   color: white;
   width: 100%;
-  padding-left: 44px;
   transition: all 0.3s;
   outline: none;
+  font-size: 14px;
 }
 
 .searchInput:focus {
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+  background-color: rgba(39, 39, 42, 0.5);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .searchInput::placeholder {
-  color: #6b7280;
+  color: #a1a1aa;
 }
 
 .searchText {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .searchText {
-    display: block;
-  }
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 14px;
 }
 
 .chevronIcon {
   height: 16px;
   width: 16px;
   opacity: 0.5;
+  margin-left: 6px;
 }
 
 .authContainer {
