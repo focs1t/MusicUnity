@@ -13,8 +13,10 @@ import {
   Alert,
   Divider,
   InputAdornment,
-  IconButton
+  IconButton,
+  Link
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
 import { fileApi } from '../shared/api/file';
@@ -23,6 +25,140 @@ import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import InfoIcon from '@mui/icons-material/Info';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { Link as RouterLink } from 'react-router-dom';
+
+// Стилизованные компоненты
+const MainContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  minHeight: 'calc(100vh - theme(spacing.16))',
+  flexDirection: 'column',
+  flex: 1,
+  gap: theme.spacing(4),
+  backgroundColor: '#09090b',
+  padding: theme.spacing(4),
+  [theme.breakpoints.up('md')]: {
+    gap: theme.spacing(6),
+    padding: theme.spacing(10),
+  },
+  marginTop: '-20px',
+  marginBottom: '-20px',
+  [theme.breakpoints.up('lg')]: {
+    marginTop: '-60px',
+    marginBottom: '-60px',
+  },
+}));
+
+const ContentContainer = styled(Box)(({ theme }) => ({
+  width: '100%',
+  maxWidth: '1200px',
+  margin: '0 auto',
+  gap: theme.spacing(2),
+}));
+
+const ContentGrid = styled(Box)(({ theme }) => ({
+  width: '100%',
+  maxWidth: '1200px',
+  margin: '0 auto',
+  display: 'grid',
+  gap: theme.spacing(4),
+  alignItems: 'start',
+  [theme.breakpoints.up('md')]: {
+    gridTemplateColumns: '180px 1fr',
+  },
+  [theme.breakpoints.up('lg')]: {
+    gridTemplateColumns: '250px 1fr',
+  },
+}));
+
+const NavLink = styled(RouterLink)(({ theme }) => ({
+  color: 'rgba(161, 161, 170, 0.8)',
+  fontWeight: 400,
+  fontSize: '0.875rem',
+  textDecoration: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  transition: 'color 0.3s',
+  '&:hover': {
+    color: '#fff',
+  },
+}));
+
+const NavMenu = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gap: theme.spacing(3),
+  fontSize: '0.875rem',
+  color: 'rgba(161, 161, 170, 0.8)',
+}));
+
+const ContentSection = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gap: theme.spacing(4),
+}));
+
+const FormCard = styled(Paper)(({ theme }) => ({
+  borderRadius: theme.spacing(1),
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  backgroundColor: '#111113',
+  color: 'white',
+  boxShadow: 'none',
+  overflow: 'hidden',
+}));
+
+const CardHeader = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(6),
+  paddingBottom: theme.spacing(1.5),
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(1.5),
+}));
+
+const CardContent = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(6),
+  paddingTop: 0,
+}));
+
+const CardFooter = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(6),
+  paddingTop: theme.spacing(4),
+  paddingBottom: theme.spacing(4),
+  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(5),
+}));
+
+// Стили для информационного блока
+const AlertBox = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '100%',
+  borderRadius: theme.spacing(1),
+  border: '1px solid #ea580c',
+  padding: theme.spacing(4),
+  paddingLeft: theme.spacing(7),
+  backgroundColor: 'rgba(234, 88, 12, 0.05)',
+  color: 'white',
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+  height: '40px',
+  padding: '0 16px',
+  backgroundColor: 'white',
+  color: 'black',
+  textTransform: 'none',
+  fontWeight: 500,
+  fontSize: '0.875rem',
+  borderRadius: '6px',
+  '&:hover': {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  '&:disabled': {
+    opacity: 0.5,
+    pointerEvents: 'none',
+  }
+}));
 
 const SettingsPage = () => {
   const { user: authUser } = useAuth();
@@ -218,291 +354,454 @@ const SettingsPage = () => {
   
   if (loading) {
     return (
-      <Container maxWidth="md">
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
+      <MainContainer>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
           <CircularProgress />
         </Box>
-      </Container>
+      </MainContainer>
     );
   }
   
   if (error) {
     return (
-      <Container maxWidth="md">
-        <Box sx={{ my: 4, textAlign: 'center' }}>
+      <MainContainer>
+        <Box sx={{ textAlign: 'center', minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Typography variant="h5" color="error" paragraph>
             {error}
           </Typography>
         </Box>
-      </Container>
+      </MainContainer>
     );
   }
   
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ color: 'white' }}>
+    <MainContainer>
+      <ContentContainer>
+        <Typography variant="h3" sx={{ fontWeight: 600, fontSize: '1.5rem', mb: 2, color: 'white' }}>
           Настройки профиля
         </Typography>
-        
-        {/* Форма настроек профиля */}
-        <Paper sx={{ p: 3, mb: 4, bgcolor: '#1e1e1e', color: 'white', borderRadius: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Основная информация
-          </Typography>
+      </ContentContainer>
+      
+      <ContentGrid>
+        {/* Навигационное меню */}
+        <NavMenu>
+          <NavLink to="#" style={{ fontWeight: 600, color: 'white' }}>
+            Основные
+          </NavLink>
           
-          <Grid container spacing={3} alignItems="flex-start">
-            <Grid item xs={12} sm={4} md={3} sx={{ textAlign: 'center' }}>
-              <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                <Avatar
-                  src={previewAvatar || avatarUrl}
-                  alt={userDetails?.username}
-                  sx={{ width: 120, height: 120, mb: 2, mx: 'auto', border: '3px solid rgba(255,255,255,0.1)' }}
-                />
-                <IconButton
-                  color="primary"
-                  aria-label="upload picture"
-                  component="span"
-                  sx={{
-                    position: 'absolute',
-                    bottom: 10,
-                    right: 0,
-                    bgcolor: 'rgba(0,0,0,0.5)',
-                    '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                    color: 'white'
-                  }}
-                  onClick={() => fileInputRef.current.click()}
-                >
-                  <PhotoCameraIcon />
-                </IconButton>
-                <input
-                  type="file"
-                  hidden
-                  ref={fileInputRef}
-                  accept="image/*"
-                  onChange={handleAvatarSelect}
-                />
+          <NavLink to={`/profile/${userDetails?.id || ''}`}>
+            <span style={{ marginRight: '8px' }}>Мой профиль</span>
+            <OpenInNewIcon sx={{ fontSize: 16 }} />
+          </NavLink>
+        </NavMenu>
+        
+        {/* Контент */}
+        <ContentSection>
+          {/* Уведомление для пользователей */}
+          <AlertBox>
+            <svg 
+              stroke="currentColor" 
+              fill="currentColor" 
+              strokeWidth="0" 
+              viewBox="0 0 512 512" 
+              style={{ 
+                position: 'absolute', 
+                left: '16px', 
+                top: '16px', 
+                width: '20px', 
+                height: '20px',
+                fill: '#f97316'
+              }} 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M228.9 79.9L51.8 403.1C40.6 423.3 55.5 448 78.9 448h354.3c23.3 0 38.2-24.7 27.1-44.9L283.1 79.9c-11.7-21.2-42.5-21.2-54.2 0zM273.6 214L270 336h-28l-3.6-122h35.2zM256 402.4c-10.7 0-19.1-8.1-19.1-18.4s8.4-18.4 19.1-18.4 19.1 8.1 19.1 18.4-8.4 18.4-19.1 18.4z"></path>
+            </svg>
+            <Typography variant="h5" sx={{ mb: 1, fontWeight: 500, fontSize: '1rem' }}>
+              Внимание
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.875rem' }}>
+              Уважаемые пользователи и авторы, при редактировании вашего профиля на нашем сайте, все добавленные вами ссылки, описание профиля, фотографии и баннеры не должны содержать рекламу или нарушать законодательство РФ. Вы несете ответственность за размещение материалов на сайте.
+            </Typography>
+          </AlertBox>
+          
+          {/* Форма аватара */}
+          <FormCard>
+            <CardHeader>
+              <Typography variant="h4" sx={{ fontWeight: 600, fontSize: '1.5rem' }}>
+                Аватар
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(161, 161, 170, 0.8)', fontSize: '0.875rem' }}>
+                Вы можете сменить свой аватар. После одобрения модерацией он сразу отобразится на сайте.
+              </Typography>
+            </CardHeader>
+            
+            <CardContent>
+              <Box sx={{ width: '144px', mb: 2 }}>
+                <Box sx={{ display: 'flex', width: '100%', mb: 2 }}>
+                  <Button
+                    component="label"
+                    htmlFor="avatar"
+                    sx={{
+                      height: '40px',
+                      backgroundColor: 'white',
+                      color: 'black',
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      fontSize: '0.875rem',
+                      borderRadius: '6px',
+                      width: '250px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '0 16px',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      }
+                    }}
+                  >
+                    <svg 
+                      stroke="currentColor" 
+                      fill="currentColor" 
+                      strokeWidth="0" 
+                      viewBox="0 0 512 512"
+                      style={{ width: '16px', height: '16px', marginRight: '8px' }}
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M464 448H48c-26.51 0-48-21.49-48-48V112c0-26.51 21.49-48 48-48h416c26.51 0 48 21.49 48 48v288c0 26.51-21.49 48-48 48zM112 120c-30.928 0-56 25.072-56 56s25.072 56 56 56 56-25.072 56-56-25.072-56-56-56zM64 384h384V272l-87.515-87.515c-4.686-4.686-12.284-4.686-16.971 0L208 320l-55.515-55.515c-4.686-4.686-12.284-4.686-16.971 0L64 336v48z"></path>
+                    </svg>
+                    <span>Выберите изображение</span>
+                    <input
+                      type="file"
+                      hidden
+                      id="avatar"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      onChange={handleAvatarSelect}
+                    />
+                  </Button>
+                </Box>
+                
+                <Box sx={{ mt: 2, mb: 2, width: '100%', position: 'relative' }}>
+                  <Box 
+                    sx={{ 
+                      position: 'relative',
+                      width: '144px',
+                      height: '144px',
+                      borderRadius: '50%',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <Avatar
+                      src={previewAvatar || avatarUrl || '/noimage-single.png'}
+                      alt={userDetails?.username}
+                      sx={{ 
+                        position: 'absolute',
+                        width: '100%', 
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  </Box>
+                </Box>
               </Box>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                Размер аватара не должен превышать 5 МБ
+            </CardContent>
+            
+            <CardFooter>
+              <StyledButton
+                onClick={handleAvatarUpload}
+                disabled={saving}
+                sx={{ width: '150px' }}
+              >
+                {saving ? 'Сохранение...' : 'Отправить'}
+              </StyledButton>
+            </CardFooter>
+          </FormCard>
+          
+          {/* Форма данных профиля */}
+          <FormCard>
+            <CardHeader>
+              <Typography variant="h4" sx={{ fontWeight: 600, fontSize: '1.5rem' }}>
+                Данные профиля
               </Typography>
-            </Grid>
-            
-            <Grid item xs={12} sm={8} md={9}>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Имя пользователя"
-                    value={userDetails?.username || ''}
-                    fullWidth
-                    disabled
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': { borderColor: 'rgba(255,255,255,0.23)' },
-                        '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' },
-                        '&.Mui-disabled fieldset': { borderColor: 'rgba(255,255,255,0.1)' }
-                      },
-                      '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                      '& .MuiInputBase-input': { color: 'rgba(255,255,255,0.5)' }
-                    }}
-                  />
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', ml: 1 }}>
-                    Имя пользователя нельзя изменить
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <TextField
-                    label="Email"
-                    value={userDetails?.email || ''}
-                    fullWidth
-                    disabled
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': { borderColor: 'rgba(255,255,255,0.23)' },
-                        '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' },
-                        '&.Mui-disabled fieldset': { borderColor: 'rgba(255,255,255,0.1)' }
-                      },
-                      '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                      '& .MuiInputBase-input': { color: 'rgba(255,255,255,0.5)' }
-                    }}
-                  />
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', ml: 1 }}>
-                    Email нельзя изменить
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <TextField
-                    label="О себе"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': { borderColor: 'rgba(255,255,255,0.23)' },
-                        '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' }
-                      },
-                      '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                      '& .MuiInputBase-input': { color: 'white' }
-                    }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <TextField
-                    label="Telegram ID"
-                    value={telegramChatId}
-                    onChange={(e) => setTelegramChatId(e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    placeholder="username"
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">@</InputAdornment>,
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': { borderColor: 'rgba(255,255,255,0.23)' },
-                        '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' }
-                      },
-                      '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                      '& .MuiInputBase-input': { color: 'white' },
-                      '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.7)' }
-                    }}
-                  />
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', ml: 1 }}>
-                    Укажите ваш Telegram для связи
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<SaveIcon />}
-              onClick={handleSaveProfile}
-              disabled={saving}
-            >
-              {saving ? 'Сохранение...' : 'Сохранить изменения'}
-            </Button>
-          </Box>
-        </Paper>
-        
-        {/* Смена пароля */}
-        <Paper sx={{ p: 3, bgcolor: '#1e1e1e', color: 'white', borderRadius: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Смена пароля
-          </Typography>
-          
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                label="Текущий пароль"
-                type={showOldPassword ? "text" : "password"}
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowOldPassword(!showOldPassword)}
-                        edge="end"
-                        sx={{ color: 'rgba(255,255,255,0.7)' }}
-                      >
-                        {showOldPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: 'rgba(255,255,255,0.23)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' }
-                  },
-                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                  '& .MuiInputBase-input': { color: 'white' }
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                label="Новый пароль"
-                type={showNewPassword ? "text" : "password"}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        edge="end"
-                        sx={{ color: 'rgba(255,255,255,0.7)' }}
-                      >
-                        {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: 'rgba(255,255,255,0.23)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' }
-                  },
-                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                  '& .MuiInputBase-input': { color: 'white' }
-                }}
-              />
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', ml: 1 }}>
-                Минимум 6 символов
+              <Typography variant="body2" sx={{ color: 'rgba(161, 161, 170, 0.8)', fontSize: '0.875rem' }}>
+                Вы можете обновить свою биографию и данные для связи.
               </Typography>
-            </Grid>
+            </CardHeader>
             
-            <Grid item xs={12}>
-              <TextField
-                label="Подтверждение нового пароля"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                fullWidth
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: 'rgba(255,255,255,0.23)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' }
-                  },
-                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                  '& .MuiInputBase-input': { color: 'white' }
-                }}
-              />
-            </Grid>
-          </Grid>
+            <CardContent>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Box sx={{ display: 'grid', gap: 3 }}>
+                  <Box>
+                    <Typography component="label" htmlFor="email" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
+                      Email
+                    </Typography>
+                    <TextField
+                      id="email"
+                      value={userDetails?.email || ''}
+                      disabled
+                      fullWidth
+                      placeholder="rztuser@mail.com"
+                      variant="outlined"
+                      InputProps={{
+                        sx: {
+                          backgroundColor: 'rgba(161, 161, 170, 0.1)',
+                          color: 'rgba(161, 161, 170, 0.8)',
+                          height: '40px',
+                          borderRadius: '6px',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.2)'
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                  
+                  <Box>
+                    <Typography component="label" htmlFor="nickname" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
+                      Никнейм
+                    </Typography>
+                    <TextField
+                      id="nickname"
+                      value={userDetails?.username || ''}
+                      disabled
+                      fullWidth
+                      placeholder="Введите ваш никнейм"
+                      variant="outlined"
+                      InputProps={{
+                        sx: {
+                          backgroundColor: 'rgba(161, 161, 170, 0.1)',
+                          color: 'rgba(161, 161, 170, 0.8)',
+                          height: '40px',
+                          borderRadius: '6px',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.2)'
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                  
+                  <Box>
+                    <Typography component="label" htmlFor="description" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
+                      Биография
+                    </Typography>
+                    <TextField
+                      id="description"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      fullWidth
+                      multiline
+                      rows={4}
+                      placeholder="Расскажите о себе"
+                      variant="outlined"
+                      InputProps={{
+                        sx: {
+                          backgroundColor: 'transparent',
+                          color: 'white',
+                          borderRadius: '6px',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.2)'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.3)'
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.5)'
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                  
+                  <Box>
+                    <Typography component="label" htmlFor="telegram" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
+                      Telegram
+                    </Typography>
+                    <TextField
+                      id="telegram"
+                      value={telegramChatId}
+                      onChange={(e) => setTelegramChatId(e.target.value)}
+                      fullWidth
+                      placeholder="https://t.me/"
+                      variant="outlined"
+                      InputProps={{
+                        sx: {
+                          backgroundColor: 'transparent',
+                          color: 'white',
+                          height: '40px',
+                          borderRadius: '6px',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.2)'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.3)'
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.5)'
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </CardContent>
+            
+            <CardFooter>
+              <StyledButton
+                onClick={handleSaveProfile}
+                disabled={saving}
+              >
+                {saving ? 'Сохранение...' : 'Сохранить'}
+              </StyledButton>
+            </CardFooter>
+          </FormCard>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<EditIcon />}
-              onClick={handleChangePassword}
-              disabled={saving || !oldPassword || !newPassword || !confirmPassword}
-            >
-              {saving ? 'Сохранение...' : 'Изменить пароль'}
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
+          {/* Форма смены пароля */}
+          <FormCard>
+            <CardHeader>
+              <Typography variant="h4" sx={{ fontWeight: 600, fontSize: '1.5rem' }}>
+                Смена пароля
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(161, 161, 170, 0.8)', fontSize: '0.875rem' }}>
+                Создайте новый пароль для вашего аккаунта.
+              </Typography>
+            </CardHeader>
+            
+            <CardContent>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Box sx={{ display: 'grid', gap: 3 }}>
+                  <Box>
+                    <Typography component="label" htmlFor="current-password" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
+                      Текущий пароль
+                    </Typography>
+                    <TextField
+                      id="current-password"
+                      type={showOldPassword ? "text" : "password"}
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => setShowOldPassword(!showOldPassword)}
+                              edge="end"
+                              sx={{ color: 'rgba(255,255,255,0.7)' }}
+                            >
+                              {showOldPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          backgroundColor: 'transparent',
+                          color: 'white',
+                          height: '40px',
+                          borderRadius: '6px',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.2)'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.3)'
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.5)'
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                  
+                  <Box>
+                    <Typography component="label" htmlFor="new-password" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
+                      Новый пароль
+                    </Typography>
+                    <TextField
+                      id="new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              edge="end"
+                              sx={{ color: 'rgba(255,255,255,0.7)' }}
+                            >
+                              {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          backgroundColor: 'transparent',
+                          color: 'white',
+                          height: '40px',
+                          borderRadius: '6px',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.2)'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.3)'
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.5)'
+                          }
+                        }
+                      }}
+                    />
+                    <Typography variant="caption" sx={{ color: 'rgba(161, 161, 170, 0.8)', mt: 0.5, display: 'block' }}>
+                      Минимум 6 символов
+                    </Typography>
+                  </Box>
+                  
+                  <Box>
+                    <Typography component="label" htmlFor="confirm-password" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
+                      Подтверждение нового пароля
+                    </Typography>
+                    <TextField
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputProps={{
+                        sx: {
+                          backgroundColor: 'transparent',
+                          color: 'white',
+                          height: '40px',
+                          borderRadius: '6px',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.2)'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.3)'
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(161, 161, 170, 0.5)'
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </CardContent>
+            
+            <CardFooter>
+              <StyledButton
+                onClick={handleChangePassword}
+                disabled={saving || !oldPassword || !newPassword || !confirmPassword}
+              >
+                {saving ? 'Сохранение...' : 'Изменить пароль'}
+              </StyledButton>
+            </CardFooter>
+          </FormCard>
+        </ContentSection>
+      </ContentGrid>
       
       {/* Уведомления */}
       <Snackbar 
@@ -520,7 +819,7 @@ const SettingsPage = () => {
           {notification.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </MainContainer>
   );
 };
 
