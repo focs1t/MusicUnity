@@ -1166,10 +1166,10 @@ const ProfilePage = () => {
                         {userRank.isInTop100 ? (
                           <>
                             <div className="rank-badge">ТОП {userRank.rank}</div>
-                            <div className="rank-link"><Link to="/top-100">в ТОП-100</Link></div>
+                            <div className="rank-link"><Link to="/top-100" style={{color: 'white', textDecoration: 'none'}}>в ТОП-100</Link></div>
                           </>
                         ) : (
-                          <div className="rank-link"><Link to="/top-100">Рейтинг пользователей</Link></div>
+                          <div className="rank-link"><Link to="/top-100" style={{color: 'white', textDecoration: 'none'}}>Рейтинг пользователей</Link></div>
                         )}
                       </div>
                     </div>
