@@ -454,74 +454,103 @@ export const Header = () => {
   };
 
   return (
-    <header className={styles.header}>
-      <div className={styles.container}>
-        <div className={styles.content}>
-          <a className={styles.logo} href="/">
-            <img 
-              alt="Риса за Творчество логотип" 
-              width="200" 
-              height="100" 
-              decoding="async" 
-              data-nimg="1" 
-              className={styles.logoImage} 
-              style={{ color: 'transparent' }} 
-              src="/риса за творчество логотип.svg" 
-            />
-          </a>
-          <div className={styles.searchContainer}>
-            <form className={styles.searchForm}>
-              <label htmlFor="search" className={styles.srOnly}>Search</label>
-              <button 
-                className={styles.searchButton} 
-                type="submit"
-              >
-                <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className={styles.searchIcon} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M337.509 305.372h-17.501l-6.571-5.486c20.791-25.232 33.922-57.054 33.922-93.257C347.358 127.632 283.896 64 205.135 64 127.452 64 64 127.632 64 206.629s63.452 142.628 142.225 142.628c35.011 0 67.831-13.167 92.991-34.008l6.561 5.487v17.551L415.18 448 448 415.086 337.509 305.372zm-131.284 0c-54.702 0-98.463-43.887-98.463-98.743 0-54.858 43.761-98.742 98.463-98.742 54.7 0 98.462 43.884 98.462 98.742 0 54.856-43.762 98.743-98.462 98.743z"></path>
-                </svg>
-              </button>
-              <button 
-                type="button" 
-                role="combobox" 
-                aria-controls="radix-:Rqakq:" 
-                aria-expanded="false" 
-                aria-autocomplete="none" 
-                dir="ltr" 
-                data-state="closed" 
-                data-placeholder="" 
-                className={styles.searchButton}
-              >
-                <span style={{ pointerEvents: 'none' }}>
-                  <div>
-                    <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className={styles.searchIcon} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M2 7v10"></path>
-                      <path d="M6 5v14"></path>
-                      <rect width="12" height="18" x="10" y="3" rx="2"></rect>
-                    </svg> 
-                    <span className={styles.searchText}>Авторы и релизы</span>
-                  </div>
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.chevronIcon} aria-hidden="true">
-                  <path d="m6 9 6 6 6-6"></path>
-                </svg>
-              </button>
-              <select aria-hidden="true" tabIndex="-1" style={{ position: 'absolute', border: '0px', width: '1px', height: '1px', padding: '0px', margin: '-1px', overflow: 'hidden', clip: 'rect(0px, 0px, 0px, 0px)', whiteSpace: 'nowrap', overflowWrap: 'normal' }}>
-                <option value=""></option>
-                <option value="releases"> Авторы и релизы</option>
-                <option value="users"> Пользователи</option>
-              </select>
-              <input 
-                className={styles.searchInput} 
-                placeholder="Поиск..." 
-                value=""
+    <>
+      <header className={styles.header}>
+        <div className={styles.container}>
+          <div className={styles.content}>
+            <a className={styles.logo} href="/">
+              <img 
+                alt="Риса за Творчество логотип" 
+                width="200" 
+                height="100" 
+                decoding="async" 
+                data-nimg="1" 
+                className={styles.logoImage} 
+                style={{ color: 'transparent' }} 
+                src="/риса за творчество логотип.svg" 
               />
-            </form>
-          </div>
-          <div className={styles.authContainer}>
-            {renderAuthButtons()}
+            </a>
+            <div className={styles.searchContainer}>
+              <form className={styles.searchForm}>
+                <label htmlFor="search" className={styles.srOnly}>Search</label>
+                <button 
+                  className={styles.searchButton} 
+                  type="submit"
+                >
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className={styles.searchIcon} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M337.509 305.372h-17.501l-6.571-5.486c20.791-25.232 33.922-57.054 33.922-93.257C347.358 127.632 283.896 64 205.135 64 127.452 64 64 127.632 64 206.629s63.452 142.628 142.225 142.628c35.011 0 67.831-13.167 92.991-34.008l6.561 5.487v17.551L415.18 448 448 415.086 337.509 305.372zm-131.284 0c-54.702 0-98.463-43.887-98.463-98.743 0-54.858 43.761-98.742 98.463-98.742 54.7 0 98.462 43.884 98.462 98.742 0 54.856-43.762 98.743-98.462 98.743z"></path>
+                  </svg>
+                </button>
+                <button 
+                  type="button" 
+                  role="combobox" 
+                  aria-controls="radix-:Rqakq:" 
+                  aria-expanded="false" 
+                  aria-autocomplete="none" 
+                  dir="ltr" 
+                  data-state="closed" 
+                  data-placeholder="" 
+                  className={styles.searchButton}
+                >
+                  <span style={{ pointerEvents: 'none' }}>
+                    <div>
+                      <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className={styles.searchIcon} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 7v10"></path>
+                        <path d="M6 5v14"></path>
+                        <rect width="12" height="18" x="10" y="3" rx="2"></rect>
+                      </svg> 
+                      <span className={styles.searchText}>Авторы и релизы</span>
+                    </div>
+                  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.chevronIcon} aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"></path>
+                  </svg>
+                </button>
+                <select aria-hidden="true" tabIndex="-1" style={{ position: 'absolute', border: '0px', width: '1px', height: '1px', padding: '0px', margin: '-1px', overflow: 'hidden', clip: 'rect(0px, 0px, 0px, 0px)', whiteSpace: 'nowrap', overflowWrap: 'normal' }}>
+                  <option value=""></option>
+                  <option value="releases"> Авторы и релизы</option>
+                  <option value="users"> Пользователи</option>
+                </select>
+                <input 
+                  className={styles.searchInput} 
+                  placeholder="Поиск..." 
+                  value=""
+                />
+              </form>
+            </div>
+            <div className={styles.authContainer}>
+              {renderAuthButtons()}
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Модальные окна авторизации и регистрации */}
+      <LoginModal 
+        open={loginModalOpen} 
+        onClose={handleCloseLoginModal}
+        onSwitchToRegister={handleSwitchToRegister}
+        onSwitchToForgotPassword={handleSwitchToForgotPassword}
+      />
+      
+      <RegisterModal 
+        open={registerModalOpen} 
+        onClose={handleCloseRegisterModal}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+      
+      <ForgotPasswordModal
+        open={forgotPasswordModalOpen}
+        onClose={handleCloseForgotPasswordModal}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+      
+      <ResetPasswordModal 
+        open={resetPasswordModalOpen} 
+        onClose={handleCloseResetPasswordModal}
+        token={resetToken}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+    </>
   );
 }; 
