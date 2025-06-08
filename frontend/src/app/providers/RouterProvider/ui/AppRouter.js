@@ -6,7 +6,9 @@ import FollowingReleasesPage from '../../../../pages/FollowingReleasesPage';
 import ProfilePage from '../../../../pages/ProfilePage';
 import SettingsPage from '../../../../pages/SettingsPage';
 import Top100Page from '../../../../pages/Top100Page';
+import AuthorLikesPage from '../../../../pages/AuthorLikesPage';
 import { ROUTES } from '../../../../shared/config/routes';
+import ReviewsPage from '../../../../pages/ReviewsPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -39,9 +41,9 @@ const AppRouter = () => {
       <Route path={ROUTES.TOP_100} element={<PublicRoute element={<Top100Page />} />} />
       <Route path={ROUTES.FAQ} element={<PublicRoute element={<div>Часто задаваемые вопросы</div>} />} />
       <Route path={ROUTES.RATING} element={<PublicRoute element={<div>Рейтинг</div>} />} />
-      <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<div>Авторские лайки</div>} />} />
+      <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<AuthorLikesPage />} />} />
       <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<div>Зарегистрированные авторы</div>} />} />
-      <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<div>Рецензии</div>} />} />
+      <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<ReviewsPage />} />} />
       <Route path={ROUTES.CONTACT} element={<PublicRoute element={<div>Обратная связь</div>} />} />
       
       {/* Редирект на главную при переходе на неизвестный маршрут */}

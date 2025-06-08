@@ -47,8 +47,43 @@ public class LikeService {
     }
     
     public Page<ReviewDTO> getAllReviewsWithAuthorLikes(Pageable pageable) {
-        return likeRepository.findAllReviewsByLikeType(LikeType.AUTHOR, pageable)
-                .map(reviewMapper::toDTO);
+        try {
+            Page<Review> reviews = likeRepository.findAllReviewsWithAuthorLikes(LikeType.AUTHOR, pageable);
+            
+            // Конвертируем в DTO
+            Page<ReviewDTO> reviewDTOs = reviews.map(reviewMapper::toDTO);
+            
+            // Добавляем информацию об авторах лайков для каждой рецензии
+            reviewDTOs.forEach(reviewDTO -> {
+                List<LikeDTO> authorLikes = getAuthorLikesByReview(reviewDTO.getReviewId());
+                if (!authorLikes.isEmpty()) {
+                    // Берем первый авторский лайк (или можно обработать все)
+                    LikeDTO authorLike = authorLikes.get(0);
+                    
+                    // Получаем информацию о пользователе (авторе), который поставил лайк
+                    try {
+                        User author = userRepository.findById(authorLike.getUserId())
+                                .orElseThrow(() -> new UserNotFoundException(authorLike.getUserId()));
+                        
+                        ReviewDTO.UserDTO authorDTO = new ReviewDTO.UserDTO();
+                        authorDTO.setUserId(author.getUserId());
+                        authorDTO.setUsername(author.getUsername());
+                        authorDTO.setAvatarUrl(author.getAvatarUrl());
+                        
+                        reviewDTO.setAuthorLike(authorDTO);
+                    } catch (Exception e) {
+                        System.err.println("Ошибка при получении информации об авторе лайка: " + e.getMessage());
+                    }
+                }
+            });
+            
+            return reviewDTOs;
+        } catch (Exception e) {
+            // Логирование ошибки для отладки
+            System.err.println("Ошибка при получении рецензий с авторскими лайками: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     public Long getLikesCountByReview(Long reviewId) {

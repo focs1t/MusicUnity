@@ -36,6 +36,25 @@ public class ReviewMapper {
             
         dto.setCreatedAt(review.getCreatedAt());
         
+        // Заполняем данные пользователя
+        if (review.getUser() != null) {
+            ReviewDTO.UserDTO userDTO = new ReviewDTO.UserDTO();
+            userDTO.setUserId(review.getUser().getUserId());
+            userDTO.setUsername(review.getUser().getUsername());
+            userDTO.setAvatarUrl(review.getUser().getAvatarUrl());
+            // Ранг можно установить позже через UserService если потребуется
+            dto.setUser(userDTO);
+        }
+        
+        // Заполняем данные релиза
+        if (review.getRelease() != null) {
+            ReviewDTO.ReleaseDTO releaseDTO = new ReviewDTO.ReleaseDTO();
+            releaseDTO.setReleaseId(review.getRelease().getReleaseId());
+            releaseDTO.setTitle(review.getRelease().getTitle());
+            releaseDTO.setCoverUrl(review.getRelease().getCoverUrl());
+            dto.setRelease(releaseDTO);
+        }
+        
         return dto;
     }
     

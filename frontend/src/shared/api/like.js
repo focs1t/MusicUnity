@@ -32,6 +32,28 @@ export const likeApi = {
   },
 
   /**
+   * Получение всех рецензий с авторскими лайками
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getAllReviewsWithAuthorLikes: async (page = 0, size = 10) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/author-likes`, {
+        params: { page, size }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при получении рецензий с авторскими лайками:', error);
+      return {
+        content: [],
+        totalElements: 0,
+        totalPages: 0
+      };
+    }
+  },
+
+  /**
    * Получение количества лайков отзыва
    * @param {number} reviewId - ID отзыва
    * @returns {Promise<number>}

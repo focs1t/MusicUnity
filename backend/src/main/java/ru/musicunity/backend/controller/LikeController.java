@@ -18,6 +18,7 @@ import ru.musicunity.backend.service.LikeService;
 import ru.musicunity.backend.service.ReviewService;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/likes")
@@ -26,6 +27,7 @@ import java.util.List;
 public class LikeController {
     private final LikeService likeService;
     private final ReviewService reviewService;
+    private static final Logger logger = Logger.getLogger(LikeController.class.getName());
 
     @Operation(summary = "Получение лайков отзыва")
     @ApiResponses(value = {
@@ -45,6 +47,24 @@ public class LikeController {
     public ResponseEntity<List<LikeDTO>> getAuthorLikesByReview(
         @Parameter(description = "ID отзыва") @PathVariable Long reviewId) {
         return ResponseEntity.ok(likeService.getAuthorLikesByReview(reviewId));
+    }
+
+    @Operation(summary = "Получение всех рецензий с авторскими лайками")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список рецензий с авторскими лайками")
+    })
+    @GetMapping("/author-likes")
+    public ResponseEntity<Page<ReviewDTO>> getAllReviewsWithAuthorLikes(
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        logger.info("Получен запрос на /api/likes/author-likes с параметрами пагинации: " + pageable);
+        try {
+            Page<ReviewDTO> result = likeService.getAllReviewsWithAuthorLikes(pageable);
+            logger.info("Успешно получены рецензии с авторскими лайками: " + result.getTotalElements() + " элементов");
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.severe("Ошибка при получении рецензий с авторскими лайками: " + e.getMessage());
+            throw e;
+        }
     }
 
     @Operation(summary = "Получение количества лайков отзыва")
