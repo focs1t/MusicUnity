@@ -83,7 +83,40 @@ function ReleasesPage() {
    * Отображение типа релиза в виде значка
    */
   const getReleaseTypeIcon = (type) => {
-    if (type === 'TRACK' || type === 'track') {
+    // Преобразуем тип к верхнему регистру для единообразия сравнения
+    const upperType = typeof type === 'string' ? type.toUpperCase() : '';
+    
+    if (upperType === 'SINGLE' || upperType === 'EP') {
+      // Иконка для синглов и EP - нота (как MusicNoteIcon)
+      return React.createElement('svg', {
+        stroke: 'currentColor',
+        fill: 'currentColor',
+        strokeWidth: '0',
+        viewBox: '0 0 24 24',
+        className: 'relative size-4',
+        height: '1em',
+        width: '1em',
+        xmlns: 'http://www.w3.org/2000/svg'
+      }, React.createElement('path', {
+        d: 'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z'
+      }));
+    } else if (upperType === 'ALBUM') {
+      // Иконка для альбомов - диск (как AlbumIcon)
+      return React.createElement('svg', {
+        stroke: 'currentColor',
+        fill: 'currentColor',
+        strokeWidth: '0',
+        viewBox: '0 0 24 24',
+        className: 'relative size-4',
+        height: '1em',
+        width: '1em',
+        xmlns: 'http://www.w3.org/2000/svg'
+      }, [
+        React.createElement('path', { key: 'path1', d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5z' }),
+        React.createElement('circle', { key: 'circle', cx: '12', cy: '12', r: '2.5' })
+      ]);
+    } else if (upperType === 'TRACK') {
+      // Иконка для треков - нота (как было раньше)
       return React.createElement('svg', {
         stroke: 'currentColor',
         fill: 'currentColor',
@@ -97,6 +130,7 @@ function ReleasesPage() {
         d: 'M406.3 48.2c-4.7.9-202 39.2-206.2 40-4.2.8-8.1 3.6-8.1 8v240.1c0 1.6-.1 7.2-2.4 11.7-3.1 5.9-8.5 10.2-16.1 12.7-3.3 1.1-7.8 2.1-13.1 3.3-24.1 5.4-64.4 14.6-64.4 51.8 0 31.1 22.4 45.1 41.7 47.5 2.1.3 4.5.7 7.1.7 6.7 0 36-3.3 51.2-13.2 11-7.2 24.1-21.4 24.1-47.8V190.5c0-3.8 2.7-7.1 6.4-7.8l152-30.7c5-1 9.6 2.8 9.6 7.8v130.9c0 4.1-.2 8.9-2.5 13.4-3.1 5.9-8.5 10.2-16.2 12.7-3.3 1.1-8.8 2.1-14.1 3.3-24.1 5.4-64.4 14.5-64.4 51.7 0 33.7 25.4 47.2 41.8 48.3 6.5.4 11.2.3 19.4-.9s23.5-5.5 36.5-13c17.9-10.3 27.5-26.8 27.5-48.2V55.9c-.1-4.4-3.8-8.9-9.8-7.7z'
       }));
     } else {
+      // Для всех остальных типов релизов - круг с точкой (как было раньше)
       return React.createElement('svg', {
         stroke: 'currentColor',
         fill: 'currentColor',
