@@ -17,4 +17,9 @@ public class UserDTO {
     private Boolean isBlocked;
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt;
+    
+    // Статистика рецензий
+    private Long totalReviewsCount;
+    private Long extendedReviewsCount;
+    private Long simpleReviewsCount;
 } 

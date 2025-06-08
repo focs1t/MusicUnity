@@ -260,14 +260,14 @@ function ReleasesPage() {
             })
           ),
           
-          // Счетчики комментариев
-          release.reviewsCount > 0 || (release.commentCount > 0) ? 
+          // Счетчики комментариев и рецензий
+          release.extendedReviewsCount > 0 || release.simpleReviewsCount > 0 ? 
             React.createElement('div', {
               key: 'counters',
               className: 'absolute bottom-1.5 left-1.5 bg-zinc-900 rounded-full px-1.5 flex gap-2 items-center font-semibold text-sm'
             }, [
-              release.commentCount > 0 ? 
-                React.createElement('div', { key: 'comments', className: 'flex items-center gap-[3px]' }, [
+              release.extendedReviewsCount > 0 ? 
+                React.createElement('div', { key: 'extended-reviews', className: 'flex items-center gap-[3px]' }, [
                   React.createElement('svg', {
                     stroke: 'currentColor',
                     fill: 'currentColor',
@@ -281,11 +281,11 @@ function ReleasesPage() {
                     React.createElement('path', { key: 'p1', d: 'M7 7h10v2H7zm0 4h7v2H7z' }),
                     React.createElement('path', { key: 'p2', d: 'M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z' })
                   ]),
-                  React.createElement('span', {}, release.commentCount || 1)
+                  React.createElement('span', {}, release.extendedReviewsCount || 0)
                 ]) : null,
                 
-              release.reviewsCount > 0 ? 
-                React.createElement('div', { key: 'reviews', className: 'flex items-center gap-[3px]' }, [
+              release.simpleReviewsCount > 0 ? 
+                React.createElement('div', { key: 'simple-reviews', className: 'flex items-center gap-[3px]' }, [
                   React.createElement('svg', {
                     stroke: 'currentColor',
                     fill: 'currentColor',
@@ -298,10 +298,10 @@ function ReleasesPage() {
                   }, 
                     React.createElement('path', { d: 'M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z' })
                   ),
-                  React.createElement('span', {}, release.reviewsCount || 0)
+                  React.createElement('span', {}, release.simpleReviewsCount || 0)
                 ]) : null
             ]) : null,
-            
+          
           // Иконка типа релиза  
           React.createElement('div', {
             key: 'type-icon',

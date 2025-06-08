@@ -37,4 +37,40 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      */
     @Query("SELECT r FROM Review r JOIN Like l ON l.review.reviewId = r.reviewId WHERE l.user.userId = :userId")
     Page<Review> findLikedByUser(@Param("userId") Long userId, Pageable pageable);
+    
+    /**
+     * Подсчет количества рецензий определенного типа по релизу
+     * @param releaseId ID релиза
+     * @param type тип рецензии
+     * @return количество рецензий
+     */
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = :type AND r.isDeleted = false")
+    long countByReleaseAndType(@Param("releaseId") Long releaseId, @Param("type") ReviewType type);
+    
+    /**
+     * Подсчет количества рецензий определенного типа, созданных пользователем
+     * @param userId ID пользователя
+     * @param type тип рецензии
+     * @return количество рецензий
+     */
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.userId = :userId AND r.type = :type AND r.isDeleted = false")
+    long countByUserAndType(@Param("userId") Long userId, @Param("type") ReviewType type);
+    
+    /**
+     * Получение всех рецензий определенного типа по релизу
+     * @param releaseId ID релиза
+     * @param type тип рецензии
+     * @param pageable параметры пагинации
+     * @return страница рецензий
+     */
+    Page<Review> findAllByReleaseReleaseIdAndTypeAndIsDeletedFalse(Long releaseId, ReviewType type, Pageable pageable);
+    
+    /**
+     * Получение всех рецензий определенного типа, созданных пользователем
+     * @param userId ID пользователя
+     * @param type тип рецензии
+     * @param pageable параметры пагинации
+     * @return страница рецензий
+     */
+    Page<Review> findAllByUserUserIdAndTypeAndIsDeletedFalse(Long userId, ReviewType type, Pageable pageable);
 }

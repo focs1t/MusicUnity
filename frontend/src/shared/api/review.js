@@ -178,6 +178,34 @@ export const reviewApi = {
       throw error;
     }
   },
+  
+  /**
+   * Получение количества полных рецензий пользователя
+   * @param {number} userId - ID пользователя
+   * @returns {Promise<number>}
+   */
+  getExtendedReviewsCountByUser: async (userId) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/user/${userId}/extended/count`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  /**
+   * Получение количества простых рецензий пользователя
+   * @param {number} userId - ID пользователя
+   * @returns {Promise<number>}
+   */
+  getSimpleReviewsCountByUser: async (userId) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/user/${userId}/simple/count`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
   /**
    * Получение количества отзывов на релиз

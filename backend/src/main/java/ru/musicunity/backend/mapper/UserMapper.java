@@ -3,15 +3,19 @@ package ru.musicunity.backend.mapper;
 import org.springframework.stereotype.Component;
 import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.pojo.User;
+import ru.musicunity.backend.pojo.enums.ReviewType;
+import ru.musicunity.backend.repository.ReviewRepository;
 import ru.musicunity.backend.repository.UserRepository;
 
 @Component
 public class UserMapper {
     
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
-    public UserMapper(UserRepository userRepository) {
+    public UserMapper(UserRepository userRepository, ReviewRepository reviewRepository) {
         this.userRepository = userRepository;
+        this.reviewRepository = reviewRepository;
     }
     
     public UserDTO toDTO(User user) {
@@ -30,6 +34,15 @@ public class UserMapper {
         dto.setIsBlocked(user.getIsBlocked());
         dto.setLastLogin(user.getLastLogin());
         dto.setCreatedAt(user.getCreatedAt());
+        
+        // Добавляем статистику рецензий
+        Long totalReviews = reviewRepository.countByUser(user.getUserId());
+        Long extendedReviews = reviewRepository.countByUserAndType(user.getUserId(), ReviewType.EXTENDED);
+        Long simpleReviews = reviewRepository.countByUserAndType(user.getUserId(), ReviewType.SIMPLE);
+        
+        dto.setTotalReviewsCount(totalReviews);
+        dto.setExtendedReviewsCount(extendedReviews);
+        dto.setSimpleReviewsCount(simpleReviews);
         
         return dto;
     }

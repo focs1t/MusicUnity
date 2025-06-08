@@ -137,6 +137,30 @@ public class ReviewService {
                 .map(reviewMapper::toDTO);
     }
 
+    /**
+     * Получение рецензий определенного типа по релизу
+     * @param releaseId ID релиза
+     * @param type тип рецензии
+     * @param pageable параметры пагинации
+     * @return страница рецензий
+     */
+    public Page<ReviewDTO> getReviewsByReleaseAndType(Long releaseId, ReviewType type, Pageable pageable) {
+        return reviewRepository.findAllByReleaseReleaseIdAndTypeAndIsDeletedFalse(releaseId, type, pageable)
+                .map(reviewMapper::toDTO);
+    }
+    
+    /**
+     * Получение рецензий определенного типа, созданных пользователем
+     * @param userId ID пользователя
+     * @param type тип рецензии
+     * @param pageable параметры пагинации
+     * @return страница рецензий
+     */
+    public Page<ReviewDTO> getReviewsByUserAndType(Long userId, ReviewType type, Pageable pageable) {
+        return reviewRepository.findAllByUserUserIdAndTypeAndIsDeletedFalse(userId, type, pageable)
+                .map(reviewMapper::toDTO);
+    }
+
     public Page<ReviewDTO> getAllSorted(Pageable pageable) {
         return reviewRepository.findAllSorted(pageable)
                 .map(reviewMapper::toDTO);
@@ -148,6 +172,26 @@ public class ReviewService {
 
     public long getReviewsCountByRelease(Long releaseId) {
         return reviewRepository.countByRelease(releaseId);
+    }
+    
+    /**
+     * Получение количества рецензий определенного типа по релизу
+     * @param releaseId ID релиза
+     * @param type тип рецензии
+     * @return количество рецензий
+     */
+    public long getReviewsCountByReleaseAndType(Long releaseId, ReviewType type) {
+        return reviewRepository.countByReleaseAndType(releaseId, type);
+    }
+    
+    /**
+     * Получение количества рецензий определенного типа, созданных пользователем
+     * @param userId ID пользователя
+     * @param type тип рецензии
+     * @return количество рецензий
+     */
+    public long getReviewsCountByUserAndType(Long userId, ReviewType type) {
+        return reviewRepository.countByUserAndType(userId, type);
     }
 
     /**

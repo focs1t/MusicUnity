@@ -507,6 +507,8 @@ const ProfilePage = () => {
     givenLikes: 0,
     receivedAuthorLikes: 0,
     totalReviews: 0,
+    extendedReviews: 0,  // Новое поле для расширенных рецензий
+    simpleReviews: 0,    // Новое поле для простых рецензий
     followedAuthors: 0,
     favorites: 0
   });
@@ -585,6 +587,8 @@ const ProfilePage = () => {
           givenLikes,
           authorLikes,
           reviewsCount,
+          extendedReviewsCount,
+          simpleReviewsCount,
           followedAuthorsData,
           favoritesData,
           likedReviewsData
@@ -593,10 +597,24 @@ const ProfilePage = () => {
           likeApi.getGivenLikesCountByUser(userData.userId),
           likeApi.getReceivedAuthorLikesCountByUser(userData.userId),
           reviewApi.getReviewsCountByUser(userData.userId),
+          reviewApi.getExtendedReviewsCountByUser(userData.userId),
+          reviewApi.getSimpleReviewsCountByUser(userData.userId),
           userApi.getUserFollowedAuthors(userData.userId, 0, 5),
           userApi.getUserFavorites(userData.userId, 0, 5),
           likeApi.getLikedReviewsByUser(userData.userId, 0, 100)
         ]);
+        
+        // Обновление статистики
+        setStats({
+          receivedLikes,
+          givenLikes,
+          receivedAuthorLikes: authorLikes,
+          totalReviews: reviewsCount,
+          extendedReviews: extendedReviewsCount,
+          simpleReviews: simpleReviewsCount,
+          followedAuthors: followedAuthorsData.totalElements || 0,
+          favorites: favoritesData.totalElements || 0
+        });
         
         // Получаем список ID рецензий, которые пользователь лайкнул
         if (likedReviewsData && likedReviewsData.content) {
@@ -661,15 +679,7 @@ const ProfilePage = () => {
           setLikedReviews([]);
         }
         
-        // Обновление статистики
-        setStats({
-          receivedLikes,
-          givenLikes,
-          receivedAuthorLikes: authorLikes,
-          totalReviews: reviewsCount,
-          followedAuthors: followedAuthorsData.totalElements || 0,
-          favorites: favoritesData.totalElements || 0
-        });
+        // Второй вызов setStats удален, чтобы не перезаписывать значения полей extendedReviews и simpleReviews
         
         // Детальное логирование данных
         console.log('Авторы (оригинальные данные):', followedAuthorsData);
@@ -1911,10 +1921,18 @@ const ProfilePage = () => {
                 <div>
                   <div className="stats-row">
                     <div className="stats-label">
-                      <ChatIcon className="stats-icon" />
-                      <span className="font-semibold">Рецензий</span>
+                      <RateReviewIcon className="stats-icon" />
+                      <span className="font-semibold">Полных рецензий</span>
                     </div>
-                    <div className="stats-value">{stats.totalReviews}</div>
+                    <div className="stats-value">{stats.extendedReviews}</div>
+                  </div>
+                  
+                  <div className="stats-row">
+                    <div className="stats-label">
+                      <ChatIcon className="stats-icon" />
+                      <span className="font-semibold">Простых рецензий</span>
+                    </div>
+                    <div className="stats-value">{stats.simpleReviews}</div>
                   </div>
                 </div>
                 

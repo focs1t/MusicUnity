@@ -73,6 +73,11 @@ public class ReleaseMapper {
                         .mapToDouble(review -> review.getTotalScore())
                         .average()
                         .orElse(0.0));
+                
+                // Устанавливаем количество полных рецензий
+                dto.setExtendedReviewsCount(extendedReviews.size());
+            } else {
+                dto.setExtendedReviewsCount(0);
             }
             
             // Рейтинг по простым рецензиям (SIMPLE)
@@ -85,10 +90,17 @@ public class ReleaseMapper {
                         .mapToDouble(review -> review.getTotalScore())
                         .average()
                         .orElse(0.0));
+                
+                // Устанавливаем количество простых рецензий
+                dto.setSimpleReviewsCount(simpleReviews.size());
+            } else {
+                dto.setSimpleReviewsCount(0);
             }
         } else {
             dto.setReviewsCount(0);
             dto.setCommentCount(0);
+            dto.setExtendedReviewsCount(0);
+            dto.setSimpleReviewsCount(0);
             // Удаляем установку среднего рейтинга
             // dto.setAverageRating(0.0);
         }

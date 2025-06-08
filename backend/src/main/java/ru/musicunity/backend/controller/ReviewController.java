@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.ReviewDTO;
+import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.service.ReviewService;
 
 @RestController
@@ -115,6 +116,26 @@ public class ReviewController {
     public ResponseEntity<Long> getReviewsCountByUser(
         @Parameter(description = "ID пользователя") @PathVariable Long userId) {
         return ResponseEntity.ok(reviewService.getReviewsCountByUser(userId));
+    }
+    
+    @Operation(summary = "Получение количества полных рецензий пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Количество полных рецензий")
+    })
+    @GetMapping("/user/{userId}/extended/count")
+    public ResponseEntity<Long> getExtendedReviewsCountByUser(
+        @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        return ResponseEntity.ok(reviewService.getReviewsCountByUserAndType(userId, ReviewType.EXTENDED));
+    }
+    
+    @Operation(summary = "Получение количества простых рецензий пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Количество простых рецензий")
+    })
+    @GetMapping("/user/{userId}/simple/count")
+    public ResponseEntity<Long> getSimpleReviewsCountByUser(
+        @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        return ResponseEntity.ok(reviewService.getReviewsCountByUserAndType(userId, ReviewType.SIMPLE));
     }
 
     @Operation(summary = "Получение количества отзывов на релиз")

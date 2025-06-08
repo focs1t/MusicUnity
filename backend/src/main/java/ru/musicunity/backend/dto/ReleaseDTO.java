@@ -22,6 +22,8 @@ public class ReleaseDTO {
     private Integer reviewsCount;
     private Double fullReviewRating;
     private Double simpleReviewRating;
+    private Integer extendedReviewsCount;
+    private Integer simpleReviewsCount;
     private Integer commentCount;
 
     @Data
