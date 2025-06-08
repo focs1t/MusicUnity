@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
@@ -46,7 +46,7 @@ function TabPanel(props) {
 }
 
 // Обновляю компонент карточки рецензии
-const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc }) => {
+const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount }) => {
   // Вспомогательная функция для вычисления totalScore внутри компонента
   const calculateReviewScore = (review) => {
     if (review.totalScore !== undefined && review.totalScore !== null) {
@@ -162,7 +162,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
   };
 
   return (
-    <div className="review-card">
+    <div className="review-card" data-review-id={review.reviewId}>
       <div className="relative">
         <div className="bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3">
           <div className="flex items-start space-x-2 lg:space-x-3 w-full">
@@ -239,14 +239,17 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
           <button 
             className="review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5"
             onClick={() => isOwnReview ? handleOwnReviewLikeClick() : onLikeToggle(review.reviewId)}
+            data-review-id={review.reviewId}
           >
-            <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center">
+            <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center like-icon">
               {isLiked ? 
                 <FavoriteIcon style={{ color: '#FF5252', fontSize: '22px' }} /> : 
                 <FavoriteBorderIcon style={{ color: '#AAAAAA', fontSize: '22px' }} />
               }
             </div>
-            <span className="font-bold text-base lg:text-base">{review.likesCount !== undefined ? review.likesCount : 0}</span>
+            <span className="font-bold text-base lg:text-base like-count">
+              {getReviewLikesCount(review)}
+            </span>
           </button>
           
           {/* Всплывающее сообщение */}
@@ -268,28 +271,32 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
 };
 
 // Компонент для отображения рецензии с проверкой данных релиза
-const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc }) => {
+const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount }) => {
   const [enhancedReview, setEnhancedReview] = useState(review);
   const [userRank, setUserRank] = useState(null);
+  
+  // Отслеживаем локальное состояние лайка, чтобы обеспечить правильное отображение
+  const [localIsLiked, setLocalIsLiked] = useState(isLiked);
+  
+  // Обновляем локальное состояние при изменении входящего isLiked
+  useEffect(() => {
+    setLocalIsLiked(isLiked);
+  }, [isLiked]);
+  
+  // Кастомный обработчик лайка, который сначала обновляет локальное состояние
+  const handleLikeToggle = (reviewId) => {
+    // Сразу обновляем локальное состояние
+    setLocalIsLiked(!localIsLiked);
+    // Вызываем родительский обработчик
+    onLikeToggle(reviewId);
+  };
   
   // Определяем реальный статус лайка, учитывая как стандартный isLiked, так и свойство isLikedByCurrentUser
   // которое мы добавили для рецензий при просмотре чужого профиля
   const actualIsLiked = useMemo(() => {
-    // Если передан явный статус лайка, используем его
-    if (typeof isLiked === 'boolean') {
-      // Но также проверяем, есть ли у рецензии свойство isLikedByCurrentUser
-      if (review.hasOwnProperty('isLikedByCurrentUser')) {
-        return review.isLikedByCurrentUser;
-      }
-      return isLiked;
-    }
-    // Если статус не передан, но есть свойство в рецензии, используем его
-    if (review.hasOwnProperty('isLikedByCurrentUser')) {
-      return review.isLikedByCurrentUser;
-    }
-    // По умолчанию - не лайкнуто
-    return false;
-  }, [isLiked, review]);
+    // Используем локальное состояние как более приоритетное
+    return localIsLiked;
+  }, [localIsLiked]);
   
   // Логирование входных данных
   useEffect(() => {
@@ -396,14 +403,25 @@ const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cached
   
   const isCurrentUserReview = fullEnhancedReview.userId === currentUserId;
   
+  // Для непосредственного доступа к счетчику лайков в DOM
+  const likeCountRef = useRef(null);
+  
+  // Эффект для обновления DOM когда изменяется количество лайков
+  useEffect(() => {
+    if (likeCountRef.current && review.likesCount !== undefined) {
+      likeCountRef.current.textContent = review.likesCount;
+    }
+  }, [review.likesCount]);
+  
   return (
     <ReviewCard 
       review={fullEnhancedReview}
       userDetails={enhancedUserDetails}
       isLiked={actualIsLiked}
-      onLikeToggle={onLikeToggle}
+      onLikeToggle={handleLikeToggle}
       cachedAvatarUrl={cachedAvatarUrl}
       getCurrentUserIdFunc={getCurrentUserIdFunc}
+      getReviewLikesCount={getReviewLikesCount}
     />
   );
 };
@@ -512,6 +530,9 @@ const ProfilePage = () => {
   // Состояние для отладки
   const [showDebug, setShowDebug] = useState(false);
   const [debugData, setDebugData] = useState({});
+  
+  // Добавим глобальное состояние для отслеживания лайкнутых рецензий и их счетчиков
+  const [likeStates, setLikeStates] = useState({});
   
   // Загрузка данных при монтировании компонента
   useEffect(() => {
@@ -1079,6 +1100,11 @@ const ProfilePage = () => {
   const handleReviewFilterChange = (filter) => {
     setPage(1); // Сбрасываем страницу при смене фильтра
     setReviewFilter(filter);
+    
+    // Принудительное обновление данных при смене фильтра
+    if (userDetails) {
+      fetchReviewsData(userDetails.userId, filter);
+    }
   };
   
   // Обработчик изменения страницы
@@ -1099,6 +1125,12 @@ const ProfilePage = () => {
   
   // Проверка лайкнута ли отзыв текущим пользователем
   const isReviewLiked = (reviewId) => {
+    // Проверяем сначала глобальное состояние лайков
+    if (likeStates[reviewId]) {
+      return likeStates[reviewId].isLiked;
+    }
+    
+    // Затем проверяем массив лайкнутых ID
     if (!reviewId) {
       console.warn('isReviewLiked вызван с пустым reviewId');
       return false;
@@ -1109,9 +1141,8 @@ const ProfilePage = () => {
       return false;
     }
     
-    // Проверяем, включает ли массив лайкнутых ID текущий ID рецензии
     const isLiked = likedReviewIds.includes(reviewId);
-    console.log(`Проверка лайка для рецензии ${reviewId}, likedReviewIds:`, likedReviewIds, `результат:`, isLiked);
+    console.log(`Проверка лайка для рецензии ${reviewId}, результат:`, isLiked);
     return isLiked;
   };
   
@@ -1258,9 +1289,6 @@ const ProfilePage = () => {
       return;
     }
     
-    // Если это чужой профиль, мы все равно используем ID текущего пользователя для лайка/анлайка
-    // Т.е. функционал лайков должен работать и при просмотре чужого профиля
-    
     // Находим рецензию в массиве
     let review = userReviews.find(r => r.reviewId === reviewId);
     if (!review) {
@@ -1285,45 +1313,28 @@ const ProfilePage = () => {
       const isLiked = likedReviewIds.includes(reviewId);
       console.log(`Текущее состояние лайка для рецензии ${reviewId}: ${isLiked ? 'лайкнута' : 'не лайкнута'}`);
       
+      // Мгновенно обновляем глобальное состояние лайка
       if (isLiked) {
-        // Оптимистично обновляем UI перед запросом к серверу
+        // Убираем лайк
         setLikedReviewIds(prev => prev.filter(id => id !== reviewId));
         
-        // Уменьшаем счетчик лайков во всех вкладках
-        setUserReviews(prevReviews => 
-          prevReviews.map(r => 
-            r.reviewId === reviewId 
-              ? {...r, likesCount: Math.max(0, (r.likesCount || 0) - 1)} 
-              : r
-          )
-        );
+        // Обновляем счетчик лайков в глобальном состоянии
+        const newCount = Math.max(0, (review.likesCount || 0) - 1);
+        setLikeStates(prev => ({
+          ...prev,
+          [reviewId]: { isLiked: false, count: newCount }
+        }));
         
-        setLikedReviews(prevReviews => 
-          prevReviews.map(r => 
-            r.reviewId === reviewId 
-              ? {...r, likesCount: Math.max(0, (r.likesCount || 0) - 1)} 
-              : r
-          )
-        );
-        
-        // Удаляем лайк в бэкенде
+        // Запрос к API на удаление лайка
         try {
           await likeApi.removeLike(reviewId, userId);
           console.log(`Лайк удален: reviewId=${reviewId}, userId=${userId}`);
-        } catch (apiError) {
-          console.error('Ошибка при удалении лайка через API:', apiError);
-          console.log('Продолжаем работу с локальными данными');
-        }
-        
-        // Получаем актуальное количество лайков с сервера
-        try {
-          const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
           
-          // Обновляем точное количество лайков после получения от сервера
+          // Обновляем данные в состоянии приложения
           setUserReviews(prevReviews => 
             prevReviews.map(r => 
               r.reviewId === reviewId 
-                ? {...r, likesCount: updatedLikesCount} 
+                ? {...r, likesCount: newCount, isLikedByCurrentUser: false} 
                 : r
             )
           );
@@ -1331,52 +1342,66 @@ const ProfilePage = () => {
           setLikedReviews(prevReviews => 
             prevReviews.map(r => 
               r.reviewId === reviewId 
-                ? {...r, likesCount: updatedLikesCount} 
+                ? {...r, likesCount: newCount, isLikedByCurrentUser: false} 
                 : r
             )
           );
-        } catch (countError) {
-          console.error('Ошибка при получении количества лайков:', countError);
+          
+          // Обновляем счетчик лайков с сервера
+          const serverCount = await likeApi.getLikesCountByReview(reviewId);
+          if (serverCount !== newCount) {
+            setLikeStates(prev => ({
+              ...prev,
+              [reviewId]: { ...prev[reviewId], count: serverCount }
+            }));
+            
+            setUserReviews(prevReviews => 
+              prevReviews.map(r => 
+                r.reviewId === reviewId 
+                  ? {...r, likesCount: serverCount, isLikedByCurrentUser: false} 
+                  : r
+              )
+            );
+            
+            setLikedReviews(prevReviews => 
+              prevReviews.map(r => 
+                r.reviewId === reviewId 
+                  ? {...r, likesCount: serverCount, isLikedByCurrentUser: false} 
+                  : r
+              )
+            );
+          }
+        } catch (error) {
+          console.error('Ошибка при удалении лайка:', error);
+          
+          // Восстанавливаем состояние при ошибке
+          setLikedReviewIds(prev => [...prev, reviewId]);
+          setLikeStates(prev => ({
+            ...prev,
+            [reviewId]: { isLiked: true, count: review.likesCount || 0 }
+          }));
         }
       } else {
-        // Оптимистично обновляем UI перед запросом к серверу
+        // Добавляем лайк
         setLikedReviewIds(prev => [...prev, reviewId]);
         
-        // Увеличиваем счетчик лайков во всех вкладках
-        setUserReviews(prevReviews => 
-          prevReviews.map(r => 
-            r.reviewId === reviewId 
-              ? {...r, likesCount: (r.likesCount || 0) + 1} 
-              : r
-          )
-        );
+        // Обновляем счетчик лайков в глобальном состоянии
+        const newCount = (review.likesCount || 0) + 1;
+        setLikeStates(prev => ({
+          ...prev,
+          [reviewId]: { isLiked: true, count: newCount }
+        }));
         
-        setLikedReviews(prevReviews => 
-          prevReviews.map(r => 
-            r.reviewId === reviewId 
-              ? {...r, likesCount: (r.likesCount || 0) + 1} 
-              : r
-          )
-        );
-        
-        // Добавляем лайк в бэкенде
+        // Запрос к API на добавление лайка
         try {
           await likeApi.createLike(reviewId, userId, 'REGULAR');
           console.log(`Лайк добавлен: reviewId=${reviewId}, userId=${userId}`);
-        } catch (apiError) {
-          console.error('Ошибка при добавлении лайка через API:', apiError);
-          console.log('Продолжаем работу с локальными данными');
-        }
-        
-        // Получаем актуальное количество лайков с сервера
-        try {
-          const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
           
-          // Обновляем точное количество лайков после получения от сервера
+          // Обновляем данные в состоянии приложения
           setUserReviews(prevReviews => 
             prevReviews.map(r => 
               r.reviewId === reviewId 
-                ? {...r, likesCount: updatedLikesCount} 
+                ? {...r, likesCount: newCount, isLikedByCurrentUser: true} 
                 : r
             )
           );
@@ -1384,51 +1409,208 @@ const ProfilePage = () => {
           setLikedReviews(prevReviews => 
             prevReviews.map(r => 
               r.reviewId === reviewId 
-                ? {...r, likesCount: updatedLikesCount} 
+                ? {...r, likesCount: newCount, isLikedByCurrentUser: true} 
                 : r
             )
           );
-        } catch (countError) {
-          console.error('Ошибка при получении количества лайков:', countError);
+          
+          // Обновляем счетчик лайков с сервера
+          const serverCount = await likeApi.getLikesCountByReview(reviewId);
+          if (serverCount !== newCount) {
+            setLikeStates(prev => ({
+              ...prev,
+              [reviewId]: { ...prev[reviewId], count: serverCount }
+            }));
+            
+            setUserReviews(prevReviews => 
+              prevReviews.map(r => 
+                r.reviewId === reviewId 
+                  ? {...r, likesCount: serverCount, isLikedByCurrentUser: true} 
+                  : r
+              )
+            );
+            
+            setLikedReviews(prevReviews => 
+              prevReviews.map(r => 
+                r.reviewId === reviewId 
+                  ? {...r, likesCount: serverCount, isLikedByCurrentUser: true} 
+                  : r
+              )
+            );
+          }
+        } catch (error) {
+          console.error('Ошибка при добавлении лайка:', error);
+          
+          // Восстанавливаем состояние при ошибке
+          setLikedReviewIds(prev => prev.filter(id => id !== reviewId));
+          setLikeStates(prev => ({
+            ...prev,
+            [reviewId]: { isLiked: false, count: review.likesCount || 0 }
+          }));
         }
       }
+      
+      // Обновляем данные через небольшой промежуток времени
+      setTimeout(() => {
+        if (userDetails) {
+          if (tabValue === 1) {
+            fetchReviewsData(userDetails.userId, reviewFilter);
+          } else if (tabValue === 2) {
+            fetchLikedReviewsData(userDetails.userId);
+          }
+        }
+      }, 300);
+      
     } catch (error) {
       console.error(`Ошибка при переключении лайка для рецензии ${reviewId}:`, error);
+    }
+  };
+  
+  // Вспомогательная функция для загрузки рецензий
+  const fetchReviewsData = async (userId, filter) => {
+    try {
+      const userReviewsData = await reviewApi.getReviewsByUser(
+        userId, 
+        page - 1, 
+        5, 
+        filter === 'author_liked' ? true : null
+      );
       
-      // В случае ошибки пытаемся восстановить корректное состояние данных
+      // Обновляем данные лайков для каждой рецензии и проверяем/дополняем данные релиза
+      const updatedReviews = await Promise.all(
+        userReviewsData.content.map(async (review) => {
+          try {
+            const likesCount = await likeApi.getLikesCountByReview(review.reviewId);
+            
+            // Проверяем и исправляем данные релиза, если они отсутствуют или неполные
+            let updatedRelease = review.release;
+            let releaseId = review.releaseId;
+            
+            // Если у рецензии есть поле releaseId, но нет полных данных о релизе, или данные неполные
+            if (releaseId && (!updatedRelease || !updatedRelease.coverUrl)) {
+              try {
+                // Делаем запрос к API релизов для получения полных данных
+                const releaseData = await releaseApi.getReleaseById(releaseId);
+                
+                if (releaseData) {
+                  updatedRelease = releaseData;
+                }
+              } catch (releaseError) {
+                console.error(`Не удалось загрузить данные релиза для рецензии ID ${review.reviewId}:`, releaseError);
+              }
+            }
+            
+            // Для чужого профиля проверяем, лайкнул ли текущий пользователь эту рецензию
+            let isLikedByCurrentUser = false;
+            if (!isOwnProfile) {
+              isLikedByCurrentUser = likedReviewIds.includes(review.reviewId);
+            }
+            
+            return { 
+              ...review, 
+              likesCount,
+              release: updatedRelease,
+              isLikedByCurrentUser
+            };
+          } catch (error) {
+            console.error(`Ошибка при обновлении данных для рецензии ID ${review.reviewId}:`, error);
+            return review;
+          }
+        })
+      );
+      
+      setUserReviews(updatedReviews);
+      setTotalPages(userReviewsData.totalPages || 1);
+    } catch (error) {
+      console.error('Ошибка при загрузке рецензий:', error);
+    }
+  };
+  
+  // Вспомогательная функция для загрузки лайкнутых рецензий
+  const fetchLikedReviewsData = async (userId) => {
+    try {
+      let userLikedReviews;
+      
       try {
-        // Получаем актуальные данные с сервера
-        const [updatedLikesCount, userLikedReviews] = await Promise.all([
-          likeApi.getLikesCountByReview(reviewId),
-          likeApi.getLikedReviewsByUser(userId)
-        ]);
-        
-        // Обновляем состояние на основе свежих данных с сервера
-        const actualLikedIds = userLikedReviews.content
-          .map(r => r.reviewId || r.id || 0)
-          .filter(id => id > 0);
-        
-        setLikedReviewIds(actualLikedIds);
-        
-        // Обновляем количество лайков в обоих списках рецензий
-        setUserReviews(prevReviews => 
-          prevReviews.map(r => 
-            r.reviewId === reviewId 
-              ? {...r, likesCount: updatedLikesCount} 
-              : r
-          )
-        );
-        
-        setLikedReviews(prevReviews => 
-          prevReviews.map(r => 
-            r.reviewId === reviewId 
-              ? {...r, likesCount: updatedLikesCount} 
-              : r
-          )
-        );
-      } catch (recoveryError) {
-        console.error('Ошибка при восстановлении состояния:', recoveryError);
+        userLikedReviews = await likeApi.getLikedReviewsByUser(userId, page - 1, 5);
+      } catch (apiError) {
+        console.error('Ошибка при загрузке лайкнутых рецензий:', apiError);
+        userLikedReviews = { content: [], totalPages: 0, totalElements: 0 };
       }
+      
+      if (userLikedReviews.content && userLikedReviews.content.length > 0) {
+        // Обновляем данные лайков для каждой рецензии
+        const updatedLikedReviews = await Promise.all(
+          userLikedReviews.content.map(async (review) => {
+            try {
+              const likesCount = await likeApi.getLikesCountByReview(review.reviewId);
+              
+              // Дополняем данные релиза и пользователя
+              let updatedRelease = review.release;
+              let updatedUser = review.user;
+              
+              // Обновляем данные релиза если нужно
+              if (review.releaseId && (!updatedRelease || !updatedRelease.coverUrl)) {
+                try {
+                  const releaseData = await releaseApi.getReleaseById(review.releaseId);
+                  if (releaseData) {
+                    updatedRelease = releaseData;
+                  }
+                } catch (error) {
+                  console.error(`Не удалось загрузить данные релиза для рецензии ID ${review.reviewId}:`, error);
+                }
+              }
+              
+              // Обновляем данные пользователя если нужно
+              if (!updatedUser || !updatedUser.username) {
+                if (review.userId) {
+                  try {
+                    const userData = await userApi.getUserById(review.userId);
+                    if (userData) {
+                      updatedUser = userData;
+                    }
+                  } catch (error) {
+                    console.error(`Не удалось загрузить данные пользователя для рецензии ID ${review.reviewId}:`, error);
+                  }
+                }
+              }
+              
+              // Для просмотра чужого профиля проверяем статус лайка
+              let isCurrentUserLiked = true; // По умолчанию для вкладки "Понравилось"
+              
+              if (!isOwnProfile) {
+                const currentUserId = getCurrentUserId();
+                const isCurrentUserAuthor = review.userId === currentUserId;
+                
+                if (isCurrentUserAuthor) {
+                  isCurrentUserLiked = false;
+                } else {
+                  isCurrentUserLiked = likedReviewIds.includes(review.reviewId);
+                }
+              }
+              
+              return {
+                ...review,
+                likesCount,
+                release: updatedRelease,
+                user: updatedUser,
+                isLikedByCurrentUser: isCurrentUserLiked
+              };
+            } catch (error) {
+              console.error(`Ошибка при обновлении данных для лайкнутой рецензии ID ${review.reviewId}:`, error);
+              return review;
+            }
+          })
+        );
+        
+        setLikedReviews(updatedLikedReviews);
+        setTotalPages(userLikedReviews.totalPages || 0);
+      } else {
+        setLikedReviews([]);
+        setTotalPages(0);
+      }
+    } catch (error) {
+      console.error('Ошибка при загрузке лайкнутых рецензий:', error);
     }
   };
   
@@ -1623,6 +1805,41 @@ const ProfilePage = () => {
     );
   }
   
+  // JSX разметка для подвкладок рецензий
+  const renderReviewSubTabs = () => {
+    return (
+      <div className="sub-tabs">
+        <a 
+          className={`tab-link ${reviewFilter === 'all' ? 'active' : ''}`}
+          onClick={() => handleReviewFilterChange('all')}
+          href="#"
+        >
+          Все рецензии
+        </a>
+        <a 
+          className={`tab-link ${reviewFilter === 'author_liked' ? 'active' : ''}`}
+          onClick={() => handleReviewFilterChange('author_liked')}
+          href="#"
+        >
+          Рецензии с авторскими лайками
+        </a>
+      </div>
+    );
+  };
+  
+  // Функция для получения актуального счетчика лайков
+  const getReviewLikesCount = (review) => {
+    const reviewId = review.reviewId;
+    
+    // Проверяем глобальное состояние лайков
+    if (likeStates[reviewId] && typeof likeStates[reviewId].count === 'number') {
+      return likeStates[reviewId].count;
+    }
+    
+    // В противном случае используем значение из данных рецензии
+    return review.likesCount !== undefined ? review.likesCount : 0;
+  };
+  
   return (
     <div className="site-content">
       <main>
@@ -1752,25 +1969,8 @@ const ProfilePage = () => {
                   </a>
                 </div>
                 
-                {/* Подвкладки для фильтрации рецензий (отображаются только на вкладке рецензий и только для своего профиля) */}
-                {tabValue === 1 && isOwnProfile && (
-                  <div className="sub-tabs">
-                    <a 
-                      className={`tab-link ${reviewFilter === 'all' ? 'active' : ''}`}
-                      onClick={() => handleReviewFilterChange('all')}
-                      href="#"
-                    >
-                      Все рецензии
-                    </a>
-                    <a 
-                      className={`tab-link ${reviewFilter === 'author_liked' ? 'active' : ''}`}
-                      onClick={() => handleReviewFilterChange('author_liked')}
-                      href="#"
-                    >
-                      Рецензии с авторскими лайками
-                    </a>
-                  </div>
-                )}
+                {/* Подвкладки для фильтрации рецензий (отображаются всегда на вкладке рецензий) */}
+                {tabValue === 1 && renderReviewSubTabs()}
                 
                 {/* Предпочтения: отслеживаемые авторы и избранные релизы */}
                 <TabPanel value={tabValue} index={0}>
@@ -1878,6 +2078,7 @@ const ProfilePage = () => {
                             onLikeToggle={handleLikeToggle}
                             cachedAvatarUrl={getCachedAvatarUrl()}
                             getCurrentUserIdFunc={getCurrentUserId}
+                            getReviewLikesCount={getReviewLikesCount}
                           />
                         ))
                       ) : (
@@ -1923,6 +2124,7 @@ const ProfilePage = () => {
                             onLikeToggle={handleLikeToggle}
                             cachedAvatarUrl={getCachedReviewAuthorAvatarUrl(review.user)}
                             getCurrentUserIdFunc={getCurrentUserId}
+                            getReviewLikesCount={getReviewLikesCount}
                           />
                         ))
                       ) : (
