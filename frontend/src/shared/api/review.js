@@ -121,12 +121,43 @@ export const reviewApi = {
    * Получение всех отзывов
    * @param {number} page - Номер страницы
    * @param {number} size - Размер страницы
+   * @param {string} sortBy - Тип сортировки (newest, oldest, popular, top_rated)
    * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
    */
-  getAllReviews: async (page = 0, size = 10) => {
+  getAllReviews: async (page = 0, size = 10, sortBy = 'newest') => {
     try {
+      // Преобразуем параметр sortBy в параметры sort и direction для Spring Data
+      let sort, direction;
+      
+      switch (sortBy) {
+        case 'newest':
+          sort = 'createdAt';
+          direction = 'desc';
+          break;
+        case 'oldest':
+          sort = 'createdAt';
+          direction = 'asc';
+          break;
+        case 'popular':
+          sort = 'likesCount';
+          direction = 'desc';
+          break;
+        case 'top_rated':
+          sort = 'totalScore';
+          direction = 'desc';
+          break;
+        default:
+          sort = 'createdAt';
+          direction = 'desc';
+      }
+      
       const response = await httpClient.get(API_URL, {
-        params: { page, size }
+        params: { 
+          page, 
+          size, 
+          sort: `${sort},${direction}`,
+          sortBy // Оставляем для совместимости, если бэкенд начнет использовать этот параметр
+        }
       });
       return response.data;
     } catch (error) {

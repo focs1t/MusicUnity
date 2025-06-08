@@ -552,7 +552,7 @@ const ReviewsPage = () => {
         
         // Параллельно загружаем рецензии и лайкнутые рецензии для повышения производительности
         const [reviewsResponse, likedReviewsSet] = await Promise.all([
-          reviewApi.getAllReviews(currentPage - 1, REVIEWS_PER_PAGE),
+          reviewApi.getAllReviews(currentPage - 1, REVIEWS_PER_PAGE, sortOption),
           userId ? fetchLikedReviewsByCurrentUser() : new Set()
         ]);
         
@@ -853,6 +853,7 @@ const ReviewsPage = () => {
                 key: 'sort-text'
               }, 
                 sortOption === 'newest' ? 'Новые' :
+                sortOption === 'oldest' ? 'Старые' :
                 sortOption === 'popular' ? 'Популярные' : 'Высший рейтинг'
               ),
               React.createElement(ChevronDownIcon, {
@@ -871,6 +872,11 @@ const ReviewsPage = () => {
                   onClick: () => handleSortChange('newest'),
                   key: 'sort-newest'
                 }, 'Новые'),
+                React.createElement('li', {
+                  className: 'px-3 py-2 text-sm hover:bg-zinc-700 cursor-pointer',
+                  onClick: () => handleSortChange('oldest'),
+                  key: 'sort-oldest'
+                }, 'Старые'),
                 React.createElement('li', {
                   className: 'px-3 py-2 text-sm hover:bg-zinc-700 cursor-pointer',
                   onClick: () => handleSortChange('popular'),
