@@ -70,8 +70,9 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
   };
 
   // Функция для обработки ошибок изображений
-  const handleImageError = (e) => {
-    console.log('Ошибка загрузки изображения, использую встроенный placeholder');
+  const handleReviewImageError = (e, context = 'изображения') => {
+    console.log(`Ошибка загрузки ${context}, использую встроенный placeholder`);
+    console.log(`Проблемный URL: ${e.target.src}`);
     
     // Прекращаем обработку ошибок для этого элемента
     e.target.onerror = null;
@@ -81,24 +82,15 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
   };
   
   // Функция для обработки ошибок изображений релизов
-  const handleReleaseImageError = (e) => {
-    console.log('Ошибка загрузки обложки релиза, замена на заглушку');
+  const handleReviewReleaseImageError = (e) => {
+    console.log('Ошибка загрузки обложки релиза в рецензии, использую встроенный placeholder');
+    console.log(`Проблемный URL: ${e.target.src}`);
     
     // Прекращаем обработку ошибок для этого элемента
     e.target.onerror = null;
     
-    // Проверяем, была ли уже попытка загрузить заглушку
-    const hasTriedPlaceholder = e.target.getAttribute('data-tried-placeholder') === 'true';
-    
-    if (!hasTriedPlaceholder) {
-      // Отмечаем, что мы пытались загрузить заглушку
-      e.target.setAttribute('data-tried-placeholder', 'true');
-      e.target.src = '/default-cover.avif';
-    } else {
-      // Если заглушка тоже не загрузилась, используем встроенный data URI
-      console.log('Не удалось загрузить заглушку, использую встроенный placeholder');
-      e.target.src = DEFAULT_COVER_PLACEHOLDER;
-    }
+    // Используем встроенный placeholder
+    e.target.src = DEFAULT_COVER_PLACEHOLDER;
   };
 
   console.log('Данные пользователя в ReviewCard:', userDetails);
@@ -166,7 +158,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
                 height="40" 
                 className="shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full"
                 src={getAvatarUrl()} 
-                onError={handleImageError}
+                onError={(e) => handleReviewImageError(e, 'аватара')}
               />
             </Link>
             
@@ -208,7 +200,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
                 height="40" 
                 className="rounded-md w-full h-full object-cover"
                 src={getReleaseCoverUrl()} 
-                onError={handleReleaseImageError}
+                onError={(e) => handleReviewReleaseImageError(e)}
               />
             </Link>
           </div>
@@ -539,7 +531,25 @@ const ProfilePage = () => {
             
             // Сохраняем URL аватара автора в кеш
             if (author.authorId && author.avatarUrl) {
-              newAuthorAvatarUrls[author.authorId] = author.avatarUrl;
+              // Обрабатываем URL аватара перед сохранением
+              try {
+                // Пытаемся декодировать URL, если он содержит закодированные символы
+                let processedUrl = safeDecodeUrl(author.avatarUrl);
+                
+                // Проверяем является ли строка URL валидным URL
+                new URL(processedUrl);
+                
+                // Обрезаем URL, если он содержит параметры запроса
+                if (processedUrl.includes('?')) {
+                  processedUrl = processedUrl.split('?')[0];
+                  console.log(`URL аватара для автора ${author.name} слишком длинный, используем базовый URL:`, processedUrl);
+                }
+                
+                newAuthorAvatarUrls[author.authorId] = processedUrl;
+              } catch (e) {
+                console.error(`Некорректный URL аватара для автора ${author.name || author.authorId}:`, author.avatarUrl);
+                newAuthorAvatarUrls[author.authorId] = DEFAULT_AVATAR_PLACEHOLDER;
+              }
             }
             
             // Проверяем, что автор имеет все необходимые поля
@@ -988,12 +998,56 @@ const ProfilePage = () => {
     return DEFAULT_AVATAR_PLACEHOLDER;
   };
   
+  // Функция для безопасного декодирования URL
+  const safeDecodeUrl = (url) => {
+    if (!url) return null;
+    
+    try {
+      // Проверяем, содержит ли URL закодированные символы
+      if (url.includes('%')) {
+        // Пытаемся декодировать URL
+        const decodedUrl = decodeURIComponent(url);
+        console.log('Декодированный URL:', decodedUrl);
+        return decodedUrl;
+      }
+      return url;
+    } catch (e) {
+      console.error('Ошибка при декодировании URL:', e);
+      return url;
+    }
+  };
+  
   // Получение URL аватара автора из кеша или данных автора
   const getCachedAuthorAvatarUrl = (author) => {
+    // Проверяем кеш
     if (author.authorId && authorAvatarUrls[author.authorId]) {
       return authorAvatarUrls[author.authorId];
     }
-    return author.avatarUrl ? author.avatarUrl : DEFAULT_AVATAR_PLACEHOLDER;
+    
+    // Проверяем URL в данных автора
+    if (author.avatarUrl) {
+      // Пытаемся декодировать URL, если он содержит закодированные символы
+      let processedUrl = safeDecodeUrl(author.avatarUrl);
+      
+      try {
+        // Проверяем является ли строка URL валидным URL
+        new URL(processedUrl);
+        
+        // Обрезаем URL, если он содержит параметры запроса
+        if (processedUrl.includes('?')) {
+          processedUrl = processedUrl.split('?')[0];
+          console.log(`URL аватара для автора ${author.name} слишком длинный, используем базовый URL:`, processedUrl);
+        }
+        
+        return processedUrl;
+      } catch (e) {
+        console.error(`Некорректный URL аватара для автора ${author.name || author.authorId}:`, author.avatarUrl);
+        return DEFAULT_AVATAR_PLACEHOLDER;
+      }
+    }
+    
+    // Если нет URL, возвращаем placeholder
+    return DEFAULT_AVATAR_PLACEHOLDER;
   };
   
   // Получение URL аватара автора рецензии из кеша или данных пользователя
@@ -1004,9 +1058,50 @@ const ProfilePage = () => {
     return user?.avatarUrl ? user.avatarUrl : DEFAULT_AVATAR_PLACEHOLDER;
   };
   
-  // Функция для обработки ошибок изображений
-  const handleImageError = (e) => {
-    console.log('Ошибка загрузки изображения, использую встроенный placeholder');
+  // Функция для обработки ошибок изображений авторов
+  const handleAuthorImageError = (e, author) => {
+    console.log(`Ошибка загрузки изображения для автора ${author?.name || 'неизвестного'}, использую встроенный placeholder`);
+    console.log(`Проблемный URL: ${e.target.src}`);
+    
+    // Прекращаем обработку ошибок для этого элемента
+    e.target.onerror = null;
+    
+    // Используем встроенный placeholder
+    e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+    
+    // Если у нас есть ID автора, обновляем кеш, чтобы избежать повторных ошибок
+    if (author && author.authorId) {
+      setAuthorAvatarUrls(prev => ({
+        ...prev,
+        [author.authorId]: DEFAULT_AVATAR_PLACEHOLDER
+      }));
+    }
+  };
+
+  // Обработчик для переключения отладочной информации (можно вызвать Alt+D)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.altKey && e.key === 'd') {
+        setShowDebug(prev => !prev);
+        setDebugData({
+          releasesData: processedReleases,
+          releasesByType: {
+            albums: albumReleases,
+            singlesAndEps: singleReleases,
+            unknown: otherReleases
+          }
+        });
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [processedReleases, albumReleases, singleReleases, otherReleases]);
+  
+  // Функция для обработки ошибок загрузки изображений профиля
+  const handleProfileImageError = (e, context = 'изображения профиля') => {
+    console.log(`Ошибка загрузки ${context}, использую встроенный placeholder`);
+    console.log(`Проблемный URL: ${e.target.src}`);
     
     // Прекращаем обработку ошибок для этого элемента
     e.target.onerror = null;
@@ -1014,26 +1109,17 @@ const ProfilePage = () => {
     // Используем встроенный placeholder
     e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
-
+  
   // Функция для обработки ошибок изображений релизов
   const handleReleaseImageError = (e) => {
-    console.log('Ошибка загрузки обложки релиза, замена на заглушку');
+    console.log('Ошибка загрузки обложки релиза, использую встроенный placeholder');
+    console.log(`Проблемный URL: ${e.target.src}`);
     
     // Прекращаем обработку ошибок для этого элемента
     e.target.onerror = null;
     
-    // Проверяем, была ли уже попытка загрузить заглушку
-    const hasTriedPlaceholder = e.target.getAttribute('data-tried-placeholder') === 'true';
-    
-    if (!hasTriedPlaceholder) {
-      // Отмечаем, что мы пытались загрузить заглушку
-      e.target.setAttribute('data-tried-placeholder', 'true');
-      e.target.src = '/default-cover.avif';
-    } else {
-      // Если заглушка тоже не загрузилась, используем встроенный data URI
-      console.log('Не удалось загрузить заглушку, использую встроенный placeholder');
-      e.target.src = DEFAULT_COVER_PLACEHOLDER;
-    }
+    // Используем встроенный placeholder
+    e.target.src = DEFAULT_COVER_PLACEHOLDER;
   };
   
   // Функция для отображения релизов по категории
@@ -1059,8 +1145,8 @@ const ProfilePage = () => {
               alt={release.title || altText} 
               loading="lazy" 
               className="album-image equal-size" 
-              src={release.coverUrl ? release.coverUrl : '/default-cover.avif'} 
-              onError={handleReleaseImageError}
+              src={release.coverUrl ? release.coverUrl : DEFAULT_COVER_PLACEHOLDER} 
+              onError={(e) => handleReleaseImageError(e)}
             />
           </Link>
           <Link className="album-name text-white no-underline" to={`/releases/${release.releaseId}`}>
@@ -1070,26 +1156,6 @@ const ProfilePage = () => {
       );
     });
   };
-  
-  // Обработчик для переключения отладочной информации (можно вызвать Alt+D)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.altKey && e.key === 'd') {
-        setShowDebug(prev => !prev);
-        setDebugData({
-          releasesData: processedReleases,
-          releasesByType: {
-            albums: albumReleases,
-            singlesAndEps: singleReleases,
-            unknown: otherReleases
-          }
-        });
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [processedReleases, albumReleases, singleReleases, otherReleases]);
   
   if (loading) {
     return (
@@ -1124,7 +1190,7 @@ const ProfilePage = () => {
                     height="130" 
                     className="profile-avatar" 
                     src={getCachedAvatarUrl()}
-                    onError={handleImageError}
+                    onError={(e) => handleProfileImageError(e, 'аватара')}
                   />
                 </div>
                 <h1 className="profile-username">{userDetails?.username || "Пользователь"}</h1>
@@ -1273,6 +1339,11 @@ const ProfilePage = () => {
                           {followedAuthors.length > 0 ? (
                             followedAuthors.map((author) => {
                               console.log('Отображение автора:', author);
+                              
+                              // Валидация URL аватарки перед отображением
+                              const processedAvatarUrl = getCachedAuthorAvatarUrl(author);
+                              console.log(`Подготовленный URL аватарки для ${author.name}:`, processedAvatarUrl);
+                              
                               return (
                                 <div key={author.authorId} className="artist-item">
                                   <Link className="artist-link" to={`/authors/${author.authorId}`}>
@@ -1280,8 +1351,8 @@ const ProfilePage = () => {
                                       alt={author.name || "Автор"} 
                                       loading="lazy" 
                                       className="artist-image equal-size" 
-                                      src={getCachedAuthorAvatarUrl(author)} 
-                                      onError={handleImageError}
+                                      src={processedAvatarUrl} 
+                                      onError={(e) => handleAuthorImageError(e, author)}
                                     />
                                   </Link>
                                   <Link className="artist-name text-white no-underline" to={`/authors/${author.authorId}`}>
