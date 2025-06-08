@@ -269,7 +269,7 @@ function ReleasesPage() {
       React.createElement('div', { key: 'cover', className: 'relative z-10' }, 
         React.createElement('a', {
           className: 'relative block',
-          href: `/track/${release.releaseId}`
+          href: `/release/${release.releaseId}`
         }, [
           // Обложка релиза
           React.createElement('div', {
@@ -349,7 +349,7 @@ function ReleasesPage() {
         React.createElement('a', {
           key: 'title',
           className: 'text-sm w-full dark:text-white antialiased leading-4 mt-1.5 block font-bold',
-          href: `/track/${release.releaseId}`
+          href: `/release/${release.releaseId}`
         }, release.title),
         
         React.createElement('div', { key: 'authors', className: 'flex flex-wrap leading-3 mt-1 text-[13px]' }, 
@@ -358,7 +358,7 @@ function ReleasesPage() {
               React.createElement('a', {
                 key: `author-${index}`,
                 className: 'border-b border-b-white/0 hover:border-white/30 opacity-70',
-                href: `/artist/${author.id}`
+                href: `/author/${author.id}`
               }, author.authorName)
             ];
             
