@@ -65,7 +65,7 @@ public class UserService {
             }
             
             // Количество авторских лайков (лайки, которые получили рецензии пользователя)
-            Long authorLikes = likeRepository.countByReviewAuthorUserId(user.getUserId());
+            Long authorLikes = likeRepository.countByReviewAuthorUserIdAndType(user.getUserId(), LikeType.AUTHOR);
             
             // Количество рецензий пользователя
             Long reviews = reviewRepository.countByUser(user.getUserId());

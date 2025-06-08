@@ -185,7 +185,7 @@ const AuthorLikesPage = () => {
               <div key={review.reviewId} className="review-card-author-like">
                 <div className="review-card-header">
                   <div className="review-card-user">
-                    <Link to={`/user/${review.userId}`} className="user-avatar-link">
+                    <Link to={`/profile/${review.userId}`} className="user-avatar-link">
                       <img 
                         alt={review.user?.username || "Пользователь"}
                         className="user-avatar"
@@ -194,7 +194,7 @@ const AuthorLikesPage = () => {
                     </Link>
                     <div className="user-info">
                       <div className="username">
-                        <Link to={`/user/${review.userId}`}>{review.user?.username || "Пользователь"}</Link>
+                        <Link to={`/profile/${review.userId}`}>{review.user?.username || "Пользователь"}</Link>
                       </div>
                       {review.user?.rank && (
                         <div className="user-rank">
@@ -218,7 +218,7 @@ const AuthorLikesPage = () => {
 
                 <div className="author-like-info">
                   <div className="author-info">
-                    <Link to={`/user/${review.authorLike?.userId}`} className="author-avatar-link">
+                    <Link to={`/profile/${review.authorLike?.userId}`} className="author-avatar-link">
                       <img 
                         alt={review.authorLike?.username || "Автор"}
                         className="author-avatar"
@@ -226,7 +226,7 @@ const AuthorLikesPage = () => {
                       />
                     </Link>
                     <div className="author-name">
-                      <Link to={`/user/${review.authorLike?.userId}`}>{review.authorLike?.username || "Автор"}</Link>
+                      <Link to={`/profile/${review.authorLike?.userId}`}>{review.authorLike?.username || "Автор"}</Link>
                     </div>
                   </div>
                   <div className="author-like-badge">

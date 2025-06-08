@@ -15,6 +15,7 @@ import {
   useTheme,
   Alert
 } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { userApi } from '../shared/api';
 
 const Top100Page = () => {
@@ -199,8 +200,27 @@ const Top100Page = () => {
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar src={user.avatarUrl} alt={user.username} sx={{ mr: 2 }} />
-                    <Typography>{user.username}</Typography>
+                    <Avatar 
+                      src={user.avatarUrl} 
+                      alt={user.username} 
+                      sx={{ mr: 2 }} 
+                      component={RouterLink} 
+                      to={`/profile/${user.id}`}
+                    />
+                    <Typography 
+                      component={RouterLink} 
+                      to={`/profile/${user.id}`} 
+                      sx={{ 
+                        textDecoration: 'none', 
+                        color: 'inherit',
+                        '&:hover': { 
+                          color: theme.palette.primary.main, 
+                          textDecoration: 'underline' 
+                        }
+                      }}
+                    >
+                      {user.username}
+                    </Typography>
                   </Box>
                 </TableCell>
                 <TableCell align="center">{user.authorLikes}</TableCell>
