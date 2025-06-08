@@ -62,7 +62,7 @@ export const userApi = {
       
       return {
         rank: null,
-        points: null,
+        points: 0,
         isInTop100: false
       };
     }

@@ -262,7 +262,7 @@ const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cached
     const fetchUserRank = async () => {
       try {
         // Определяем ID пользователя для получения ранга
-        const userId = review.userId || (review.user && review.user.userId) || (userDetails && userDetails.userId);
+        const userId = review.id || review.userId || (review.user && (review.user.id || review.user.userId)) || (userDetails && (userDetails.id || userDetails.userId));
         
         if (userId) {
           console.log(`EnhancedReviewCard: Запрашиваем ранг для пользователя ID ${userId}`);
