@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.musicunity.backend.pojo.Review;
+import ru.musicunity.backend.pojo.enums.ReviewType;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT COUNT(r) FROM Review r WHERE r.release.releaseId = :releaseId AND r.isDeleted = false")
     long countByRelease(Long releaseId);
 
-    @Query("SELECT r FROM Review r WHERE r.isDeleted = false")
+    @Query("SELECT r FROM Review r WHERE r.isDeleted = false AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED")
     Page<Review> findAllSorted(Pageable pageable);
 
     @Query("SELECT r FROM Review r WHERE r.isDeleted = true")
