@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
 import { useAuth } from '../app/providers/AuthProvider';
+import './ReviewsPage.css'; // Импорт CSS
 
 // Импорт иконок
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -236,6 +237,15 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
   // Если у нас есть какие-то данные о пользователе, используем их для проверки
   const isOwnReview = getUserId() === currentUserId;
   console.log(`Является ли рецензия собственной: ${isOwnReview}`);
+  
+  // Состояние для отображения сообщения
+  const [showMessage, setShowMessage] = useState(false);
+  
+  // Обработчик клика по кнопке лайка для собственной рецензии
+  const handleOwnReviewLikeClick = () => {
+    setShowMessage(true);
+    setTimeout(() => setShowMessage(false), 2000); // Скрываем сообщение через 2 секунды
+  };
 
   // Строим карточку рецензии с использованием React.createElement вместо JSX
   return React.createElement('div', {
@@ -340,11 +350,10 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
 
       // Нижняя часть с лайками и ссылкой на полную рецензию
       React.createElement('div', { className: 'mt-auto flex justify-between items-center relative pr-1.5', key: 'actions' }, [
-        React.createElement('div', { className: 'flex gap-2 items-center', key: 'likes-container' }, 
+        React.createElement('div', { className: 'flex gap-2 items-center', key: 'likes-container' }, [
           React.createElement('button', {
-            className: `review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5 ${isOwnReview ? 'opacity-50 cursor-not-allowed' : ''}`,
-            onClick: () => !isOwnReview && onLikeToggle && onLikeToggle(review.id || review.reviewId),
-            disabled: isOwnReview
+            className: `review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5`,
+            onClick: () => isOwnReview ? handleOwnReviewLikeClick() : onLikeToggle && onLikeToggle(review.id || review.reviewId)
           }, [
             React.createElement('div', { className: 'w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center', key: 'like-icon' }, 
               isLiked 
@@ -354,8 +363,14 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
             React.createElement('span', { className: 'font-bold text-base lg:text-base', key: 'likes-count' }, 
               review.likesCount !== undefined ? review.likesCount : 0
             )
-          ])
-        ),
+          ]),
+          
+          // Всплывающее сообщение
+          showMessage && React.createElement('div', { 
+            className: 'tooltip-message',
+            key: 'message'
+          }, 'Нельзя лайкать свои рецензии')
+        ]),
         React.createElement('div', { className: 'relative flex items-center gap-x-0.5', key: 'link-container' }, 
           React.createElement(Link, {
             className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground size-8 md:size-10 bg-transparent hover:bg-white/10',

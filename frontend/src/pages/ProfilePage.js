@@ -16,6 +16,7 @@ import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import ChatIcon from '@mui/icons-material/Chat';
 import './ProfilePage.css';
+import './ReviewsPage.css'; // Импорт CSS с анимациями для всплывающих сообщений
 
 // Встроенный плейсхолдер в формате data URI для аватара
 const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -194,6 +195,15 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
     return review.release.title || "Релиз";
   };
 
+  // Состояние для отображения сообщения
+  const [showMessage, setShowMessage] = useState(false);
+  
+  // Обработчик клика по кнопке лайка для собственной рецензии
+  const handleOwnReviewLikeClick = () => {
+    setShowMessage(true);
+    setTimeout(() => setShowMessage(false), 2000); // Скрываем сообщение через 2 секунды
+  };
+
   return (
     <div className="review-card">
       <div className="relative">
@@ -270,9 +280,8 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
       <div className="review-footer">
         <div className="review-actions">
           <button 
-            className={`review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5 ${isOwnReview ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={() => !isOwnReview && onLikeToggle(review.reviewId)}
-            disabled={isOwnReview}
+            className="review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5"
+            onClick={() => isOwnReview ? handleOwnReviewLikeClick() : onLikeToggle(review.reviewId)}
           >
             <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center">
               {isLiked ? 
@@ -282,6 +291,11 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
             </div>
             <span className="font-bold text-base lg:text-base">{review.likesCount !== undefined ? review.likesCount : 0}</span>
           </button>
+          
+          {/* Всплывающее сообщение */}
+          {showMessage && (
+            <div className="tooltip-message">Нельзя лайкать свои рецензии</div>
+          )}
         </div>
         
         <div className="review-links">
