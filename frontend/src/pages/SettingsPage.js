@@ -171,6 +171,9 @@ const SettingsPage = () => {
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
   
+  // Константа для заглушки аватара
+  const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
+  
   // Поля формы
   const [bio, setBio] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
@@ -247,6 +250,10 @@ const SettingsPage = () => {
         // Используем любое доступное поле URL
         const avatarUrl = response.url || response.temporaryUrl;
         setAvatarUrl(avatarUrl);
+        
+        // Сохраняем в localStorage для синхронизации между компонентами
+        localStorage.setItem('user_avatar_url', avatarUrl);
+        
         setNotification({
           open: true,
           message: 'Аватар успешно загружен',
@@ -284,6 +291,11 @@ const SettingsPage = () => {
       
       // Отправляем только данные аватара, сохраняя текущие значения остальных полей
       await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+      
+      // Сохраняем аватар в localStorage для синхронизации между компонентами
+      if (processedAvatarUrl) {
+        localStorage.setItem('user_avatar_url', processedAvatarUrl);
+      }
       
       setNotification({
         open: true,
@@ -331,6 +343,11 @@ const SettingsPage = () => {
       
       // Отправляем данные без проверки формата telegramChatId
       await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+      
+      // Сохраняем аватар в localStorage для синхронизации между компонентами
+      if (processedAvatarUrl) {
+        localStorage.setItem('user_avatar_url', processedAvatarUrl);
+      }
       
       setNotification({
         open: true,
@@ -412,6 +429,15 @@ const SettingsPage = () => {
   // Закрытие уведомления
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
+  };
+  
+  // Обработчик ошибок загрузки изображений
+  const handleImageError = (e) => {
+    console.log('Ошибка загрузки аватарки в настройках, использую встроенный placeholder');
+    // Прекращаем обработку ошибок для этого элемента
+    e.target.onerror = null;
+    // Используем встроенный data URI
+    e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
   
   if (loading) {
@@ -553,8 +579,9 @@ const SettingsPage = () => {
                     }}
                   >
                     <Avatar
-                      src={previewAvatar || avatarUrl || '/noimage-single.png'}
+                      src={previewAvatar || avatarUrl || DEFAULT_AVATAR_PLACEHOLDER}
                       alt={userDetails?.username}
+                      onError={handleImageError}
                       sx={{ 
                         position: 'absolute',
                         width: '100%', 

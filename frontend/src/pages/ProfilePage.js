@@ -61,25 +61,23 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
     return Math.round(baseScore * vibeMultiplier);
   };
 
+  // Используем кешированный URL аватара или резервное значение
+  const getAvatarUrl = () => {
+    if (cachedAvatarUrl) {
+      return cachedAvatarUrl;
+    }
+    return userDetails?.avatarUrl ? userDetails.avatarUrl : DEFAULT_AVATAR_PLACEHOLDER;
+  };
+
   // Функция для обработки ошибок изображений
   const handleImageError = (e) => {
-    console.log('Ошибка загрузки изображения, замена на заглушку');
+    console.log('Ошибка загрузки изображения, использую встроенный placeholder');
     
     // Прекращаем обработку ошибок для этого элемента
     e.target.onerror = null;
     
-    // Проверяем, была ли уже попытка загрузить заглушку
-    const hasTriedPlaceholder = e.target.getAttribute('data-tried-placeholder') === 'true';
-    
-    if (!hasTriedPlaceholder) {
-      // Отмечаем, что мы пытались загрузить заглушку
-      e.target.setAttribute('data-tried-placeholder', 'true');
-      e.target.src = '/default-avatar.jpg';
-    } else {
-      // Если заглушка тоже не загрузилась, используем встроенный data URI
-      console.log('Не удалось загрузить заглушку, использую встроенный placeholder');
-      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
-    }
+    // Используем встроенный placeholder
+    e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
   
   // Функция для обработки ошибок изображений релизов
@@ -116,14 +114,6 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
     if (userDetails.displayName) return userDetails.displayName;
     
     return "Пользователь";
-  };
-
-  // Используем кешированный URL аватара или резервное значение
-  const getAvatarUrl = () => {
-    if (cachedAvatarUrl) {
-      return cachedAvatarUrl;
-    }
-    return userDetails?.avatarUrl ? userDetails.avatarUrl : '/default-avatar.jpg';
   };
 
   // Проверяем данные релиза и логируем подробности
@@ -415,7 +405,10 @@ const ProfilePage = () => {
   });
   
   // Для кеширования URL аватара
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(() => {
+    // Пытаемся получить аватар из localStorage для синхронизации с Header
+    return localStorage.getItem('user_avatar_url') || null;
+  });
   const [authorAvatarUrls, setAuthorAvatarUrls] = useState({});
   const [reviewAuthorAvatarUrls, setReviewAuthorAvatarUrls] = useState({});
   
@@ -480,8 +473,10 @@ const ProfilePage = () => {
         setUserDetails(userData);
         
         // Сохраняем URL аватара в кеш при первой загрузке
-        if (!avatarUrl && userData?.avatarUrl) {
+        if (userData?.avatarUrl) {
           setAvatarUrl(userData.avatarUrl);
+          // Сохраняем в localStorage для синхронизации с Header
+          localStorage.setItem('user_avatar_url', userData.avatarUrl);
         }
         
         // Получение ранга пользователя
@@ -979,7 +974,18 @@ const ProfilePage = () => {
   
   // Получение URL аватара из кеша или данных пользователя
   const getCachedAvatarUrl = () => {
-    return avatarUrl || (userDetails?.avatarUrl ? userDetails.avatarUrl : '/default-avatar.jpg');
+    // Проверяем сначала локальное состояние
+    if (avatarUrl) return avatarUrl;
+    
+    // Затем данные пользователя
+    if (userDetails?.avatarUrl) return userDetails.avatarUrl;
+    
+    // Затем localStorage (на случай, если Header обновил аватар)
+    const localStorageAvatar = localStorage.getItem('user_avatar_url');
+    if (localStorageAvatar) return localStorageAvatar;
+    
+    // И наконец, возвращаем встроенный placeholder вместо локального файла
+    return DEFAULT_AVATAR_PLACEHOLDER;
   };
   
   // Получение URL аватара автора из кеша или данных автора
@@ -987,7 +993,7 @@ const ProfilePage = () => {
     if (author.authorId && authorAvatarUrls[author.authorId]) {
       return authorAvatarUrls[author.authorId];
     }
-    return author.avatarUrl ? author.avatarUrl : '/default-avatar.jpg';
+    return author.avatarUrl ? author.avatarUrl : DEFAULT_AVATAR_PLACEHOLDER;
   };
   
   // Получение URL аватара автора рецензии из кеша или данных пользователя
@@ -995,28 +1001,18 @@ const ProfilePage = () => {
     if (user && user.userId && reviewAuthorAvatarUrls[user.userId]) {
       return reviewAuthorAvatarUrls[user.userId];
     }
-    return user?.avatarUrl ? user.avatarUrl : '/default-avatar.jpg';
+    return user?.avatarUrl ? user.avatarUrl : DEFAULT_AVATAR_PLACEHOLDER;
   };
   
   // Функция для обработки ошибок изображений
   const handleImageError = (e) => {
-    console.log('Ошибка загрузки изображения профиля, замена на заглушку');
+    console.log('Ошибка загрузки изображения, использую встроенный placeholder');
     
     // Прекращаем обработку ошибок для этого элемента
     e.target.onerror = null;
     
-    // Проверяем, была ли уже попытка загрузить заглушку
-    const hasTriedPlaceholder = e.target.getAttribute('data-tried-placeholder') === 'true';
-    
-    if (!hasTriedPlaceholder) {
-      // Отмечаем, что мы пытались загрузить заглушку
-      e.target.setAttribute('data-tried-placeholder', 'true');
-      e.target.src = '/default-avatar.jpg';
-    } else {
-      // Если заглушка тоже не загрузилась, используем встроенный data URI
-      console.log('Не удалось загрузить заглушку, использую встроенный placeholder');
-      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
-    }
+    // Используем встроенный placeholder
+    e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
 
   // Функция для обработки ошибок изображений релизов

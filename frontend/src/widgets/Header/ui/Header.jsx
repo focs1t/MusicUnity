@@ -143,6 +143,10 @@ export const Header = () => {
   const { isAuth, user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
+  const [cachedAvatarUrl, setCachedAvatarUrl] = useState(null);
+  // Добавляем константу для заглушки аватара
+  const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
+  
   const open = Boolean(anchorEl);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -174,6 +178,13 @@ export const Header = () => {
           const userData = await userApi.getCurrentUser();
           console.log('Fetched user details:', userData);
           setUserDetails(userData);
+          
+          // Кешируем URL аватара для синхронизации между компонентами
+          if (userData?.avatarUrl) {
+            setCachedAvatarUrl(userData.avatarUrl);
+            // Сохраняем в localStorage для использования в других компонентах
+            localStorage.setItem('user_avatar_url', userData.avatarUrl);
+          }
         } catch (error) {
           console.error('Ошибка при получении данных пользователя:', error);
         }
@@ -343,12 +354,24 @@ export const Header = () => {
 
   // Получаем аватарку пользователя для отображения
   const getUserAvatar = () => {
-    // Сначала проверяем детальные данные с сервера
+    // Сначала проверяем кешированное значение
+    if (cachedAvatarUrl) return cachedAvatarUrl;
+    
+    // Затем проверяем детальные данные с сервера
     if (userDetails?.avatarUrl) return userDetails.avatarUrl;
     
     // Затем проверяем данные из JWT токена
-    if (!user) return '';
-    return user.avatarUrl || user.avatar || user.picture || '';
+    if (!user) return DEFAULT_AVATAR_PLACEHOLDER;
+    return user.avatarUrl || user.avatar || user.picture || DEFAULT_AVATAR_PLACEHOLDER;
+  };
+
+  // Обработчик ошибок загрузки изображений
+  const handleImageError = (e) => {
+    console.log('Ошибка загрузки аватарки в хедере, использую встроенный placeholder');
+    // Прекращаем обработку ошибок для этого элемента
+    e.target.onerror = null;
+    // Используем встроенный data URI
+    e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
 
   // Отображение компонентов в зависимости от статуса авторизации
@@ -366,6 +389,7 @@ export const Header = () => {
             <Avatar
               alt={getUserDisplayName()}
               src={getUserAvatar()}
+              onError={handleImageError}
               sx={{ 
                 bgcolor: '#000',
                 width: 40,
