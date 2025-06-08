@@ -354,7 +354,7 @@ function ReleasesPage() {
             release.simpleReviewRating ? 
               React.createElement('div', {
                 key: 'simple-review-rating',
-                className: 'inline-flex size-7 text-xs items-center font-semibold justify-center border-2 border-userColor rounded-full px-0 text-center'
+                className: 'inline-flex size-7 text-xs items-center font-semibold justify-center border-2 border-userColor rounded-full px-0 text-center simple-review-rating'
               }, formatRating(release.simpleReviewRating)) : null
           ])
         ) : null

@@ -894,4 +894,12 @@ nav[aria-label="pagination"] a[aria-current="page"] {
   .md\:pr-2\.5 {
     padding-right: 0.625rem;
   }
+}
+
+/* Улучшенные стили для кружка с простыми рецензиями */
+.inline-flex.size-7.text-xs.items-center.font-semibold.justify-center.border-2.border-userColor.rounded-full,
+.simple-review-rating {
+  background-color: transparent !important;
+  border: 2px solid #3a82f7 !important;
+  color: #ffffff !important;
 } 
