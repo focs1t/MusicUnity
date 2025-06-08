@@ -30,6 +30,9 @@ const AppRouter = () => {
       <Route path="/profile" element={<ProtectedRoute element={<ProfilePage />} />} />
       <Route path="/profile/reviews" element={<ProtectedRoute element={<ProfilePage />} />} />
       <Route path="/profile/liked" element={<ProtectedRoute element={<ProfilePage />} />} />
+      <Route path="/profile/:userId" element={<PublicRoute element={<ProfilePage />} />} />
+      <Route path="/profile/:userId/reviews" element={<PublicRoute element={<ProfilePage />} />} />
+      <Route path="/profile/:userId/liked" element={<PublicRoute element={<ProfilePage />} />} />
       <Route path="/settings" element={<ProtectedRoute element={<SettingsPage />} />} />
       <Route path="/following-releases" element={<ProtectedRoute element={<FollowingReleasesPage />} />} />
       

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
 import { reviewApi } from '../shared/api/review';
@@ -272,11 +272,31 @@ const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cached
   const [enhancedReview, setEnhancedReview] = useState(review);
   const [userRank, setUserRank] = useState(null);
   
+  // Определяем реальный статус лайка, учитывая как стандартный isLiked, так и свойство isLikedByCurrentUser
+  // которое мы добавили для рецензий при просмотре чужого профиля
+  const actualIsLiked = useMemo(() => {
+    // Если передан явный статус лайка, используем его
+    if (typeof isLiked === 'boolean') {
+      // Но также проверяем, есть ли у рецензии свойство isLikedByCurrentUser
+      if (review.hasOwnProperty('isLikedByCurrentUser')) {
+        return review.isLikedByCurrentUser;
+      }
+      return isLiked;
+    }
+    // Если статус не передан, но есть свойство в рецензии, используем его
+    if (review.hasOwnProperty('isLikedByCurrentUser')) {
+      return review.isLikedByCurrentUser;
+    }
+    // По умолчанию - не лайкнуто
+    return false;
+  }, [isLiked, review]);
+  
   // Логирование входных данных
   useEffect(() => {
     console.log(`EnhancedReviewCard: Рецензия ID ${review.reviewId}`);
     console.log(`EnhancedReviewCard: Данные пользователя:`, JSON.stringify(userDetails, null, 2));
-  }, [review, userDetails]);
+    console.log(`EnhancedReviewCard: Статус лайка:`, actualIsLiked);
+  }, [review, userDetails, actualIsLiked]);
   
   // Эффект для получения ранга пользователя
   useEffect(() => {
@@ -380,7 +400,7 @@ const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cached
     <ReviewCard 
       review={fullEnhancedReview}
       userDetails={enhancedUserDetails}
-      isLiked={isLiked}
+      isLiked={actualIsLiked}
       onLikeToggle={onLikeToggle}
       cachedAvatarUrl={cachedAvatarUrl}
       getCurrentUserIdFunc={getCurrentUserIdFunc}
@@ -418,6 +438,21 @@ const ProfilePage = () => {
   const [error, setError] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const { userId: profileUserId } = useParams(); // Получаем userId из URL параметров
+  
+  // Определяем, смотрим ли мы свой профиль или чужой
+  const isOwnProfile = useMemo(() => {
+    // Если нет параметра userId в URL, то это свой профиль
+    if (!profileUserId) return true;
+    
+    // Если есть параметр userId, сравниваем с текущим пользователем
+    if (authUser) {
+      return String(authUser.id) === String(profileUserId) || 
+             String(authUser.userId) === String(profileUserId);
+    }
+    
+    return false;
+  }, [authUser, profileUserId]);
   
   // Для хранения ранга пользователя
   const [userRank, setUserRank] = useState({
@@ -437,8 +472,9 @@ const ProfilePage = () => {
   // Определение активной вкладки на основе URL
   const getTabValueFromPath = () => {
     const path = location.pathname;
-    if (path.includes('/profile/reviews')) return 1;
-    if (path.includes('/profile/liked')) return 2;
+    // Учитываем как обычные пути, так и пути с userId
+    if (path.includes('/reviews')) return 1;
+    if (path.includes('/liked')) return 2;
     return 0; // По умолчанию - Предпочтения
   };
   
@@ -485,14 +521,24 @@ const ProfilePage = () => {
         
         // Получение подробных данных о пользователе
         let userData;
-        if (authUser?.id) {
+        if (profileUserId) {
+          // Если мы смотрим профиль другого пользователя
+          userData = await userApi.getUserById(profileUserId);
+        } else if (authUser?.id) {
+          // Если есть данные текущего пользователя
           userData = await userApi.getUserById(authUser.id);
         } else {
+          // Иначе запрашиваем текущего пользователя
           userData = await userApi.getCurrentUser();
         }
         
         console.log('Получены данные пользователя:', userData);
         setUserDetails(userData);
+        
+        // Сбрасываем страницу и фильтры при смене пользователя
+        setPage(1);
+        setTabValue(getTabValueFromPath());
+        setReviewFilter('all');
         
         // Сохраняем URL аватара в кеш при первой загрузке
         if (userData?.avatarUrl) {
@@ -714,6 +760,26 @@ const ProfilePage = () => {
         ));
         
         setError(null);
+        
+        // Всегда получаем лайкнутые рецензии текущего пользователя для отображения статуса лайков
+        // даже когда просматриваем чужой профиль
+        try {
+          // Определяем ID текущего пользователя
+          const currentUserId = getCurrentUserId();
+          if (currentUserId) {
+            const currentUserLikedReviews = await likeApi.getLikedReviewsByUser(currentUserId, 0, 100);
+            if (currentUserLikedReviews && currentUserLikedReviews.content) {
+              const likedIds = currentUserLikedReviews.content
+                .map(review => review.reviewId || review.id)
+                .filter(id => id);
+                
+              console.log('Лайкнутые рецензии текущего пользователя:', likedIds);
+              setLikedReviewIds(likedIds);
+            }
+          }
+        } catch (likedError) {
+          console.error('Ошибка при получении лайкнутых рецензий текущего пользователя:', likedError);
+        }
       } catch (err) {
         console.error('Ошибка при загрузке данных пользователя:', err);
         setError('Не удалось загрузить данные пользователя. Пожалуйста, попробуйте позже.');
@@ -723,8 +789,8 @@ const ProfilePage = () => {
     };
     
     fetchUserData();
-  }, [authUser]);
-
+  }, [authUser, profileUserId, location.pathname]); // Добавляем location.pathname для обновления при изменении пути
+  
   // Отдельный эффект для загрузки данных вкладок
   useEffect(() => {
     const fetchTabData = async () => {
@@ -732,12 +798,13 @@ const ProfilePage = () => {
       
       try {
         if (tabValue === 1) {
-          // Для рецензий используем фильтр
+          // Для рецензий используем фильтр только если это собственный профиль
+          // Для чужого профиля всегда показываем все рецензии
           const userReviewsData = await reviewApi.getReviewsByUser(
             userDetails.userId, 
             page - 1, 
             5, 
-            reviewFilter === 'author_liked' ? true : null
+            isOwnProfile && reviewFilter === 'author_liked' ? true : null
           );
           console.log('Полученные рецензии пользователя:', JSON.stringify(userReviewsData.content, null, 2));
           
@@ -778,10 +845,18 @@ const ProfilePage = () => {
                   }
                 }
                 
+                // Для чужого профиля проверяем, лайкнул ли текущий пользователь эту рецензию
+                let isLikedByCurrentUser = false;
+                if (!isOwnProfile) {
+                  isLikedByCurrentUser = likedReviewIds.includes(review.reviewId);
+                  console.log(`Рецензия ${review.reviewId} лайкнута текущим пользователем: ${isLikedByCurrentUser}`);
+                }
+                
                 return { 
                   ...review, 
                   likesCount,
-                  release: updatedRelease
+                  release: updatedRelease,
+                  isLikedByCurrentUser
                 };
               } catch (error) {
                 console.error(`Ошибка при обновлении данных для рецензии ID ${review.reviewId}:`, error);
@@ -791,11 +866,21 @@ const ProfilePage = () => {
           );
           
           setUserReviews(updatedReviews);
-          setTotalPages(userReviewsData.totalPages);
+          setTotalPages(userReviewsData.totalPages || 1);
         } else if (tabValue === 2) {
           try {
             // Загружаем лайкнутые рецензии с бэкенда
-            const userLikedReviews = await likeApi.getLikedReviewsByUser(userDetails.userId, page - 1, 5);
+            // Для чужого профиля некоторые данные могут быть недоступны
+            let userLikedReviews;
+            
+            try {
+              userLikedReviews = await likeApi.getLikedReviewsByUser(userDetails.userId, page - 1, 5);
+            } catch (apiError) {
+              console.error('Ошибка при загрузке лайкнутых рецензий:', apiError);
+              // В случае ошибки, например из-за ограничений доступа, показываем пустой список
+              userLikedReviews = { content: [], totalPages: 0, totalElements: 0 };
+            }
+            
             console.log('Полученные лайкнутые рецензии:', JSON.stringify(userLikedReviews.content, null, 2));
             
             // Кеширование аватаров авторов рецензий
@@ -873,11 +958,35 @@ const ProfilePage = () => {
                       }
                     }
                     
+                    // При просмотре своего профиля или чужого профиля с лайкнутыми рецензиями
+                    // всегда устанавливаем статус лайка как true
+                    // При просмотре своих лайкнутых рецензий, они по определению лайкнуты текущим пользователем
+                    // При просмотре чужих лайкнутых рецензий, статус лайка зависит от текущего пользователя
+                    
+                    // Сначала проверяем, чей профиль просматриваем
+                    let isCurrentUserLiked = true; // По умолчанию считаем, что лайкнуто
+                    
+                    // Если смотрим чужой профиль, проверяем, лайкнул ли текущий пользователь эту рецензию
+                    if (!isOwnProfile) {
+                      const currentUserId = getCurrentUserId();
+                      // Проверка, совпадает ли автор рецензии с текущим пользователем
+                      const isCurrentUserAuthor = review.userId === currentUserId;
+                      
+                      if (isCurrentUserAuthor) {
+                        // Если это рецензия текущего пользователя, то он не может ее лайкнуть
+                        isCurrentUserLiked = false;
+                      } else {
+                        // Проверяем, есть ли эта рецензия в списке лайкнутых текущим пользователем
+                        isCurrentUserLiked = likedReviewIds.includes(review.reviewId);
+                      }
+                    }
+                    
                     return { 
                       ...review, 
                       likesCount,
                       release: updatedRelease,
-                      user: updatedUser
+                      user: updatedUser,
+                      isLikedByCurrentUser: isCurrentUserLiked
                     };
                   } catch (error) {
                     console.error(`Ошибка при обновлении данных для лайкнутой рецензии ID ${review.reviewId}:`, error);
@@ -903,50 +1012,30 @@ const ProfilePage = () => {
             console.log('Загружаем данные для вкладки Предпочтения...');
             
             // Получаем отслеживаемых авторов
-            const followedAuthorsData = await userApi.getUserFollowedAuthors(userDetails.userId, 0, 10);
-            console.log('Ответ сервера для авторов:', followedAuthorsData);
+            let followedAuthorsData;
             
-            if (followedAuthorsData && followedAuthorsData.content) {
-              console.log('Количество авторов:', followedAuthorsData.content.length);
-              
-              // Проверяем каждого автора на наличие необходимых полей
-              const validAuthors = followedAuthorsData.content.map(author => {
-                console.log('Автор:', author);
-                return {
-                  authorId: author.authorId || 0,
-                  name: author.name || author.authorName || "Неизвестный автор",
-                  avatarUrl: author.avatarUrl || null,
-                  isArtist: author.isArtist || false,
-                  isProducer: author.isProducer || false
-                };
-              });
-              
-              console.log('Обработанные авторы:', validAuthors);
-              setFollowedAuthors(validAuthors);
+            try {
+              followedAuthorsData = await userApi.getUserFollowedAuthors(userDetails.userId, 0, 10);
+            } catch (apiError) {
+              console.error('Ошибка при загрузке отслеживаемых авторов:', apiError);
+              // В случае ошибки, например из-за ограничений доступа, показываем пустой список
+              followedAuthorsData = { content: [], totalPages: 0, totalElements: 0 };
             }
+            
+            // ... existing code ...
             
             // Получаем избранные релизы
-            const favoritesData = await userApi.getUserFavorites(userDetails.userId, 0, 10);
-            console.log('Ответ сервера для релизов:', favoritesData);
+            let favoritesData;
             
-            if (favoritesData && favoritesData.content) {
-              console.log('Количество релизов:', favoritesData.content.length);
-              
-              // Проверяем каждый релиз на наличие необходимых полей
-              const validReleases = favoritesData.content.map(release => {
-                console.log('Релиз:', release);
-                return {
-                  releaseId: release.releaseId || 0,
-                  title: release.title || "Неизвестный релиз",
-                  coverUrl: release.coverUrl || null,
-                  releaseDate: release.releaseDate || null,
-                  authors: release.authors || []
-                };
-              });
-              
-              console.log('Обработанные релизы:', validReleases);
-              setFavoriteReleases(validReleases);
+            try {
+              favoritesData = await userApi.getUserFavorites(userDetails.userId, 0, 10);
+            } catch (apiError) {
+              console.error('Ошибка при загрузке избранных релизов:', apiError);
+              // В случае ошибки, например из-за ограничений доступа, показываем пустой список
+              favoritesData = { content: [], totalPages: 0, totalElements: 0 };
             }
+            
+            // ... existing code ...
           } catch (error) {
             console.error('Ошибка при загрузке данных предпочтений:', error);
           }
@@ -957,7 +1046,7 @@ const ProfilePage = () => {
     };
     
     fetchTabData();
-  }, [userDetails, tabValue, page, reviewFilter]);
+  }, [userDetails, tabValue, page, reviewFilter, isOwnProfile, likedReviewIds]); // Добавляем likedReviewIds в зависимости
 
   // Обработчик изменения вкладки
   const handleTabChange = (newValue) => {
@@ -966,12 +1055,23 @@ const ProfilePage = () => {
     setReviewFilter('all'); // Сбрасываем фильтр рецензий при смене вкладки
     
     // Обновляем URL в соответствии с выбранной вкладкой
-    if (newValue === 0) {
-      navigate('/profile');
-    } else if (newValue === 1) {
-      navigate('/profile/reviews');
-    } else if (newValue === 2) {
-      navigate('/profile/liked');
+    // Учитываем, смотрим ли мы свой профиль или чужой
+    if (profileUserId) {
+      if (newValue === 0) {
+        navigate(`/profile/${profileUserId}`);
+      } else if (newValue === 1) {
+        navigate(`/profile/${profileUserId}/reviews`);
+      } else if (newValue === 2) {
+        navigate(`/profile/${profileUserId}/liked`);
+      }
+    } else {
+      if (newValue === 0) {
+        navigate('/profile');
+      } else if (newValue === 1) {
+        navigate('/profile/reviews');
+      } else if (newValue === 2) {
+        navigate('/profile/liked');
+      }
     }
   };
   
@@ -1009,8 +1109,10 @@ const ProfilePage = () => {
       return false;
     }
     
-    console.log(`Проверка лайка для рецензии ${reviewId}, likedReviewIds:`, likedReviewIds);
-    return likedReviewIds.includes(reviewId);
+    // Проверяем, включает ли массив лайкнутых ID текущий ID рецензии
+    const isLiked = likedReviewIds.includes(reviewId);
+    console.log(`Проверка лайка для рецензии ${reviewId}, likedReviewIds:`, likedReviewIds, `результат:`, isLiked);
+    return isLiked;
   };
   
   // Получение текущего ID пользователя из разных источников данных
@@ -1155,6 +1257,9 @@ const ProfilePage = () => {
       console.warn('Пользователь не авторизован или ID <= 0');
       return;
     }
+    
+    // Если это чужой профиль, мы все равно используем ID текущего пользователя для лайка/анлайка
+    // Т.е. функционал лайков должен работать и при просмотре чужого профиля
     
     // Находим рецензию в массиве
     let review = userReviews.find(r => r.reviewId === reviewId);
@@ -1647,8 +1752,8 @@ const ProfilePage = () => {
                   </a>
                 </div>
                 
-                {/* Подвкладки для фильтрации рецензий (отображаются только на вкладке рецензий) */}
-                {tabValue === 1 && (
+                {/* Подвкладки для фильтрации рецензий (отображаются только на вкладке рецензий и только для своего профиля) */}
+                {tabValue === 1 && isOwnProfile && (
                   <div className="sub-tabs">
                     <a 
                       className={`tab-link ${reviewFilter === 'all' ? 'active' : ''}`}
@@ -1769,7 +1874,7 @@ const ProfilePage = () => {
                             key={review.reviewId}
                             review={review}
                             userDetails={userDetails}
-                            isLiked={isReviewLiked(review.reviewId)}
+                            isLiked={isOwnProfile ? isReviewLiked(review.reviewId) : (review.isLikedByCurrentUser || isReviewLiked(review.reviewId))}
                             onLikeToggle={handleLikeToggle}
                             cachedAvatarUrl={getCachedAvatarUrl()}
                             getCurrentUserIdFunc={getCurrentUserId}
@@ -1778,8 +1883,8 @@ const ProfilePage = () => {
                       ) : (
                         <div className="no-reviews">
                           {reviewFilter === 'all' 
-                            ? 'У вас пока нет рецензий.' 
-                            : 'У вас нет рецензий с авторскими лайками.'}
+                            ? (isOwnProfile ? 'У вас пока нет рецензий.' : 'У пользователя пока нет рецензий.') 
+                            : (isOwnProfile ? 'У вас нет рецензий с авторскими лайками.' : 'У пользователя нет рецензий с авторскими лайками.')}
                         </div>
                       )}
                     </div>
@@ -1814,7 +1919,7 @@ const ProfilePage = () => {
                             key={review.reviewId}
                             review={review}
                             userDetails={review.user}
-                            isLiked={true}
+                            isLiked={isOwnProfile ? true : isReviewLiked(review.reviewId)}
                             onLikeToggle={handleLikeToggle}
                             cachedAvatarUrl={getCachedReviewAuthorAvatarUrl(review.user)}
                             getCurrentUserIdFunc={getCurrentUserId}
@@ -1822,7 +1927,7 @@ const ProfilePage = () => {
                         ))
                       ) : (
                         <div className="no-reviews">
-                          У вас нет понравившихся рецензий.
+                          {isOwnProfile ? 'У вас нет понравившихся рецензий.' : 'У пользователя нет понравившихся рецензий.'}
                         </div>
                       )}
                     </div>
