@@ -107,6 +107,55 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
     
     return "Пользователь";
   };
+  
+  // Проверка, является ли текущий пользователь автором рецензии
+  const getCurrentUserId = () => {
+    try {
+      // Проверяем разные возможные источники данных пользователя
+      const userDataStr = localStorage.getItem('userData');
+      const authTokenStr = localStorage.getItem('authToken');
+      const userInfoStr = localStorage.getItem('userInfo');
+      
+      console.log('ReviewCard - Данные авторизации в localStorage:', {
+        userData: userDataStr ? 'present' : 'absent',
+        authToken: authTokenStr ? 'present' : 'absent',
+        userInfo: userInfoStr ? 'present' : 'absent'
+      });
+      
+      // Пробуем извлечь ID из userData
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        console.log('userData parse result:', userData);
+        if (userData && (userData.id || userData.userId)) {
+          return userData.id || userData.userId;
+        }
+      }
+      
+      // Пробуем извлечь ID из userInfo, если userData не сработал
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        console.log('userInfo parse result:', userInfo);
+        if (userInfo && (userInfo.id || userInfo.userId)) {
+          return userInfo.id || userInfo.userId;
+        }
+      }
+      
+      // Если ничего не нашли, проверяем window.user для браузерного окружения
+      if (window.user && (window.user.id || window.user.userId)) {
+        return window.user.id || window.user.userId;
+      }
+      
+      console.warn('Не удалось получить ID пользователя из localStorage');
+      return 0;
+    } catch (error) {
+      console.error('Ошибка при получении ID пользователя:', error);
+      return 0;
+    }
+  };
+  
+  const currentUserId = getCurrentUserId();
+  console.log(`ProfilePage ReviewCard: рецензия ID ${review.reviewId}, автор ID ${review.userId}, текущий пользователь ID ${currentUserId}`);
+  const isOwnReview = review.userId === currentUserId;
 
   // Проверяем данные релиза и логируем подробности
   useEffect(() => {
@@ -221,8 +270,9 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
       <div className="review-footer">
         <div className="review-actions">
           <button 
-            className="review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5"
-            onClick={() => onLikeToggle(review.reviewId)}
+            className={`review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5 ${isOwnReview ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={() => !isOwnReview && onLikeToggle(review.reviewId)}
+            disabled={isOwnReview}
           >
             <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center">
               {isLiked ? 
@@ -346,6 +396,23 @@ const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cached
     
     return updatedReview;
   }, [enhancedReview, enhancedUserDetails, userRank]);
+  
+  // Проверяем, является ли это собственная рецензия текущего пользователя
+  const currentUserData = useMemo(() => {
+    try {
+      const userDataStr = localStorage.getItem('userData');
+      if (userDataStr) {
+        return JSON.parse(userDataStr);
+      }
+    } catch (error) {
+      console.error('EnhancedReviewCard: Ошибка при получении данных пользователя:', error);
+    }
+    return null;
+  }, []);
+  
+  const isCurrentUserReview = currentUserData && 
+    (fullEnhancedReview.userId === currentUserData.id || 
+     fullEnhancedReview.userId === currentUserData.userId);
   
   return (
     <ReviewCard 
@@ -915,6 +982,51 @@ const ProfilePage = () => {
     return likedReviewIds.includes(reviewId);
   };
   
+  // Получение текущего ID пользователя из localStorage
+  const getCurrentUserId = () => {
+    try {
+      // Проверяем разные возможные источники данных пользователя
+      const userDataStr = localStorage.getItem('userData');
+      const authTokenStr = localStorage.getItem('authToken');
+      const userInfoStr = localStorage.getItem('userInfo');
+      
+      console.log('ProfilePage - Данные авторизации в localStorage:', {
+        userData: userDataStr ? 'present' : 'absent',
+        authToken: authTokenStr ? 'present' : 'absent',
+        userInfo: userInfoStr ? 'present' : 'absent'
+      });
+      
+      // Пробуем извлечь ID из userData
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        console.log('userData parse result:', userData);
+        if (userData && (userData.id || userData.userId)) {
+          return userData.id || userData.userId;
+        }
+      }
+      
+      // Пробуем извлечь ID из userInfo, если userData не сработал
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        console.log('userInfo parse result:', userInfo);
+        if (userInfo && (userInfo.id || userInfo.userId)) {
+          return userInfo.id || userInfo.userId;
+        }
+      }
+      
+      // Если ничего не нашли, проверяем window.user для браузерного окружения
+      if (window.user && (window.user.id || window.user.userId)) {
+        return window.user.id || window.user.userId;
+      }
+      
+      console.warn('Не удалось получить ID пользователя из localStorage');
+      return 0;
+    } catch (error) {
+      console.error('Ошибка при получении ID пользователя:', error);
+      return 0;
+    }
+  };
+  
   // Функция для лайка/анлайка рецензии
   const handleLikeToggle = async (reviewId) => {
     if (!authUser) {
@@ -923,62 +1035,156 @@ const ProfilePage = () => {
       return;
     }
     
+    // Получаем актуальный ID пользователя
+    const userId = getCurrentUserId();
+    console.log('ProfilePage handleLikeToggle: userId =', userId);
+    
+    if (!userId) {
+      console.warn('Пользователь не авторизован (не найден ID)');
+      return;
+    }
+    
+    // Проверяем, что пользователь не лайкает свою собственную рецензию
+    const review = userReviews.find(r => r.reviewId === reviewId) || 
+                  likedReviews.find(r => r.reviewId === reviewId);
+    
+    if (!review) {
+      console.error(`Рецензия с ID ${reviewId} не найдена`);
+      return;
+    }
+    
+    if (review.userId === userId) {
+      console.warn('Нельзя лайкать собственные рецензии');
+      return;
+    }
+    
     try {
       if (isReviewLiked(reviewId)) {
-        // Удаляем лайк
-        await likeApi.removeLike(reviewId, userDetails.userId);
-        
-        // Обновляем список лайкнутых рецензий
+        // Оптимистично обновляем UI перед запросом к серверу
         setLikedReviewIds(prevIds => prevIds.filter(id => id !== reviewId));
         
-        // Получаем актуальное количество лайков
-        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
-        
-        // Обновляем количество лайков в рецензии
+        // Уменьшаем счетчик лайков во всех вкладках
         setUserReviews(prevReviews => 
-          prevReviews.map(review => 
-            review.reviewId === reviewId 
-              ? { ...review, likesCount: updatedLikesCount } 
-              : review
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: Math.max(0, (r.likesCount || 0) - 1) } 
+              : r
           )
         );
         
         setLikedReviews(prevReviews => 
-          prevReviews.map(review => 
-            review.reviewId === reviewId 
-              ? { ...review, likesCount: updatedLikesCount } 
-              : review
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: Math.max(0, (r.likesCount || 0) - 1) } 
+              : r
+          )
+        );
+        
+        // Удаляем лайк в бэкенде
+        await likeApi.removeLike(reviewId, userId);
+        
+        // Получаем актуальное количество лайков с сервера
+        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+        
+        // Обновляем точное количество лайков после получения от сервера
+        setUserReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: updatedLikesCount } 
+              : r
+          )
+        );
+        
+        setLikedReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: updatedLikesCount } 
+              : r
           )
         );
       } else {
-        // Добавляем лайк
-        await likeApi.createLike(reviewId, userDetails.userId, 'USER');
-        
-        // Обновляем список лайкнутых рецензий
+        // Оптимистично обновляем UI перед запросом к серверу
         setLikedReviewIds(prevIds => [...prevIds, reviewId]);
         
-        // Получаем актуальное количество лайков
-        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
-        
-        // Обновляем количество лайков в рецензии
+        // Увеличиваем счетчик лайков во всех вкладках
         setUserReviews(prevReviews => 
-          prevReviews.map(review => 
-            review.reviewId === reviewId 
-              ? { ...review, likesCount: updatedLikesCount } 
-              : review
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: (r.likesCount || 0) + 1 } 
+              : r
           )
         );
         
         setLikedReviews(prevReviews => 
-          prevReviews.map(review => 
-            review.reviewId === reviewId 
-              ? { ...review, likesCount: updatedLikesCount } 
-              : review
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: (r.likesCount || 0) + 1 } 
+              : r
+          )
+        );
+        
+        // Добавляем лайк в бэкенде
+        await likeApi.createLike(reviewId, userId, 'REGULAR');
+        
+        // Получаем актуальное количество лайков с сервера
+        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+        
+        // Обновляем точное количество лайков после получения от сервера
+        setUserReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: updatedLikesCount } 
+              : r
+          )
+        );
+        
+        setLikedReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: updatedLikesCount } 
+              : r
           )
         );
       }
     } catch (error) {
       console.error('Ошибка при обновлении лайка:', error);
+      
+      // В случае ошибки возвращаем предыдущее состояние
+      try {
+        // Получаем актуальные данные с сервера
+        const [updatedLikesCount, userLikedReviews] = await Promise.all([
+          likeApi.getLikesCountByReview(reviewId),
+          likeApi.getLikedReviewsByUser(userId)
+        ]);
+        
+        // Обновляем состояние на основе свежих данных с сервера
+        const actualLikedIds = new Set(
+          userLikedReviews.content
+            .map(r => r.reviewId || r.id || 0)
+            .filter(id => id > 0)
+        );
+        
+        setLikedReviewIds([...actualLikedIds]);
+        
+        // Обновляем количество лайков в обоих списках рецензий
+        setUserReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: updatedLikesCount } 
+              : r
+          )
+        );
+        
+        setLikedReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.reviewId === reviewId 
+              ? { ...r, likesCount: updatedLikesCount } 
+              : r
+          )
+        );
+      } catch (recoveryError) {
+        console.error('Ошибка при восстановлении состояния:', recoveryError);
+      }
     }
   };
   
