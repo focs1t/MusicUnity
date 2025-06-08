@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { reviewApi } from '../shared/api/review';
+import { likeApi } from '../shared/api/like';
 
 // Импорт иконок
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ChevronDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -17,53 +19,127 @@ const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMj
 // Встроенный плейсхолдер в формате data URI для обложки релиза
 const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMyMjIyMjIiLz48cGF0aCBkPSJNNzAgODBIMTMwVjEyMEg3MFY4MFoiIGZpbGw9IiM0NDQ0NDQiLz48cGF0aCBkPSJNNTAgMTUwSDE1MFYxNjBINTBWMTUwWiIgZmlsbD0iIzQ0NDQ0NCIvPjwvc3ZnPg==';
 
+// Получение текущего ID пользователя из localStorage
+const getCurrentUserId = () => {
+  try {
+    const userDataStr = localStorage.getItem('userData');
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      return userData.id || userData.userId || 0;
+    }
+  } catch (error) {
+    console.error('Ошибка при получении ID пользователя:', error);
+  }
+  return 0;
+};
+
 // Компонент карточки рецензии
-const ReviewCard = ({ review, onLikeToggle }) => {
+const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
+  // Функция для обработки ошибок изображений
   const handleImageError = (e, placeholder) => {
     console.log('Ошибка загрузки изображения, использую placeholder');
+    console.log(`Проблемный URL: ${e.target.src}`);
     e.target.onerror = null;
     e.target.src = placeholder;
   };
 
-  // Безопасное получение данных пользователя
-  const getUserData = () => {
-    return review.user || {
-      id: 1,
-      name: 'Пользователь',
-      avatar: DEFAULT_AVATAR_PLACEHOLDER,
-      top: 100
-    };
+  // Безопасное получение имени пользователя
+  const getUserName = () => {
+    if (!review.user) return "Пользователь";
+    
+    // Проверяем разные возможные поля с именем пользователя
+    if (review.user.username) return review.user.username;
+    if (review.user.name) return review.user.name;
+    if (review.user.displayName) return review.user.displayName;
+    
+    return "Пользователь";
   };
 
-  // Безопасное получение данных трека
+  // Безопасное получение URL аватара
+  const getAvatarUrl = () => {
+    if (!review.user) return DEFAULT_AVATAR_PLACEHOLDER;
+    
+    // Проверяем разные возможные поля с URL аватара
+    if (review.user.avatarUrl) return review.user.avatarUrl;
+    if (review.user.avatar) return review.user.avatar;
+    
+    return DEFAULT_AVATAR_PLACEHOLDER;
+  };
+
+  // Безопасное получение ID пользователя
+  const getUserId = () => {
+    if (!review.user) return 0;
+    return review.user.id || review.user.userId || review.userId || 0;
+  };
+
+  // Безопасное получение ранга пользователя (ТОП)
+  const getUserRank = () => {
+    // Для отладки временно присваиваем рейтинг 
+    // на основании userId (маресев = 1, другие пользователи = 2)
+    const userId = getUserId();
+    if (userId === 7) return 1; // Маресев
+    return 2; // Другие пользователи
+  };
+
+  // Безопасное получение данных трека или релиза
   const getTrackData = () => {
-    return review.track || review.release || {
-      id: 1,
-      title: 'Трек',
-      cover: DEFAULT_COVER_PLACEHOLDER
+    const trackData = review.track || review.release || {};
+    return {
+      id: trackData.id || trackData.releaseId || trackData.trackId || 0,
+      title: trackData.title || "Трек",
+      cover: trackData.cover || trackData.coverUrl || DEFAULT_COVER_PLACEHOLDER
     };
   };
 
   // Безопасное получение данных рейтинга
   const getRatingData = () => {
-    // Проверяем есть ли объект rating в review
-    if (!review.rating) {
-      // Если нет, создаем стандартный объект с рейтингом
+    // Если есть прямое значение totalScore, используем его
+    if (review.totalScore !== undefined && review.totalScore !== null) {
       return {
-        total: review.totalRating || 80,
+        total: review.totalScore,
         components: [
-          review.rhymeImagery || 8,
-          review.structureRhythm || 8,
-          review.styleExecution || 8,
-          review.individuality || 8,
-          review.vibe || 8
+          review.rhymeImagery || 0,
+          review.structureRhythm || 0, 
+          review.styleExecution || 0,
+          review.individuality || 0,
+          review.vibe || 0
         ]
       };
     }
-    return review.rating;
+    
+    // Если есть объект rating, используем его
+    if (review.rating) {
+      return {
+        total: review.rating.total || 0,
+        components: review.rating.components || [0, 0, 0, 0, 0]
+      };
+    }
+    
+    // Вычисляем по формуле как на бэкенде
+    const rhymeImagery = review.rhymeImagery || 0;
+    const structureRhythm = review.structureRhythm || 0;
+    const styleExecution = review.styleExecution || 0;
+    const individuality = review.individuality || 0;
+    const vibe = review.vibe || 0;
+    
+    const baseScore = rhymeImagery + structureRhythm + styleExecution + individuality;
+    const vibeMultiplier = 1 + (vibe / 10) * 1.5;
+    const total = Math.round(baseScore * vibeMultiplier);
+    
+    return {
+      total: total,
+      components: [rhymeImagery, structureRhythm, styleExecution, individuality, vibe]
+    };
   };
 
-  const user = getUserData();
+  // Получаем данные для отображения
+  const user = {
+    id: getUserId(),
+    name: getUserName(),
+    avatar: getAvatarUrl(),
+    rank: getUserRank()
+  };
+  
   const track = getTrackData();
   const rating = getRatingData();
 
@@ -76,31 +152,31 @@ const ReviewCard = ({ review, onLikeToggle }) => {
     React.createElement('div', { className: 'relative', key: 'header' }, 
       React.createElement('div', { className: 'bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3' }, [
         // Блок с аватаром и информацией о пользователе
-        React.createElement('div', { className: 'flex items-center space-x-2 lg:space-x-3 w-full', key: 'user-info' }, [
+        React.createElement('div', { className: 'flex items-start space-x-2 lg:space-x-3 w-full', key: 'user-info' }, [
           React.createElement(Link, { 
             className: 'relative', 
-            to: `/user/${user.id}`,
+            to: `/profile/${user.id}`,
             key: 'user-avatar-link'
           }, 
             React.createElement('img', {
               alt: user.name,
               src: user.avatar,
-              className: 'shrink-0 size-[40px] lg:size-[45px] border border-white/10 rounded-full',
+              className: 'shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full',
               loading: 'lazy',
-              width: '38',
-              height: '38',
+              width: '40',
+              height: '40',
               decoding: 'async',
               onError: (e) => handleImageError(e, DEFAULT_AVATAR_PLACEHOLDER)
             })
           ),
-          React.createElement('div', { className: 'flex flex-col gap-1 justify-center', key: 'user-details' }, [
+          React.createElement('div', { className: 'flex flex-col gap-1 items-start', key: 'user-details' }, [
             React.createElement('div', { 
               className: 'flex items-center gap-1 md:gap-2 max-sm:flex-wrap',
               key: 'user-name-container'
             }, 
               React.createElement(Link, {
-                className: 'text-sm lg:text-lg font-semibold leading-[14px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden',
-                to: `/user/${user.id}`
+                className: 'text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline',
+                to: `/profile/${user.id}`
               }, user.name)
             ),
             React.createElement('div', { 
@@ -109,7 +185,7 @@ const ReviewCard = ({ review, onLikeToggle }) => {
             }, 
               React.createElement('div', {
                 className: 'inline-flex items-center text-center bg-red-500 rounded-full font-semibold px-1.5'
-              }, `ТОП-${user.top}`)
+              }, `ТОП-${user.rank}`)
             )
           ])
         ]),
@@ -118,12 +194,12 @@ const ReviewCard = ({ review, onLikeToggle }) => {
         React.createElement('div', { className: 'flex items-center justify-end gap-2 lg:gap-4', key: 'rating-cover' }, [
           React.createElement('div', { className: 'text-right flex flex-col h-full justify-center', key: 'rating' }, [
             React.createElement('div', { 
-              className: 'text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none',
+              className: 'text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right',
               key: 'total-rating'
             }, 
               React.createElement('span', { className: 'no-callout' }, rating.total)
             ),
-            React.createElement('div', { className: 'flex gap-x-1.5 font-bold text-xs lg:text-sm', key: 'component-ratings' }, 
+            React.createElement('div', { className: 'flex gap-x-1.5 font-bold text-xs lg:text-sm justify-end', key: 'component-ratings' }, 
               rating.components.map((score, index) => 
                 React.createElement('div', {
                   key: `rating-${index}`,
@@ -134,18 +210,18 @@ const ReviewCard = ({ review, onLikeToggle }) => {
             )
           ]),
           React.createElement(Link, {
-            className: 'shrink-0 size-10 lg:size-11',
+            className: 'shrink-0 size-10 lg:size-10 block',
             'data-state': 'closed',
-            to: `/track/${track.id}`,
+            to: `/releases/${track.id}`,
             key: 'track-cover-link'
           }, 
             React.createElement('img', {
               alt: track.title,
               src: track.cover,
-              className: 'rounded-md w-full',
+              className: 'rounded-md w-full h-full object-cover',
               loading: 'lazy',
-              width: '70',
-              height: '70',
+              width: '40',
+              height: '40',
               decoding: 'async',
               onError: (e) => handleImageError(e, DEFAULT_COVER_PLACEHOLDER)
             })
@@ -172,22 +248,24 @@ const ReviewCard = ({ review, onLikeToggle }) => {
       React.createElement('div', { className: 'mt-auto flex justify-between items-center relative pr-1.5', key: 'actions' }, [
         React.createElement('div', { className: 'flex gap-2 items-center', key: 'likes-container' }, 
           React.createElement('button', {
-            className: 'justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5',
-            onClick: () => onLikeToggle && onLikeToggle(review.id)
+            className: 'review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5',
+            onClick: () => onLikeToggle && onLikeToggle(review.id || review.reviewId)
           }, [
-            React.createElement('div', { className: 'w-5 lg:w-7', key: 'like-icon' }, 
-              React.createElement(FavoriteIcon, { 
-                className: 'opacity-50 transition-all duration-300 group-hover:opacity-100'
-              })
+            React.createElement('div', { className: 'w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center', key: 'like-icon' }, 
+              isLiked 
+              ? React.createElement(FavoriteIcon, { style: { color: '#FF5252', fontSize: '22px' } }) 
+              : React.createElement(FavoriteBorderIcon, { style: { color: '#AAAAAA', fontSize: '22px' } })
             ),
-            React.createElement('span', { className: 'font-bold lg:text-lg', key: 'likes-count' }, review.likes || 0)
+            React.createElement('span', { className: 'font-bold text-base lg:text-base', key: 'likes-count' }, 
+              review.likesCount !== undefined ? review.likesCount : 0
+            )
           ])
         ),
         React.createElement('div', { className: 'relative flex items-center gap-x-0.5', key: 'link-container' }, 
           React.createElement(Link, {
             className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground size-8 md:size-10 bg-transparent hover:bg-white/10',
             'data-state': 'closed',
-            to: `/reviews/${review.id}`
+            to: `/reviews/${review.id || review.reviewId}`
           }, 
             React.createElement(OpenInNewIcon, { 
               className: 'size-6 text-zinc-400 stroke-white fill-zinc-400'
@@ -203,57 +281,26 @@ const ReviewCard = ({ review, onLikeToggle }) => {
 const formatReview = (review) => {
   if (!review) {
     console.error('Ошибка форматирования: review не определен');
-    return {
-      id: 0,
-      user: {
-        id: 1,
-        name: 'Пользователь',
-        avatar: DEFAULT_AVATAR_PLACEHOLDER,
-        top: 100
-      },
-      track: {
-        id: 1,
-        title: 'Трек',
-        cover: DEFAULT_COVER_PLACEHOLDER
-      },
-      title: 'Рецензия',
-      content: 'Содержание рецензии отсутствует',
-      rating: {
-        total: 80,
-        components: [8, 8, 8, 8, 8]
-      },
-      likes: 0,
-      date: new Date().toISOString()
-    };
+    return null;
   }
 
   return {
-    id: review.id || 0,
-    user: review.user || review.author || {
-      id: 1,
-      name: 'Пользователь',
-      avatar: DEFAULT_AVATAR_PLACEHOLDER,
-      top: 100
-    },
-    track: review.track || review.release || {
-      id: 1,
-      title: 'Трек',
-      cover: DEFAULT_COVER_PLACEHOLDER
-    },
+    id: review.id || review.reviewId || 0,
+    reviewId: review.id || review.reviewId || 0,
+    userId: review.userId || (review.user && review.user.id) || 0,
+    user: review.user || review.author || null,
+    track: review.track || review.release || null,
+    releaseId: review.releaseId || (review.release && review.release.id) || 0,
     title: review.title || 'Рецензия',
-    content: review.content || 'Содержание рецензии отсутствует',
-    rating: {
-      total: review.totalRating || 80,
-      components: [
-        review.rhymeImagery || 8,
-        review.structureRhythm || 8,
-        review.styleExecution || 8,
-        review.individuality || 8,
-        review.vibe || 8
-      ]
-    },
-    likes: review.likesCount || 0,
-    date: review.createdAt || new Date().toISOString()
+    content: review.content || '',
+    rhymeImagery: review.rhymeImagery || 0,
+    structureRhythm: review.structureRhythm || 0,
+    styleExecution: review.styleExecution || 0,
+    individuality: review.individuality || 0,
+    vibe: review.vibe || 0,
+    totalScore: review.totalScore || review.totalRating || null,
+    likesCount: review.likesCount || review.likes || 0,
+    createdAt: review.createdAt || new Date().toISOString()
   };
 };
 
@@ -266,9 +313,12 @@ const ReviewsPage = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [sortOption, setSortOption] = useState('newest');
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [likedReviews, setLikedReviews] = useState(new Set());
+  const [likesLoading, setLikesLoading] = useState(false);
   
   const location = useLocation();
   const navigate = useNavigate();
+  const currentUserId = getCurrentUserId();
   
   // Получение номера страницы из URL при загрузке
   useEffect(() => {
@@ -278,6 +328,65 @@ const ReviewsPage = () => {
       setCurrentPage(parseInt(pageParam, 10));
     }
   }, [location.search]);
+
+  // Загрузка данных лайкнутых рецензий
+  useEffect(() => {
+    const fetchLikedReviews = async () => {
+      if (!currentUserId) return;
+      
+      setLikesLoading(true);
+      try {
+        const response = await likeApi.getLikedReviewsByUser(currentUserId);
+        console.log('Получены лайкнутые рецензии:', response);
+        
+        if (response && response.content) {
+          const likedReviewIds = new Set(
+            response.content.map(likedReview => 
+              likedReview.reviewId || likedReview.id || 0
+            ).filter(id => id > 0)
+          );
+          
+          console.log('Идентификаторы лайкнутых рецензий:', Array.from(likedReviewIds));
+          setLikedReviews(likedReviewIds);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки лайкнутых рецензий:', error);
+      } finally {
+        setLikesLoading(false);
+      }
+    };
+    
+    fetchLikedReviews();
+  }, [currentUserId]);
+
+  // Обновление количества лайков для рецензий
+  const updateReviewsLikes = async (reviewsData) => {
+    const updatedReviews = [...reviewsData];
+    
+    // Создаем запросы для получения количества лайков для каждой рецензии
+    const likesPromises = updatedReviews.map(review => {
+      const reviewId = review.id || review.reviewId;
+      if (!reviewId) return Promise.resolve(review);
+      
+      return likeApi.getLikesCountByReview(reviewId)
+        .then(likesCount => {
+          review.likesCount = likesCount;
+          return review;
+        })
+        .catch(error => {
+          console.error(`Ошибка получения лайков для рецензии ${reviewId}:`, error);
+          return review;
+        });
+    });
+    
+    try {
+      const reviewsWithLikes = await Promise.all(likesPromises);
+      return reviewsWithLikes;
+    } catch (error) {
+      console.error('Ошибка при обновлении лайков:', error);
+      return updatedReviews;
+    }
+  };
 
   // Загрузка данных из API
   useEffect(() => {
@@ -289,8 +398,14 @@ const ReviewsPage = () => {
         
         if (response && response.content) {
           // Преобразуем данные API в нужный формат
-          const formattedReviews = response.content.map(review => formatReview(review));
-          setReviews(formattedReviews);
+          const formattedReviews = response.content
+            .map(review => formatReview(review))
+            .filter(review => review !== null); // Фильтруем null значения
+          
+          // Обновляем количество лайков для каждой рецензии
+          const reviewsWithLikes = await updateReviewsLikes(formattedReviews);
+          
+          setReviews(reviewsWithLikes);
           setTotalPages(response.totalPages || 1);
         } else {
           console.warn('Ответ API не содержит данных рецензий');
@@ -302,68 +417,72 @@ const ReviewsPage = () => {
         console.error('Ошибка загрузки рецензий:', err);
         setError('Не удалось загрузить рецензии. Пожалуйста, попробуйте позже.');
         setLoading(false);
-        
-        // Если API не работает, используем моковые данные
-        const mockReviews = generateMockReviews(50);
-        setReviews(mockReviews);
-        setTotalPages(Math.ceil(mockReviews.length / REVIEWS_PER_PAGE));
-        setLoading(false);
       }
     };
 
     fetchReviews();
   }, [currentPage, sortOption]);
 
-  // Функция для генерации тестовых данных (используется только если API недоступен)
-  const generateMockReviews = (count) => {
-    const mockUsers = [
-      { id: 1, name: 'Alio', avatar: 'https://cms.risazatvorchestvo.com/wp-content/uploads/2024/11/profile_photo-4648-180x180.jpg', top: 58 },
-      { id: 2, name: 'JazzFan', avatar: 'https://cdn-icons-png.flaticon.com/512/147/147142.png', top: 124 },
-      { id: 3, name: 'RockStar', avatar: 'https://cdn-icons-png.flaticon.com/512/147/147144.png', top: 32 },
-      { id: 4, name: 'ClassicLover', avatar: 'https://cdn-icons-png.flaticon.com/512/219/219986.png', top: 78 },
-      { id: 5, name: 'MusicCritic', avatar: 'https://cdn-icons-png.flaticon.com/512/219/219969.png', top: 15 }
-    ];
+  // Проверка, лайкнута ли рецензия
+  const isReviewLiked = (reviewId) => {
+    return likedReviews.has(reviewId);
+  };
 
-    const mockTracks = [
-      { id: 1, title: 'Назад в будущее', cover: 'https://cms.risazatvorchestvo.com/wp-content/uploads/2025/06/m1000x1000-180x180.png' },
-      { id: 2, title: 'Летний вечер', cover: 'https://example.com/covers/summer-evening.jpg' },
-      { id: 3, title: 'Время перемен', cover: 'https://example.com/covers/time-of-change.jpg' },
-      { id: 4, title: 'Мечта', cover: 'https://example.com/covers/dream.jpg' },
-      { id: 5, title: 'Путешествие', cover: 'https://example.com/covers/journey.jpg' }
-    ];
-
-    const mockReviews = [];
-    for (let i = 0; i < count; i++) {
-      const user = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-      const track = mockTracks[Math.floor(Math.random() * mockTracks.length)];
-      
-      mockReviews.push({
-        id: i + 1,
-        user,
-        track,
-        title: ['Сильно.', 'Великолепно!', 'Впечатляет', 'Не понравилось', 'Потрясающе'][Math.floor(Math.random() * 5)],
-        content: ['Все сниппеты благополучно проскипал и не знал в каком стиле будет новый трек от Вани, но ждал как всегда невероятного качества и хит-потенциала, и не ошибся. Этот трек - настоящий шедевр!',
-                  'Очень понравилась композиция, автор отлично передает настроение через мелодию и текст. Слушаю на повторе уже неделю.',
-                  'Честно говоря, ожидал большего. Хотя техническое исполнение на высоте, не хватает души и оригинальности.',
-                  'Одна из лучших работ в дискографии автора. Особенно впечатляет продакшн и аранжировка.',
-                  'Интересный эксперимент со звуком, но не уверен, что это понравится широкой аудитории.'][Math.floor(Math.random() * 5)],
-        rating: {
-          total: Math.floor(Math.random() * 21) + 80,
-          components: [
-            Math.floor(Math.random() * 3) + 8,
-            Math.floor(Math.random() * 3) + 8,
-            Math.floor(Math.random() * 3) + 8,
-            Math.floor(Math.random() * 3) + 8,
-            Math.floor(Math.random() * 3) + 8
-          ]
-        },
-        likes: Math.floor(Math.random() * 10) + 1,
-        date: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)).toISOString()
-      });
+  // Обработка лайка/дизлайка
+  const handleLikeToggle = async (reviewId) => {
+    if (!currentUserId) {
+      console.warn('Пользователь не авторизован');
+      return;
     }
-
-    // Сортировка по дате
-    return mockReviews.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    try {
+      const isLiked = likedReviews.has(reviewId);
+      
+      if (isLiked) {
+        // Удаляем лайк
+        await likeApi.removeLike(reviewId, currentUserId);
+        console.log(`Лайк удален: reviewId=${reviewId}, userId=${currentUserId}`);
+        
+        // Обновляем локальное состояние
+        setLikedReviews(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reviewId);
+          return newSet;
+        });
+        
+        // Уменьшаем счетчик лайков в состоянии
+        setReviews(prevReviews => 
+          prevReviews.map(review => 
+            (review.id === reviewId || review.reviewId === reviewId) 
+              ? {...review, likesCount: Math.max(0, (review.likesCount || 0) - 1)} 
+              : review
+          )
+        );
+      } else {
+        // Добавляем лайк
+        await likeApi.createLike(reviewId, currentUserId, 'REGULAR');
+        console.log(`Лайк добавлен: reviewId=${reviewId}, userId=${currentUserId}`);
+        
+        // Обновляем локальное состояние
+        setLikedReviews(prev => {
+          const newSet = new Set(prev);
+          newSet.add(reviewId);
+          return newSet;
+        });
+        
+        // Увеличиваем счетчик лайков в состоянии
+        setReviews(prevReviews => 
+          prevReviews.map(review => 
+            (review.id === reviewId || review.reviewId === reviewId) 
+              ? {...review, likesCount: (review.likesCount || 0) + 1} 
+              : review
+          )
+        );
+      }
+      
+    } catch (error) {
+      console.error(`Ошибка при переключении лайка для рецензии ${reviewId}:`, error);
+    }
   };
 
   // Обработка пагинации
@@ -568,13 +687,12 @@ const ReviewsPage = () => {
           className: 'gap-3 xl:gap-5 grid md:grid-cols-2 xl:grid-cols-3 mt-5 lg:mt-10 items-start',
           key: 'reviews-grid'
         }, 
-          reviews.slice(0, REVIEWS_PER_PAGE).map(reviewItem => {
-            // Форматируем данные для отображения
-            const review = reviewItem.user ? reviewItem : formatReview(reviewItem);
+          reviews.slice(0, REVIEWS_PER_PAGE).map(review => {
             return React.createElement(ReviewCard, {
-              key: review.id,
+              key: review.id || review.reviewId,
               review: review,
-              onLikeToggle: () => console.log('Like toggled for review', review.id)
+              isLiked: isReviewLiked(review.id || review.reviewId),
+              onLikeToggle: handleLikeToggle
             });
           })
         ),
