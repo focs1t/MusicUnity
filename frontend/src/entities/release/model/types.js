@@ -23,7 +23,9 @@ export const ReleaseType = {
  * @property {Array<string>} genres - Жанры релиза
  * @property {number} likesCount - Количество лайков
  * @property {number} reviewsCount - Количество отзывов
- * @property {number} averageRating - Средний рейтинг
+ * @property {number} fullReviewRating - Рейтинг на основе полных рецензий
+ * @property {number} simpleReviewRating - Рейтинг на основе простых рецензий
+ * @property {number} commentCount - Количество комментариев
  * @property {boolean} isDeleted - Флаг удаления
  * @property {string} createdAt - Дата создания
  */

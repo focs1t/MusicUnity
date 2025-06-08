@@ -113,6 +113,14 @@ function ReleasesPage() {
       ]);
     }
   };
+  
+  /**
+   * Округление чисел для отображения рейтинга
+   */
+  const formatRating = (rating) => {
+    if (!rating) return null;
+    return Math.round(rating);
+  };
 
   // Создание пагинации
   const renderPagination = () => {
@@ -218,6 +226,7 @@ function ReleasesPage() {
 
   // Отрисовка карточки релиза
   const renderReleaseCard = (release) => {
+    // Убираем генерацию случайных рейтингов
     return React.createElement('div', {
       key: release.releaseId,
       className: 'bg-opacity-5 hover:bg-opacity-10 bg-white p-1 lg:p-1 overflow-hidden flex flex-col justify-start relative origin-bottom-left w-full h-full rounded-xl border border-zinc-800 group duration-300'
@@ -330,22 +339,25 @@ function ReleasesPage() {
         )
       ]),
       
-      // Рейтинги
-      React.createElement('div', { key: 'ratings', className: 'flex justify-between gap-1 items-center mt-auto px-1 pb-1' }, 
-        React.createElement('div', { className: 'flex items-center gap-1 text-white' }, [
-          release.userRating ? 
-            React.createElement('div', {
-              key: 'user-rating',
-              className: 'inline-flex size-7 text-xs items-center font-semibold justify-center bg-userColor rounded-full'
-            }, release.userRating || Math.floor(Math.random() * 30) + 50) : null,
-            
-          release.averageRating ? 
-            React.createElement('div', {
-              key: 'avg-rating',
-              className: 'inline-flex size-7 text-xs items-center font-semibold justify-center border-2 border-userColor rounded-full px-0 text-center'
-            }, release.averageRating || Math.floor(Math.random() * 20) + 50) : null
-        ])
-      )
+      // Рейтинги - Отображаем только если они существуют
+      (release.fullReviewRating || release.simpleReviewRating) ? 
+        React.createElement('div', { key: 'ratings', className: 'flex justify-between gap-1 items-center mt-auto px-1 pb-1' }, 
+          React.createElement('div', { className: 'flex items-center gap-1 text-white' }, [
+            // Рейтинг по полным рецензиям (заполненный круг)
+            release.fullReviewRating ? 
+              React.createElement('div', {
+                key: 'full-review-rating',
+                className: 'inline-flex size-7 text-xs items-center font-semibold justify-center bg-userColor rounded-full'
+              }, formatRating(release.fullReviewRating)) : null,
+              
+            // Рейтинг по простым рецензиям (только бордер)
+            release.simpleReviewRating ? 
+              React.createElement('div', {
+                key: 'simple-review-rating',
+                className: 'inline-flex size-7 text-xs items-center font-semibold justify-center border-2 border-userColor rounded-full px-0 text-center'
+              }, formatRating(release.simpleReviewRating)) : null
+          ])
+        ) : null
     ]);
   };
 

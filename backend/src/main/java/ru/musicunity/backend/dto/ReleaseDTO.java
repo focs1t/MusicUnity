@@ -20,7 +20,9 @@ public class ReleaseDTO {
     private List<AuthorDTO> authors;
     private List<GenreDTO> genres;
     private Integer reviewsCount;
-    private Double averageRating;
+    private Double fullReviewRating;
+    private Double simpleReviewRating;
+    private Integer commentCount;
 
     @Data
     public static class AuthorDTO {
