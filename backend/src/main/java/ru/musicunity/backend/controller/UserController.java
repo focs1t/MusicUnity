@@ -15,6 +15,8 @@ import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.dto.UserRatingDTO;
+import ru.musicunity.backend.dto.UserUpdateDTO;
+import ru.musicunity.backend.dto.PasswordUpdateDTO;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.service.UserService;
@@ -68,10 +70,11 @@ public class UserController {
     })
     @PatchMapping("/password")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> updateOwnPassword(
-        @Parameter(description = "Текущий пароль") @RequestParam String currentPassword,
-        @Parameter(description = "Новый пароль") @RequestParam String newPassword) {
-        userService.updateOwnPassword(currentPassword, newPassword);
+    public ResponseEntity<Void> updateOwnPassword(@RequestBody PasswordUpdateDTO passwordUpdateDTO) {
+        userService.updateOwnPassword(
+            passwordUpdateDTO.getCurrentPassword(), 
+            passwordUpdateDTO.getNewPassword()
+        );
         return ResponseEntity.ok().build();
     }
 
@@ -81,11 +84,12 @@ public class UserController {
     })
     @PatchMapping("/data")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> updateOwnData(
-        @Parameter(description = "Биография пользователя") @RequestParam(required = false) String bio,
-        @Parameter(description = "URL аватара") @RequestParam(required = false) String avatarUrl,
-        @Parameter(description = "Telegram ID пользователя") @RequestParam(required = false) String telegramChatId) {
-        userService.updateOwnData(bio, avatarUrl, telegramChatId);
+    public ResponseEntity<Void> updateOwnData(@RequestBody UserUpdateDTO userUpdateDTO) {
+        userService.updateOwnData(
+            userUpdateDTO.getBio(), 
+            userUpdateDTO.getAvatarUrl(), 
+            userUpdateDTO.getTelegramChatId()
+        );
         return ResponseEntity.ok().build();
     }
 

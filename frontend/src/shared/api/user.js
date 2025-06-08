@@ -106,8 +106,10 @@ export const userApi = {
     try {
       console.log('Отправляем данные для обновления профиля:', { bio, avatarUrl, telegramChatId });
       
-      const response = await httpClient.patch(`${API_URL}/data`, null, {
-        params: { bio, avatarUrl, telegramChatId }
+      const response = await httpClient.patch(`${API_URL}/data`, {
+        bio,
+        avatarUrl,
+        telegramChatId
       });
       
       console.log('Ответ после обновления профиля:', response.data);
@@ -152,11 +154,9 @@ export const userApi = {
    */
   changePassword: async (oldPassword, newPassword) => {
     try {
-      const response = await httpClient.patch(`${API_URL}/password`, null, {
-        params: {
-          currentPassword: oldPassword,
-          newPassword
-        }
+      const response = await httpClient.patch(`${API_URL}/password`, {
+        currentPassword: oldPassword,
+        newPassword
       });
       return { success: true };
     } catch (error) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import {
   Container,
   Box,
@@ -20,6 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
 import { fileApi } from '../shared/api/file';
+import { setUser } from '../entities/auth/model';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
@@ -162,6 +164,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 
 const SettingsPage = () => {
   const { user: authUser } = useAuth();
+  const dispatch = useDispatch();
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -239,8 +242,11 @@ const SettingsPage = () => {
       
       console.log('Ответ после загрузки аватара:', response);
       
-      if (response && response.url) {
-        setAvatarUrl(response.url);
+      // Проверяем наличие URL в ответе (может быть в разных полях)
+      if (response && (response.url || response.temporaryUrl)) {
+        // Используем любое доступное поле URL
+        const avatarUrl = response.url || response.temporaryUrl;
+        setAvatarUrl(avatarUrl);
         setNotification({
           open: true,
           message: 'Аватар успешно загружен',
@@ -254,6 +260,53 @@ const SettingsPage = () => {
       setNotification({
         open: true,
         message: 'Не удалось загрузить аватар. Пожалуйста, попробуйте позже.',
+        severity: 'error'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  // Сохранение только аватара
+  const handleSaveAvatar = async () => {
+    try {
+      setSaving(true);
+      
+      // Преобразуем URL аватара, если он слишком длинный
+      let processedAvatarUrl = avatarUrl;
+      
+      // Если URL содержит параметры запроса, берем только базовую часть URL
+      if (avatarUrl && avatarUrl.includes('?')) {
+        const baseUrl = avatarUrl.split('?')[0];
+        console.log('URL аватара слишком длинный, используем базовый URL:', baseUrl);
+        processedAvatarUrl = baseUrl;
+      }
+      
+      // Отправляем только данные аватара, сохраняя текущие значения остальных полей
+      await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+      
+      setNotification({
+        open: true,
+        message: 'Аватар успешно сохранен',
+        severity: 'success'
+      });
+      
+      // Обновляем данные пользователя
+      const userData = await userApi.getCurrentUser();
+      setUserDetails(userData);
+      
+      // Обновляем данные пользователя в redux для обновления хедера
+      if (userData) {
+        dispatch(setUser({
+          ...authUser,
+          avatarUrl: processedAvatarUrl
+        }));
+      }
+    } catch (err) {
+      console.error('Ошибка при сохранении аватара:', err);
+      setNotification({
+        open: true,
+        message: 'Не удалось сохранить аватар. Пожалуйста, попробуйте позже.',
         severity: 'error'
       });
     } finally {
@@ -288,6 +341,15 @@ const SettingsPage = () => {
       // Обновляем данные пользователя
       const userData = await userApi.getCurrentUser();
       setUserDetails(userData);
+      
+      // Обновляем данные пользователя в redux для обновления хедера
+      if (userData) {
+        dispatch(setUser({
+          ...authUser,
+          avatarUrl: processedAvatarUrl,
+          bio: bio
+        }));
+      }
     } catch (err) {
       console.error('Ошибка при сохранении данных профиля:', err);
       setNotification({
@@ -507,11 +569,11 @@ const SettingsPage = () => {
             
             <CardFooter>
               <StyledButton
-                onClick={handleAvatarUpload}
+                onClick={handleSaveAvatar}
                 disabled={saving}
-                sx={{ width: '150px' }}
+                sx={{ width: '200px' }}
               >
-                {saving ? 'Сохранение...' : 'Отправить'}
+                {saving ? 'Сохранение...' : 'Сохранить аватар'}
               </StyledButton>
             </CardFooter>
           </FormCard>
@@ -650,8 +712,9 @@ const SettingsPage = () => {
               <StyledButton
                 onClick={handleSaveProfile}
                 disabled={saving}
+                sx={{ width: '200px' }}
               >
-                {saving ? 'Сохранение...' : 'Сохранить'}
+                {saving ? 'Сохранение...' : 'Сохранить профиль'}
               </StyledButton>
             </CardFooter>
           </FormCard>
@@ -795,6 +858,7 @@ const SettingsPage = () => {
               <StyledButton
                 onClick={handleChangePassword}
                 disabled={saving || !oldPassword || !newPassword || !confirmPassword}
+                sx={{ width: '200px' }}
               >
                 {saving ? 'Сохранение...' : 'Изменить пароль'}
               </StyledButton>
