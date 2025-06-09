@@ -73,7 +73,7 @@ const AuthorsPage = () => {
       setError(null);
       let response;
       
-      const pageSize = 1; // Количество авторов на странице
+      const pageSize = 10; // Количество авторов на странице
       const pageIndex = page - 1; // API ожидает индекс от 0
       
       switch (type) {
