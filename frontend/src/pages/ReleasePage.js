@@ -91,8 +91,8 @@ function ReleasePage() {
           return;
         }
         
-        if (reviewContent.length < 300) {
-          setSubmitError('Текст рецензии должен содержать не менее 300 символов');
+        if (reviewContent.length < 10) {
+          setSubmitError('Текст рецензии должен содержать не менее 10 символов');
           setIsSubmitting(false);
           return;
         }
