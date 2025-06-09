@@ -3,8 +3,307 @@ import { useParams } from 'react-router-dom';
 import { releaseApi } from '../shared/api/release';
 import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
+import { userApi } from '../shared/api/user';
 import { useAuth } from '../app/providers/AuthProvider';
 import './ReleasePage.css';
+
+// Получение ID текущего пользователя (как в ReviewsPage)
+const getCurrentUserId = () => {
+  try {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      const userId = user.id || user.userId;
+      console.log('getCurrentUserId: получен ID из localStorage:', userId);
+      return userId;
+    }
+  } catch (error) {
+    console.error('Ошибка парсинга данных пользователя из localStorage:', error);
+  }
+  
+  console.log('getCurrentUserId: пользователь не найден в localStorage');
+  return null;
+};
+
+// Константы для placeholder изображений (как в ReviewsPage)
+const DEFAULT_AVATAR_PLACEHOLDER = '/path/to/default-avatar.png';
+const DEFAULT_COVER_PLACEHOLDER = '/path/to/default-cover.png';
+
+// Компонент карточки рецензии (как в ReviewsPage)
+const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
+  // Функция для обработки ошибок изображений
+  const handleImageError = (e, placeholder) => {
+    console.log('Ошибка загрузки изображения, использую placeholder');
+    console.log(`Проблемный URL: ${e.target.src}`);
+    e.target.onerror = null;
+    e.target.src = placeholder;
+  };
+
+  // Безопасное получение имени пользователя
+  const getUserName = () => {
+    if (!review.user) return "Пользователь";
+    
+    // Проверяем разные возможные поля с именем пользователя
+    if (review.user.username) return review.user.username;
+    if (review.user.name) return review.user.name;
+    if (review.user.displayName) return review.user.displayName;
+    
+    return "Пользователь";
+  };
+
+  // Безопасное получение URL аватара
+  const getAvatarUrl = () => {
+    if (!review.user) return DEFAULT_AVATAR_PLACEHOLDER;
+    
+    // Проверяем разные возможные поля с URL аватара
+    if (review.user.avatarUrl) return review.user.avatarUrl;
+    if (review.user.avatar) return review.user.avatar;
+    
+    return DEFAULT_AVATAR_PLACEHOLDER;
+  };
+
+  // Безопасное получение ID пользователя
+  const getUserId = () => {
+    if (!review.user) return 0;
+    return review.user.id || review.user.userId || review.userId || 0;
+  };
+
+  // Состояние для ранга пользователя
+  const [userRank, setUserRank] = useState(null);
+
+  // Загружаем ранг пользователя
+  useEffect(() => {
+    const fetchUserRank = async () => {
+      const userId = getUserId();
+      if (!userId || userId === 0) return;
+      
+      try {
+        const rankData = await userApi.getUserRank(userId);
+        console.log(`Получен ранг для пользователя ${userId}:`, rankData);
+        setUserRank(rankData);
+      } catch (error) {
+        console.error(`Ошибка при получении ранга пользователя ${userId}:`, error);
+        setUserRank(null);
+      }
+    };
+
+    fetchUserRank();
+  }, [review.user]);
+
+  // Безопасное получение ранга пользователя (ТОП)
+  const getUserRank = () => {
+    if (!userRank || !userRank.isInTop100) return null;
+    return userRank.rank;
+  };
+
+
+
+  // Безопасное получение данных рейтинга
+  const getRatingData = () => {
+    // Если есть прямое значение totalScore, используем его
+    if (review.totalScore !== undefined && review.totalScore !== null) {
+      return {
+        total: review.totalScore,
+        components: [
+          review.rhymeImagery || 0,
+          review.structureRhythm || 0, 
+          review.styleExecution || 0,
+          review.individuality || 0,
+          review.vibe || 0
+        ]
+      };
+    }
+    
+    // Если есть объект rating, используем его
+    if (review.rating) {
+      return {
+        total: review.rating.total || 0,
+        components: review.rating.components || [0, 0, 0, 0, 0]
+      };
+    }
+    
+    // Вычисляем по формуле как на бэкенде
+    const rhymeImagery = review.rhymeImagery || 0;
+    const structureRhythm = review.structureRhythm || 0;
+    const styleExecution = review.styleExecution || 0;
+    const individuality = review.individuality || 0;
+    const vibe = review.vibe || 0;
+    
+    const baseScore = rhymeImagery + structureRhythm + styleExecution + individuality;
+    const vibeMultiplier = 1 + (vibe / 10) * 1.5;
+    const total = Math.round(baseScore * vibeMultiplier);
+    
+    return {
+      total: total,
+      components: [rhymeImagery, structureRhythm, styleExecution, individuality, vibe]
+    };
+  };
+
+  // Функция для форматирования даты
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  // Получаем данные для отображения
+  const user = {
+    id: getUserId(),
+    name: getUserName(),
+    avatar: getAvatarUrl(),
+    rank: getUserRank()
+  };
+  
+  const rating = getRatingData();
+  
+  // Проверка, является ли текущий пользователь автором рецензии
+  const currentUserId = getCurrentUserId();
+  console.log(`ReviewCard: рецензия ID ${review.id || review.reviewId}, автор ID ${getUserId()}, текущий пользователь ID ${currentUserId}`);
+  
+  // Если у нас есть какие-то данные о пользователе, используем их для проверки
+  const isOwnReview = getUserId() === currentUserId;
+  console.log(`Является ли рецензия собственной: ${isOwnReview}`);
+  
+  // Состояние для отображения сообщения
+  const [showMessage, setShowMessage] = useState(false);
+  
+  // Обработчик клика по кнопке лайка для собственной рецензии
+  const handleOwnReviewLikeClick = () => {
+    setShowMessage(true);
+    setTimeout(() => setShowMessage(false), 2000); // Скрываем сообщение через 2 секунды
+  };
+
+  // Строим карточку рецензии точно как в ReviewsPage
+  return (
+    <div className="bg-zinc-900 relative overflow-hidden review-wrapper p-1.5 lg:p-[5px] flex flex-col mx-auto border border-zinc-800 rounded-[15px] lg:rounded-[20px] w-full">
+      {/* Верхняя часть с информацией о пользователе и рейтинге */}
+      <div className="relative">
+        <div className="bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3">
+          {/* Блок с аватаром и информацией о пользователе */}
+          <div className="flex items-start space-x-2 lg:space-x-3 w-full">
+            <a className="relative" href={`/profile/${user.id}`}>
+              <img
+                alt={user.name}
+                src={user.avatar}
+                className="shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full"
+                loading="lazy"
+                width="40"
+                height="40"
+                decoding="async"
+                onError={(e) => handleImageError(e, DEFAULT_AVATAR_PLACEHOLDER)}
+              />
+            </a>
+            <div className="flex flex-col gap-1 items-start">
+              <div className="flex items-center gap-1 md:gap-2 max-sm:flex-wrap">
+                <a
+                  className="text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline"
+                  href={`/profile/${user.id}`}
+                >
+                  {user.name}
+                </a>
+              </div>
+              {user.rank && (
+                <div className="text-[12px] flex items-center space-x-1.5">
+                  <div className="inline-flex items-center text-center bg-red-500 rounded-full font-semibold px-1.5">
+                    ТОП-{user.rank}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Блок с рейтингом */}
+          <div className="flex items-center justify-end">
+            <div className="text-right flex flex-col h-full justify-center">
+              <div className={`text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right ${rating.total === 100 ? 'text-golden' : ''}`}>
+                <span className="no-callout">{rating.total}</span>
+              </div>
+              <div className="flex gap-x-1.5 font-bold text-xs lg:text-sm justify-end">
+                {rating.components.map((score, index) => (
+                  <div
+                    key={`rating-${index}`}
+                    className={`no-callout ${index === 4 ? 'text-ratingVibe' : 'text-userColor'}`}
+                    data-state="closed"
+                  >
+                    {score}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Содержимое рецензии */}
+      <div>
+        <div className="max-h-[120px] overflow-hidden relative transition-all duration-300 mb-4 px-1.5 block">
+          {review.title && <div className="text-base lg:text-lg mt-3 mb-2 font-semibold">{review.title}</div>}
+          <div className="mt-2 tracking-[-0.2px] font-light">
+            <div className="prose prose-invert text-[15px] text-white lg:text-base lg:leading-[150%]">
+              {review.content && review.content.length > 100 
+                ? review.content.substring(0, 100) + '...' 
+                : (review.content || 'Нет содержания')
+              }
+            </div>
+          </div>
+        </div>
+
+        {/* Нижняя часть с лайками */}
+        <div className="mt-auto flex justify-between items-center relative pr-1.5">
+          <div className="flex gap-2 items-center">
+            <button
+              className="review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5"
+              onClick={() => isOwnReview ? handleOwnReviewLikeClick() : onLikeToggle && onLikeToggle(review.id || review.reviewId)}
+            >
+              <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center">
+                {isLiked ? (
+                  <svg 
+                    width="22" 
+                    height="22" 
+                    viewBox="0 0 24 24" 
+                    fill="#FF5252"
+                    stroke="none"
+                  >
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                ) : (
+                  <svg 
+                    width="22" 
+                    height="22" 
+                    viewBox="0 0 24 24" 
+                    fill="none"
+                    stroke="#AAAAAA" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                )}
+              </div>
+              <span className="font-bold text-base lg:text-base">
+                {review.likesCount !== undefined ? review.likesCount : 0}
+              </span>
+            </button>
+            
+            {/* Всплывающее сообщение */}
+            {showMessage && (
+              <div className="tooltip-message">
+                Нельзя лайкать свои рецензии
+              </div>
+            )}
+          </div>
+          <div className="review-date text-xs text-zinc-400">
+            {formatDate(review.createdAt)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /**
  * Страница релиза
@@ -45,8 +344,16 @@ function ReleasePage() {
   const [sortBy, setSortBy] = useState('newest');
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   
+  // Состояния для пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize] = useState(1); // Количество рецензий на странице (для тестирования)
+  
   // Состояния для лайков
   const [likedReviews, setLikedReviews] = useState(new Set());
+  
+  // Состояние для отображения сообщения о собственной рецензии
+
   
   // Рассчитываем общий счет на основе формулы из бэкенда
   const calculateTotalScore = () => {
@@ -157,23 +464,53 @@ function ReleasePage() {
     }
   };
 
-  // Получение ID текущего пользователя
-  const getCurrentUserId = () => {
-    if (!user || !user.id) return null;
-    return user.id;
+  // Получение ID текущего пользователя в компоненте (как в ReviewsPage)
+  const getCurrentUserIdInComponent = () => {
+    // Сначала проверяем данные из хука useAuth
+    if (user && user.id) {
+      console.log('ID пользователя из useAuth:', user.id);
+      return user.id;
+    }
+    
+    // Если useAuth недоступен, используем глобальную функцию
+    const globalUserId = getCurrentUserId();
+    if (globalUserId) {
+      console.log('ID пользователя из глобальной функции:', globalUserId);
+      return globalUserId;
+    }
+    
+    console.log('ID пользователя не найден');
+    return null;
   };
 
-  // Загрузка рецензий
+  // Загрузка рецензий (как в ReviewsPage)
   const fetchReviews = async () => {
     try {
       setReviewsLoading(true);
-      // Получаем только расширенные рецензии с сортировкой
-      const reviewsData = await reviewApi.getExtendedReviewsByRelease(id, 0, 20, sortBy);
-      setReviews(reviewsData.content || []);
-      setTotalReviews(reviewsData.totalElements || 0);
       
-      // Загружаем информацию о лайках пользователя
-      await fetchLikedReviews(reviewsData.content || []);
+      const userId = getCurrentUserIdInComponent();
+      console.log('fetchReviews: currentUserId =', userId);
+      
+      // Параллельно загружаем рецензии и лайкнутые рецензии для повышения производительности
+      const [reviewsResponse, likedReviewsSet] = await Promise.all([
+        reviewApi.getExtendedReviewsByRelease(id, currentPage - 1, pageSize, sortBy),
+        userId ? fetchLikedReviewsByCurrentUser() : new Set()
+      ]);
+      
+      console.log('Ответ API рецензий:', reviewsResponse);
+      setLikedReviews(likedReviewsSet);
+      
+      if (reviewsResponse && reviewsResponse.content) {
+        // Обновляем количество лайков для каждой рецензии
+        const reviewsWithLikes = await updateReviewsLikes(reviewsResponse.content);
+        
+        setReviews(reviewsWithLikes);
+        setTotalReviews(reviewsResponse.totalElements || 0);
+        setTotalPages(reviewsResponse.totalPages || 0);
+      } else {
+        console.warn('Ответ API не содержит данных рецензий');
+        throw new Error('Некорректные данные от API');
+      }
     } catch (err) {
       setReviewsError('Не удалось загрузить рецензии');
       console.error('Ошибка загрузки рецензий:', err);
@@ -182,24 +519,64 @@ function ReleasePage() {
     }
   };
 
-  // Загрузка лайкнутых рецензий пользователя
-  const fetchLikedReviews = async (reviewsList) => {
-    const userId = getCurrentUserId();
-    if (!userId || !reviewsList.length) return;
+  // Загрузка лайкнутых рецензий пользователя (как в ReviewsPage)
+  const fetchLikedReviewsByCurrentUser = async () => {
+    const userId = getCurrentUserIdInComponent();
+    if (!userId) return new Set();
     
     try {
-      const likedSet = new Set();
-      for (const review of reviewsList) {
-        const reviewId = review.id;
-        const likes = await likeApi.getLikesByReview(reviewId);
-        const isLiked = likes.some(like => like.userId === userId);
-        if (isLiked) {
-          likedSet.add(reviewId);
+      console.log(`Загружаем рецензии, лайкнутые пользователем ID ${userId}`);
+      
+      try {
+        const response = await likeApi.getLikedReviewsByUser(userId);
+        
+        if (response && response.content) {
+          const likedIds = new Set(
+            response.content
+              .map(review => review.reviewId || review.id || 0)
+              .filter(id => id > 0)
+          );
+          console.log(`Получено ${likedIds.size} лайкнутых рецензий:`, Array.from(likedIds));
+          return likedIds;
         }
+      } catch (apiError) {
+        console.error('Ошибка API при загрузке лайкнутых рецензий:', apiError);
+        return new Set();
       }
-      setLikedReviews(likedSet);
-    } catch (err) {
-      console.error('Ошибка загрузки лайков:', err);
+      
+      return new Set();
+    } catch (error) {
+      console.error('Ошибка при загрузке лайкнутых рецензий:', error);
+      return new Set();
+    }
+  };
+
+  // Обновление количества лайков для рецензий (как в ReviewsPage)
+  const updateReviewsLikes = async (reviewsData) => {
+    const updatedReviews = [...reviewsData];
+    
+    // Создаем запросы для получения количества лайков для каждой рецензии
+    const likesPromises = updatedReviews.map(review => {
+      const reviewId = review.id || review.reviewId;
+      if (!reviewId) return Promise.resolve(review);
+      
+      return likeApi.getLikesCountByReview(reviewId)
+        .then(likesCount => {
+          review.likesCount = likesCount;
+          return review;
+        })
+        .catch(error => {
+          console.error(`Ошибка получения лайков для рецензии ${reviewId}:`, error);
+          return review;
+        });
+    });
+    
+    try {
+      const reviewsWithLikes = await Promise.all(likesPromises);
+      return reviewsWithLikes;
+    } catch (error) {
+      console.error('Ошибка при обновлении лайков:', error);
+      return updatedReviews;
     }
   };
 
@@ -224,12 +601,12 @@ function ReleasePage() {
     fetchReviews();
   }, [id]);
 
-  // Перезагружаем рецензии при изменении сортировки
+  // Перезагружаем рецензии при изменении сортировки или страницы
   useEffect(() => {
     if (id) {
       fetchReviews();
     }
-  }, [sortBy]);
+  }, [sortBy, currentPage]);
 
   const handleToggleFavorite = async () => {
     if (!release) return;
@@ -348,48 +725,177 @@ function ReleasePage() {
     }
   };
 
-  // Функция для получения ранга пользователя (временная заглушка)
-  const getUserRank = (userId) => {
-    // TODO: Получать ранг из API или данных пользователя
-    if (userId === 7) return 1; // Маресев
-    return 2; // Другие пользователи
-  };
+
+
+  // Компонент списка рецензий (точно как в ReviewsPage)
+  const ReviewsList = React.memo(() => {
+    if (reviewsLoading) {
+      return (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-zinc-400">Загрузка рецензий...</div>
+        </div>
+      );
+    }
+
+    if (reviewsError) {
+      return (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-400">Ошибка загрузки рецензий: {reviewsError}</div>
+        </div>
+      );
+    }
+
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-zinc-400">Рецензий пока нет</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="reviews-list space-y-4">
+        {reviews.map((review) => {
+          const reviewId = review.id || review.reviewId;
+          const isLiked = isReviewLiked(reviewId);
+
+          return (
+            <ReviewCard
+              key={reviewId}
+              review={review}
+              isLiked={isLiked}
+              onLikeToggle={handleLikeToggle}
+            />
+          );
+        })}
+      </div>
+    );
+  }, [reviews, reviewsLoading, reviewsError, likedReviews]);
 
   // Обработчик изменения сортировки
   const handleSortChange = (newSortBy) => {
     setSortBy(newSortBy);
     setSortDropdownOpen(false);
-    // Перезагружаем рецензии с новой сортировкой
-    fetchReviews();
+    setCurrentPage(1); // Сбрасываем на первую страницу при изменении сортировки
   };
 
-  // Обработчик лайка рецензии
+  // Обработчик изменения страницы
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  // Функция для создания кнопок пагинации
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    // Определяем диапазон видимых страниц
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Корректируем начальную страницу если диапазон слишком мал
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Добавляем кнопки страниц
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <li key={i}>
+          <button
+            aria-current={i === currentPage ? "page" : undefined}
+            className={`pagination-button ${i === currentPage ? 'active' : ''}`}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </button>
+        </li>
+      );
+    }
+
+    return (
+      <div className="pagination-container">
+        <nav role="navigation" aria-label="pagination" className="pagination-nav">
+          <ul className="pagination-list">
+            {/* Кнопка "Предыдущая" */}
+            {currentPage > 1 && (
+              <li>
+                <button
+                  className="pagination-button prev-next"
+                  aria-label="Go to previous page"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m15 18-6-6 6-6"></path>
+                  </svg>
+                  <span className="prev-next-text">Предыдущая</span>
+                </button>
+              </li>
+            )}
+            
+            {pages}
+            
+            {/* Кнопка "Следующая" */}
+            {currentPage < totalPages && (
+              <li>
+                <button
+                  className="pagination-button prev-next"
+                  aria-label="Go to next page"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                >
+                  <span className="prev-next-text">Следующая</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m9 18 6-6-6-6"></path>
+                  </svg>
+                </button>
+              </li>
+            )}
+          </ul>
+        </nav>
+      </div>
+    );
+  };
+
+  // Проверка, лайкнута ли рецензия (как в ReviewsPage)
+  const isReviewLiked = (reviewId) => {
+    console.log(`Проверка лайка для рецензии ${reviewId}, likedReviews:`, Array.from(likedReviews));
+    return likedReviews.has(reviewId);
+  };
+
+  // Обработчик лайка рецензии (как в ReviewsPage)
   const handleLikeToggle = async (reviewId) => {
-    const userId = getCurrentUserId();
+    const userId = getCurrentUserIdInComponent();
+    console.log('handleLikeToggle вызван для reviewId:', reviewId, 'userId:', userId);
+    
     if (!userId) {
       console.warn('Пользователь не авторизован');
       return;
     }
-
+    
     // Находим рецензию в массиве
-    const review = reviews.find(r => r.id === reviewId);
+    const review = reviews.find(r => r.id === reviewId || r.reviewId === reviewId);
     if (!review) {
       console.error(`Рецензия с ID ${reviewId} не найдена`);
       return;
     }
-
+    
     // Проверяем, что пользователь не лайкает свою собственную рецензию
     const reviewUserId = review.userId || (review.user && review.user.id) || 0;
     if (reviewUserId === userId) {
       console.warn('Нельзя лайкать собственные рецензии');
       return;
     }
-
+    
     try {
       const isLiked = likedReviews.has(reviewId);
+      console.log(`Текущее состояние лайка для рецензии ${reviewId}: ${isLiked ? 'лайкнута' : 'не лайкнута'}`);
       
       if (isLiked) {
-        // Оптимистично обновляем UI
+        // Оптимистично обновляем UI перед запросом к серверу
         setLikedReviews(prev => {
           const newSet = new Set(prev);
           newSet.delete(reviewId);
@@ -398,26 +904,38 @@ function ReleasePage() {
         
         setReviews(prevReviews => 
           prevReviews.map(r => 
-            r.id === reviewId 
+            (r.id === reviewId || r.reviewId === reviewId) 
               ? {...r, likesCount: Math.max(0, (r.likesCount || 0) - 1)} 
               : r
           )
         );
         
         // Удаляем лайк в бэкенде
-        await likeApi.removeLike(reviewId, userId);
+        try {
+          await likeApi.removeLike(reviewId, userId);
+          console.log(`Лайк удален: reviewId=${reviewId}, userId=${userId}`);
+        } catch (apiError) {
+          console.error('Ошибка при удалении лайка через API:', apiError);
+          console.log('Продолжаем работу с локальными данными');
+        }
         
-        // Получаем актуальное количество лайков
-        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
-        setReviews(prevReviews => 
-          prevReviews.map(r => 
-            r.id === reviewId 
-              ? {...r, likesCount: updatedLikesCount} 
-              : r
-          )
-        );
+        // Получаем актуальное количество лайков с сервера
+        try {
+          const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+          
+          // Обновляем точное количество лайков после получения от сервера
+          setReviews(prevReviews => 
+            prevReviews.map(r => 
+              (r.id === reviewId || r.reviewId === reviewId) 
+                ? {...r, likesCount: updatedLikesCount} 
+                : r
+            )
+          );
+        } catch (countError) {
+          console.error('Ошибка при получении количества лайков:', countError);
+        }
       } else {
-        // Оптимистично обновляем UI
+        // Оптимистично обновляем UI перед запросом к серверу
         setLikedReviews(prev => {
           const newSet = new Set(prev);
           newSet.add(reviewId);
@@ -426,37 +944,30 @@ function ReleasePage() {
         
         setReviews(prevReviews => 
           prevReviews.map(r => 
-            r.id === reviewId 
+            (r.id === reviewId || r.reviewId === reviewId) 
               ? {...r, likesCount: (r.likesCount || 0) + 1} 
               : r
           )
         );
         
         // Добавляем лайк в бэкенде
-        await likeApi.createLike(reviewId, userId, 'REGULAR');
-        
-        // Получаем актуальное количество лайков
-        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
-        setReviews(prevReviews => 
-          prevReviews.map(r => 
-            r.id === reviewId 
-              ? {...r, likesCount: updatedLikesCount} 
-              : r
-          )
-        );
-      }
-    } catch (error) {
-      console.error(`Ошибка при переключении лайка для рецензии ${reviewId}:`, error);
-      // Восстанавливаем предыдущее состояние при ошибке
-      await fetchLikedReviews(reviews);
-      // Обновляем счетчики лайков
-      for (const review of reviews) {
         try {
-          const likesCount = await likeApi.getLikesCountByReview(review.id);
+          await likeApi.createLike(reviewId, userId, 'REGULAR');
+          console.log(`Лайк добавлен: reviewId=${reviewId}, userId=${userId}`);
+        } catch (apiError) {
+          console.error('Ошибка при добавлении лайка через API:', apiError);
+          console.log('Продолжаем работу с локальными данными');
+        }
+        
+        // Получаем актуальное количество лайков с сервера
+        try {
+          const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+          
+          // Обновляем точное количество лайков после получения от сервера
           setReviews(prevReviews => 
             prevReviews.map(r => 
-              r.id === review.id 
-                ? {...r, likesCount: likesCount} 
+              (r.id === reviewId || r.reviewId === reviewId) 
+                ? {...r, likesCount: updatedLikesCount} 
                 : r
             )
           );
@@ -464,6 +975,11 @@ function ReleasePage() {
           console.error('Ошибка при получении количества лайков:', countError);
         }
       }
+    } catch (error) {
+      console.error(`Ошибка при переключении лайка для рецензии ${reviewId}:`, error);
+      
+      // В случае ошибки оставляем локальное состояние без изменений
+      console.log('Восстанавливаем интерфейс после ошибки');
     }
   };
 
@@ -1246,117 +1762,10 @@ function ReleasePage() {
                 </div>
               </div>
 
-              {reviewsLoading ? (
-                <div className="reviews-loading">Загрузка рецензий...</div>
-              ) : reviewsError ? (
-                <div className="reviews-error">{reviewsError}</div>
-              ) : reviews.length === 0 ? (
-                <div className="reviews-empty">У этого релиза пока нет рецензий</div>
-              ) : (
-                <div className="reviews-list">
-                  {reviews.map((review, index) => (
-                    <div key={review.id || index} className="review-item">
-                      <div className="review-header">
-                        <div className="review-author-section">
-                          <div className="review-author-info">
-                                                         <a className="review-author-link" href={`/user/${review.user?.id || ''}`}>
-                               {review.user?.avatarUrl ? (
-                                 <img 
-                                   alt={review.user?.username || 'Пользователь'} 
-                                   loading="lazy" 
-                                   width="38" 
-                                   height="38" 
-                                   className="review-author-avatar"
-                                   src={review.user.avatarUrl}
-                                   onError={(e) => {
-                                     e.target.style.display = 'none';
-                                     e.target.nextSibling.style.display = 'flex';
-                                   }}
-                                 />
-                               ) : null}
-                               <div 
-                                 className="review-author-avatar-placeholder"
-                                 style={{ display: review.user?.avatarUrl ? 'none' : 'flex' }}
-                               >
-                                 <svg 
-                                   viewBox="0 0 24 24" 
-                                   fill="currentColor" 
-                                   width="24" 
-                                   height="24"
-                                 >
-                                   <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V17C3 18.11 3.89 19 5 19H11V21C11 21.55 11.45 22 12 22S13 21.55 13 21V19H19C20.11 19 21 18.11 21 17V9Z"/>
-                                 </svg>
-                               </div>
-                             </a>
-                                                         <div className="review-author-details">
-                               <div className="review-author-name">
-                                 <a href={`/user/${review.user?.id || ''}`}>
-                                   {review.user?.username || 'Аноним'}
-                                 </a>
-                                 <div className="review-author-rank">
-                                   ТОП {getUserRank(review.user?.id)}
-                                 </div>
-                               </div>
-                             </div>
-                          </div>
-                          <div className="review-score-section">
-                            <div className="review-total-score">{review.totalScore || 0}</div>
-                            <div className="review-individual-scores">
-                              <div className="review-score-item">{review.rhymeImagery || 0}</div>
-                              <div className="review-score-item">{review.structureRhythm || 0}</div>
-                              <div className="review-score-item">{review.styleExecution || 0}</div>
-                              <div className="review-score-item">{review.individuality || 0}</div>
-                              <div className="review-score-item review-vibe-score">{review.vibe || 0}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {review.title ? (
-                        <div className="review-content">
-                          <div className="review-title">{review.title}</div>
-                          {review.content && (
-                            <div className="review-text">
-                              <div>{review.content}</div>
-                              <div className="review-date">{formatDate(review.createdAt)}</div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="review-simple-date">
-                          <div className="review-date">{formatDate(review.createdAt)}</div>
-                        </div>
-                      )}
-
-                      <div className="review-actions">
-                        <div className="review-like-section">
-                          <button 
-                            className={`review-like-button ${likedReviews.has(review.id) ? 'liked' : ''}`}
-                            onClick={() => handleLikeToggle(review.id)}
-                            disabled={!isAuth || (review.user?.id === user?.id)}
-                          >
-                            <div className="review-like-icon">
-                              <svg 
-                                width="30" 
-                                height="25" 
-                                viewBox="0 0 24 24" 
-                                fill={likedReviews.has(review.id) ? "currentColor" : "none"}
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round"
-                              >
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                              </svg>
-                            </div>
-                            <span className="review-like-count">{review.likesCount || 0}</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                            <ReviewsList />
+                            
+                            {/* Пагинация */}
+                            {renderPagination()}
             </section>
           </div>
         </main>

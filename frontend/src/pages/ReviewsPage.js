@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
+import { userApi } from '../shared/api/user';
 import { useAuth } from '../app/providers/AuthProvider';
 import './ReviewsPage.css'; // Импорт CSS
 
@@ -159,13 +160,32 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
     return review.user.id || review.user.userId || review.userId || 0;
   };
 
+  // Состояние для ранга пользователя
+  const [userRank, setUserRank] = useState(null);
+
+  // Загружаем ранг пользователя
+  useEffect(() => {
+    const fetchUserRank = async () => {
+      const userId = getUserId();
+      if (!userId || userId === 0) return;
+      
+      try {
+        const rankData = await userApi.getUserRank(userId);
+        console.log(`Получен ранг для пользователя ${userId}:`, rankData);
+        setUserRank(rankData);
+      } catch (error) {
+        console.error(`Ошибка при получении ранга пользователя ${userId}:`, error);
+        setUserRank(null);
+      }
+    };
+
+    fetchUserRank();
+  }, [review.user]);
+
   // Безопасное получение ранга пользователя (ТОП)
   const getUserRank = () => {
-    // Для отладки временно присваиваем рейтинг 
-    // на основании userId (маресев = 1, другие пользователи = 2)
-    const userId = getUserId();
-    if (userId === 7) return 1; // Маресев
-    return 2; // Другие пользователи
+    if (!userRank || !userRank.isInTop100) return null;
+    return userRank.rank;
   };
 
   // Безопасное получение данных трека или релиза
@@ -283,7 +303,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
                 to: `/profile/${user.id}`
               }, user.name)
             ),
-            React.createElement('div', { 
+            user.rank && React.createElement('div', { 
               className: 'text-[12px] flex items-center space-x-1.5',
               key: 'user-rank'
             }, 
@@ -298,7 +318,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
         React.createElement('div', { className: 'flex items-center justify-end gap-2 lg:gap-4', key: 'rating-cover' }, [
           React.createElement('div', { className: 'text-right flex flex-col h-full justify-center', key: 'rating' }, [
             React.createElement('div', { 
-              className: 'text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right',
+              className: `text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right ${rating.total === 100 ? 'text-golden' : ''}`,
               key: 'total-rating'
             }, 
               React.createElement('span', { className: 'no-callout' }, rating.total)
@@ -744,57 +764,63 @@ const ReviewsPage = () => {
   // Создание элементов пагинации
   const renderPaginationButtons = () => {
     const buttons = [];
+    const maxVisiblePages = 5;
     
-    // Показываем первые 5 страниц
-    for (let i = 1; i <= Math.min(5, totalPages); i++) {
+    // Определяем диапазон видимых страниц
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Корректируем начальную страницу если диапазон слишком мал
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Добавляем кнопку "Предыдущая" если не на первой странице
+    if (currentPage > 1) {
+      buttons.push(
+        React.createElement('li', { key: 'prev' }, 
+          React.createElement(Link, {
+            to: `/reviews?page=${currentPage - 1}`,
+            'aria-label': 'Перейти на предыдущую страницу',
+            className: 'pagination-button prev-next',
+            onClick: (e) => {
+              e.preventDefault();
+              handlePageChange(currentPage - 1);
+            }
+          }, [
+            React.createElement('svg', {
+              key: 'prev-icon',
+              xmlns: 'http://www.w3.org/2000/svg',
+              width: '16',
+              height: '16',
+              viewBox: '0 0 24 24',
+              fill: 'none',
+              stroke: 'currentColor',
+              strokeWidth: '2',
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round'
+            }, React.createElement('path', { d: 'm15 18-6-6 6-6' })),
+            React.createElement('span', {
+              key: 'prev-text',
+              className: 'prev-next-text'
+            }, 'Предыдущая')
+          ])
+        )
+      );
+    }
+    
+    // Показываем страницы в диапазоне
+    for (let i = startPage; i <= endPage; i++) {
       buttons.push(
         React.createElement('li', { key: i }, 
           React.createElement(Link, {
             to: `/reviews?page=${i}`,
-            className: `inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
-              i === currentPage 
-                ? 'border border-white/20 bg-background hover:bg-accent hover:text-accent-foreground' 
-                : 'hover:bg-accent hover:text-accent-foreground'
-            } h-10 w-10 max-lg:size-7 max-lg:text-[12px]`,
+            className: `pagination-button ${i === currentPage ? 'active' : ''}`,
             onClick: (e) => {
               e.preventDefault();
               handlePageChange(i);
             }
           }, i.toString())
-        )
-      );
-    }
-
-    // Если страниц больше 5, добавляем многоточие
-    if (totalPages > 5) {
-      buttons.push(
-        React.createElement('span', {
-          key: 'ellipsis',
-          'aria-hidden': 'true',
-          className: 'flex h-7 w-3.5 md:h-9 md:w-9 items-center justify-center'
-        }, [
-          React.createElement(MoreHorizIcon, {
-            key: 'ellipsis-icon',
-            className: 'w-3 h-3 md:h-4 md:w-4'
-          }),
-          React.createElement('span', {
-            key: 'ellipsis-text',
-            className: 'sr-only'
-          }, 'Больше страниц')
-        ])
-      );
-
-      // Добавляем последнюю страницу
-      buttons.push(
-        React.createElement('li', { key: totalPages }, 
-          React.createElement(Link, {
-            to: `/reviews?page=${totalPages}`,
-            className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10 max-lg:size-7 max-lg:text-[12px]',
-            onClick: (e) => {
-              e.preventDefault();
-              handlePageChange(totalPages);
-            }
-          }, totalPages.toString())
         )
       );
     }
@@ -806,7 +832,7 @@ const ReviewsPage = () => {
           React.createElement(Link, {
             to: `/reviews?page=${currentPage + 1}`,
             'aria-label': 'Перейти на следующую страницу',
-            className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-1 max-md:h-7 max-md:w-7 max-md:p-0 md:pr-2.5 max-lg:text-[12px]',
+            className: 'pagination-button prev-next',
             onClick: (e) => {
               e.preventDefault();
               handlePageChange(currentPage + 1);
@@ -814,12 +840,20 @@ const ReviewsPage = () => {
           }, [
             React.createElement('span', {
               key: 'next-text',
-              className: 'max-md:hidden'
+              className: 'prev-next-text'
             }, 'Следующая'),
-            React.createElement(ChevronRightIcon, {
+            React.createElement('svg', {
               key: 'next-icon',
-              className: 'h-4 w-4'
-            })
+              xmlns: 'http://www.w3.org/2000/svg',
+              width: '16',
+              height: '16',
+              viewBox: '0 0 24 24',
+              fill: 'none',
+              stroke: 'currentColor',
+              strokeWidth: '2',
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round'
+            }, React.createElement('path', { d: 'm9 18 6-6-6-6' }))
           ])
         )
       );
@@ -942,17 +976,17 @@ const ReviewsPage = () => {
         ),
         
         // Пагинация
-        !loading && !error && totalPages > 0 && React.createElement('section', {
-          className: 'mt-10',
+        !loading && !error && totalPages > 0 && React.createElement('div', {
+          className: 'pagination-container',
           key: 'pagination'
         }, 
           React.createElement('nav', {
             role: 'navigation',
             'aria-label': 'pagination',
-            className: 'mx-auto flex w-full justify-center'
+            className: 'pagination-nav'
           }, 
             React.createElement('ul', {
-              className: 'flex flex-row items-center gap-1'
+              className: 'pagination-list'
             }, renderPaginationButtons())
           )
         )
