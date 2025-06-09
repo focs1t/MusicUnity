@@ -8,6 +8,7 @@ import SettingsPage from '../../../../pages/SettingsPage';
 import Top100Page from '../../../../pages/Top100Page';
 import AuthorLikesPage from '../../../../pages/AuthorLikesPage';
 import ReleasesPage from '../../../../pages/ReleasesPage';
+import ReleasePage from '../../../../pages/ReleasePage';
 import { ROUTES } from '../../../../shared/config/routes';
 import ReviewsPage from '../../../../pages/ReviewsPage';
 
@@ -39,6 +40,7 @@ const AppRouter = () => {
       
       {/* Общедоступные страницы */}
       <Route path={ROUTES.RELEASES} element={<PublicRoute element={<ReleasesPage />} />} />
+      <Route path={ROUTES.RELEASE} element={<PublicRoute element={<ReleasePage />} />} />
       <Route path={ROUTES.AUTHORS} element={<PublicRoute element={<div>Исполнители</div>} />} />
       <Route path="/genres" element={<PublicRoute element={<div>Жанры</div>} />} />
       <Route path={ROUTES.ABOUT} element={<PublicRoute element={<div>О нас</div>} />} />

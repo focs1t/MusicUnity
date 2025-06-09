@@ -15,5 +15,6 @@ export const ROUTES = {
   AUTHORS: '/authors',
   REVIEWS: '/reviews',
   RELEASES: '/releases',
+  RELEASE: '/release/:id',
   CONTACT: '/contact'
 }; 
