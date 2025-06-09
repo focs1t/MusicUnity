@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authorApi } from '../shared/api/author';
 import './AuthorsPage.css';
 
@@ -11,6 +12,11 @@ const AuthorsPage = () => {
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const authorTypes = [
     { value: 'all', label: 'Все' },
@@ -21,6 +27,12 @@ const AuthorsPage = () => {
   const handleTypeSelect = (type) => {
     setSelectedType(type);
     setIsTypeDropdownOpen(false);
+    
+    // Сбрасываем на первую страницу при смене фильтра
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+      navigate(`/authors?page=1`);
+    }
   };
 
   const toggleTypeDropdown = () => {
@@ -55,25 +67,29 @@ const AuthorsPage = () => {
     e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
 
-  const loadAuthors = async (type = '') => {
+  const loadAuthors = async (type = '', page = 1) => {
     try {
       setLoading(true);
       setError(null);
       let response;
       
+      const pageSize = 1; // Количество авторов на странице
+      const pageIndex = page - 1; // API ожидает индекс от 0
+      
       switch (type) {
         case 'producers':
-          response = await authorApi.getProducers(0, 50);
+          response = await authorApi.getProducers(pageIndex, pageSize);
           break;
         case 'performers':
-          response = await authorApi.getArtists(0, 50);
+          response = await authorApi.getArtists(pageIndex, pageSize);
           break;
         default:
-          response = await authorApi.getAllAuthors(0, 50);
+          response = await authorApi.getAllAuthors(pageIndex, pageSize);
           break;
       }
       
       setAuthors(response.content || []);
+      setTotalPages(response.totalPages || 1);
     } catch (err) {
       setError('Ошибка при загрузке авторов');
       console.error('Error loading authors:', err);
@@ -82,9 +98,160 @@ const AuthorsPage = () => {
     }
   };
 
+  // Получение номера страницы из URL при загрузке
   useEffect(() => {
-    loadAuthors(selectedType);
-  }, [selectedType]);
+    const queryParams = new URLSearchParams(location.search);
+    const pageParam = queryParams.get('page');
+    if (pageParam) {
+      setCurrentPage(parseInt(pageParam, 10));
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    loadAuthors(selectedType, currentPage);
+  }, [selectedType, currentPage]);
+
+  // Обработка смены страницы
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    navigate(`/authors?page=${page}`);
+    window.scrollTo(0, 0);
+  };
+
+  // Создание элементов пагинации
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisiblePages = 5;
+    
+    // Определяем диапазон видимых страниц
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Корректируем начальную страницу если диапазон слишком мал
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Добавляем кнопку "Предыдущая" если не на первой странице
+    if (currentPage > 1) {
+      buttons.push(
+        <li key="prev">
+          <Link
+            to={`/authors?page=${currentPage - 1}`}
+            aria-label="Перейти на предыдущую страницу"
+            className="pagination-button prev-next"
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(currentPage - 1);
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m15 18-6-6 6-6"></path>
+            </svg>
+            <span className="prev-next-text">Предыдущая</span>
+          </Link>
+        </li>
+      );
+    }
+    
+    // Показываем первую страницу если она не в диапазоне
+    if (startPage > 1) {
+      buttons.push(
+        <li key={1}>
+          <Link
+            to={`/authors?page=1`}
+            className="pagination-button"
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(1);
+            }}
+          >
+            1
+          </Link>
+        </li>
+      );
+    }
+    
+    // Показываем страницы в диапазоне
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <li key={i}>
+          <Link
+            to={`/authors?page=${i}`}
+            className={`pagination-button ${i === currentPage ? 'active' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(i);
+            }}
+          >
+            {i}
+          </Link>
+        </li>
+      );
+    }
+
+    // Показываем последнюю страницу если она не в диапазоне
+    if (endPage < totalPages) {
+      buttons.push(
+        <li key={totalPages}>
+          <Link
+            to={`/authors?page=${totalPages}`}
+            className="pagination-button"
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(totalPages);
+            }}
+          >
+            {totalPages}
+          </Link>
+        </li>
+      );
+    }
+
+    // Добавляем кнопку "Следующая" если не на последней странице
+    if (currentPage < totalPages) {
+      buttons.push(
+        <li key="next">
+          <Link
+            to={`/authors?page=${currentPage + 1}`}
+            aria-label="Перейти на следующую страницу"
+            className="pagination-button prev-next"
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(currentPage + 1);
+            }}
+          >
+            <span className="prev-next-text">Следующая</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m9 18 6-6-6-6"></path>
+            </svg>
+          </Link>
+        </li>
+      );
+    }
+
+    return buttons;
+  };
 
   return (
     <div className="site-content authors-page">
@@ -253,6 +420,17 @@ const AuthorsPage = () => {
               </div>
             )}
           </div>
+          
+          {/* Пагинация */}
+          {!loading && !error && totalPages > 1 && (
+            <div className="pagination-container">
+              <nav role="navigation" aria-label="pagination" className="pagination-nav">
+                <ul className="pagination-list">
+                  {renderPaginationButtons()}
+                </ul>
+              </nav>
+            </div>
+          )}
         </div>
       </main>
     </div>
