@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { authorApi } from '../shared/api/author';
 import './AuthorsPage.css';
 
+// Встроенный плейсхолдер в формате data URI для аватара
+const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
+
 const AuthorsPage = () => {
   const [selectedType, setSelectedType] = useState('');
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
@@ -22,6 +25,34 @@ const AuthorsPage = () => {
 
   const toggleTypeDropdown = () => {
     setIsTypeDropdownOpen(!isTypeDropdownOpen);
+  };
+
+  const getAuthorAvatarUrl = (author) => {
+    if (author.avatarUrl) {
+      try {
+        // Проверяем является ли строка URL валидным URL
+        new URL(author.avatarUrl);
+        
+        let processedUrl = author.avatarUrl;
+        // Обрезаем URL, если он содержит параметры запроса
+        if (processedUrl.includes('?')) {
+          processedUrl = processedUrl.split('?')[0];
+        }
+        
+        return processedUrl;
+      } catch (e) {
+        console.error(`Некорректный URL аватара для автора ${author.authorName}:`, author.avatarUrl);
+        return DEFAULT_AVATAR_PLACEHOLDER;
+      }
+    }
+    
+    // Если нет URL, возвращаем placeholder
+    return DEFAULT_AVATAR_PLACEHOLDER;
+  };
+
+  const handleImageError = (e, author) => {
+    console.error(`Ошибка загрузки аватара для автора ${author.authorName}:`, e.target.src);
+    e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
 
   const loadAuthors = async (type = '') => {
@@ -135,29 +166,29 @@ const AuthorsPage = () => {
               <div className="authors-list">
                 {authors.map((author) => (
                   <div key={author.authorId} className="author-card">
-                    <a href={`/artist/${author.authorName}`} className="author-link">
-                      <div className="author-avatar-container">
-                        <img 
-                          src={author.avatarUrl || '/default-avatar.png'} 
-                          alt={author.authorName}
-                          className="author-avatar"
-                          onError={(e) => {
-                            e.target.src = '/default-avatar.png';
-                          }}
-                        />
-                      </div>
+                                         <a href={`/author/${author.authorId}`} className="author-link">
+                       <div className="author-avatar-container">
+                         <img 
+                           src={getAuthorAvatarUrl(author)} 
+                           alt={author.authorName}
+                           className="author-avatar"
+                           onError={(e) => handleImageError(e, author)}
+                         />
+                       </div>
                       
                       <div className="author-name-container">
                         <span className="author-name">{author.authorName}</span>
-                        <button className="verification-button">
-                          <img 
-                            src={author.isVerified ? '/icons/artist-icon-verified.svg' : '/icons/artist-icon-gray.svg'}
-                            alt={author.isVerified ? 'Verified Icon' : 'Unverified Icon'}
-                            width="25"
-                            height="25"
-                            className="verification-icon"
-                          />
-                        </button>
+                                                 <div className="verification-button">
+                           <svg 
+                             className={`verification-icon ${author.isVerified ? 'verified' : 'unverified'}`}
+                             viewBox="0 0 24 24" 
+                             fill="currentColor"
+                             width="20"
+                             height="20"
+                           >
+                             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                           </svg>
+                         </div>
                       </div>
                       
                       {author.followingCount > 0 && (

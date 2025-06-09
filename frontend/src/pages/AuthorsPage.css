@@ -238,7 +238,6 @@
 
 .author-card:hover {
   background-color: rgba(39, 39, 42, 0.6);
-  transform: translateY(-2px);
 }
 
 .author-link {
@@ -315,6 +314,14 @@
 .verification-icon {
   width: 20px;
   height: 20px;
+}
+
+.verification-icon.verified {
+  color: #3a82f7;
+}
+
+.verification-icon.unverified {
+  color: #6b7280;
 }
 
 @media (min-width: 768px) {
