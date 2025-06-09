@@ -12,6 +12,7 @@ import ReleasePage from '../../../../pages/ReleasePage';
 import { ROUTES } from '../../../../shared/config/routes';
 import ReviewsPage from '../../../../pages/ReviewsPage';
 import AuthorsPage from '../../../../pages/AuthorsPage';
+import AuthorPage from '../../../../pages/AuthorPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -43,6 +44,7 @@ const AppRouter = () => {
       <Route path={ROUTES.RELEASES} element={<PublicRoute element={<ReleasesPage />} />} />
       <Route path={ROUTES.RELEASE} element={<PublicRoute element={<ReleasePage />} />} />
       <Route path={ROUTES.AUTHORS} element={<PublicRoute element={<AuthorsPage />} />} />
+      <Route path={ROUTES.AUTHOR} element={<PublicRoute element={<AuthorPage />} />} />
       <Route path="/genres" element={<PublicRoute element={<div>Жанры</div>} />} />
       <Route path={ROUTES.ABOUT} element={<PublicRoute element={<div>О нас</div>} />} />
       <Route path={ROUTES.TOP_100} element={<PublicRoute element={<Top100Page />} />} />
