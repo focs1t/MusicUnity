@@ -1,9 +1,10 @@
 /* Основные переменные */
 :root {
   --user-color: #F45D48;
-  --ratingText-color: #3b82f6;
-  --ratingVibe-color: #8b5cf6;
+  --ratingText-color: #ffffff;
+  --ratingVibe-color: #10b981;
   --primary-color: #f45d48;
+  --gold-color: #ffd700;
 }
 
 /* Общие стили контейнеров */
@@ -693,8 +694,8 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.5rem;
-  border: 1px solid var(--ratingText-color, #3b82f6);
-  background-image: linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05));
+  border: 1px solid var(--ratingText-color, #ffffff);
+  background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
   border-radius: 0.75rem;
 }
 
@@ -716,8 +717,8 @@
   grid-column: 1 / -1;
   padding: 0.5rem 1.25rem 1.25rem;
   gap: 2.5rem;
-  border: 1px solid var(--ratingVibe-color, #8b5cf6);
-  background-image: linear-gradient(to bottom right, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.05));
+  border: 1px solid var(--ratingVibe-color, #10b981);
+  background-image: linear-gradient(to bottom right, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
   border-radius: 0.75rem;
 }
 
@@ -729,15 +730,23 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.25rem;
+  height: 2.5rem; /* Fixed height to align all sliders */
 }
 
 .rating-label {
   font-size: 0.875rem;
   font-weight: 500;
+  line-height: 1.2;
+  max-width: 80%;
 }
 
 .rating-value {
   font-weight: 700;
+  color: var(--ratingText-color);
+}
+
+.review-ratings-vibe .rating-value {
+  color: var(--ratingVibe-color);
 }
 
 @media (min-width: 1024px) {
@@ -748,11 +757,51 @@
 
 .rating-slider {
   height: 0.625rem;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(128, 128, 128, 0.3); /* Unselected (gray) part */
   flex-grow: 1;
   border-radius: 9999px;
   cursor: grab;
   width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* The colored fill part of the slider */
+.rating-slider::before {
+  content: '';
+  position: absolute;
+  height: 100%;
+  width: var(--slider-fill, 0%);
+  background-color: var(--ratingText-color);
+  border-radius: 9999px;
+  z-index: 1;
+  left: 0;
+  pointer-events: none;
+}
+
+/* Dot indicator at the end of the filled part */
+.rating-slider::after {
+  content: '';
+  position: absolute;
+  height: 10px;
+  width: 10px;
+  background-color: white;
+  border-radius: 50%;
+  top: 50%;
+  left: var(--slider-fill, 0%);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.review-ratings-vibe .rating-slider::before {
+  background-color: var(--ratingVibe-color);
+}
+
+.review-ratings-vibe .rating-slider::after {
+  background-color: var(--ratingVibe-color);
 }
 
 .rating-slider::-webkit-slider-thumb {
@@ -763,6 +812,8 @@
   background: white;
   border-radius: 3px;
   cursor: grab;
+  position: relative;
+  z-index: 2;
 }
 
 .rating-slider::-moz-range-thumb {
@@ -771,6 +822,16 @@
   background: white;
   border-radius: 3px;
   cursor: grab;
+  position: relative;
+  z-index: 2;
+}
+
+.review-ratings-vibe .rating-slider::-webkit-slider-thumb {
+  background: var(--ratingVibe-color);
+}
+
+.review-ratings-vibe .rating-slider::-moz-range-thumb {
+  background: var(--ratingVibe-color);
 }
 
 .review-form-fields {
@@ -794,6 +855,7 @@
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: box-shadow 0.3s;
+  color: white;
 }
 
 .review-title-input::placeholder {
@@ -822,6 +884,7 @@
   font-size: 1rem;
   resize: vertical;
   transition: box-shadow 0.3s;
+  color: white;
 }
 
 .review-content-textarea::placeholder {
@@ -908,6 +971,12 @@
 .review-score-value {
   font-weight: 700;
   font-size: 2.25rem;
+  color: white;
+}
+
+.review-score-value.perfect-score {
+  color: var(--gold-color);
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
 }
 
 @media (min-width: 1024px) {
@@ -918,9 +987,9 @@
 
 .review-score-max {
   position: absolute;
-  top: 0.25rem;
-  right: -1.75rem;
-  width: 1.5rem;
+  top: 0.85rem;
+  right: -2.5rem;
+  width: 2.25rem;
   font-size: 0.75rem;
   color: rgb(161, 161, 170);
   font-weight: 600;
@@ -933,13 +1002,19 @@
   white-space: nowrap;
   font-size: 0.875rem;
   font-weight: 500;
-  background-color: var(--primary-color, #f45d48);
-  color: white;
+  background-color: white;
+  color: var(--primary-color);
   border-radius: 9999px;
   width: 4rem;
   height: 4rem;
   padding: 0;
   transition: all 0.5s;
+}
+
+.review-submit-button.perfect-score {
+  background-color: var(--gold-color);
+  color: black;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
 .review-submit-button:hover {

@@ -184,6 +184,80 @@ function ReleasePage() {
     }
   };
 
+  // Функция для обновления заполнения слайдеров
+  const updateSliderFill = (event, max = 10) => {
+    const percentage = ((event.target.value - event.target.min) / (max - event.target.min)) * 100;
+    event.target.style.setProperty('--slider-fill', `${percentage}%`);
+  };
+
+  // Инициализация заполнения слайдеров при загрузке
+  useEffect(() => {
+    const initializeSliders = () => {
+      const sliders = document.querySelectorAll('.rating-slider');
+      sliders.forEach(slider => {
+        const value = parseInt(slider.value);
+        const min = parseInt(slider.min);
+        const max = parseInt(slider.max);
+        const percentage = ((value - min) / (max - min)) * 100;
+        slider.style.setProperty('--slider-fill', `${percentage}%`);
+      });
+    };
+
+    // Try immediately
+    initializeSliders();
+    
+    // And also try after a short delay to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      initializeSliders();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Обновление заполнения слайдеров при изменении значений
+  useEffect(() => {
+    const updateAllSliders = () => {
+      document.querySelectorAll('.rating-slider').forEach(slider => {
+        const value = parseInt(slider.value || 5); // Default to 5 if not set
+        const min = parseInt(slider.min || 1);
+        const max = parseInt(slider.max || 10);
+        const percentage = ((value - min) / (max - min)) * 100;
+        slider.style.setProperty('--slider-fill', `${percentage}%`);
+      });
+    };
+    
+    updateAllSliders();
+  }, [rhymeImagery, structureRhythm, styleExecution, individuality, vibe]);
+
+  // Ensure sliders are updated after component fully renders
+  useEffect(() => {
+    const updateSliderValues = () => {
+      // Force sliders to update based on current state values
+      const sliders = document.querySelectorAll('.rating-slider');
+      if (sliders.length) {
+        // Default values for our sliders
+        const values = [rhymeImagery, structureRhythm, styleExecution, individuality, vibe];
+        
+        sliders.forEach((slider, index) => {
+          if (index < values.length) {
+            const value = values[index];
+            const min = parseInt(slider.min || 1);
+            const max = parseInt(slider.max || 10);
+            const percentage = ((value - min) / (max - min)) * 100;
+            slider.style.setProperty('--slider-fill', `${percentage}%`);
+          }
+        });
+      }
+    };
+
+    // Call immediately after render
+    updateSliderValues();
+    
+    // Also call after a very short delay to ensure DOM is ready
+    const timer = setTimeout(updateSliderValues, 50);
+    return () => clearTimeout(timer);
+  }, [rhymeImagery, structureRhythm, styleExecution, individuality, vibe]);
+
   if (loading) {
     return (
       <div className="release-page">
@@ -569,7 +643,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={rhymeImagery}
-                                      onChange={(e) => setRhymeImagery(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setRhymeImagery(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -584,7 +661,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={structureRhythm}
-                                      onChange={(e) => setStructureRhythm(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setStructureRhythm(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -599,7 +679,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={styleExecution}
-                                      onChange={(e) => setStyleExecution(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setStyleExecution(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -614,7 +697,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={individuality}
-                                      onChange={(e) => setIndividuality(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setIndividuality(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -631,7 +717,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={vibe}
-                                      onChange={(e) => setVibe(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setVibe(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -685,11 +774,11 @@ function ReleasePage() {
                                 
                                 <div className="review-submit-container">
                                   <div className="review-score-display">
-                                    <span className="review-score-value">{totalScore}</span>
+                                    <span className={`review-score-value ${totalScore === 100 ? 'perfect-score' : ''}`}>{totalScore}</span>
                                     <span className="review-score-max">/ 100</span>
                                   </div>
                                   <button 
-                                    className="review-submit-button" 
+                                    className={`review-submit-button ${totalScore === 100 ? 'perfect-score' : ''}`} 
                                     type="button" 
                                     aria-haspopup="dialog" 
                                     aria-expanded="false" 
@@ -743,7 +832,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={rhymeImagery}
-                                      onChange={(e) => setRhymeImagery(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setRhymeImagery(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -758,7 +850,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={structureRhythm}
-                                      onChange={(e) => setStructureRhythm(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setStructureRhythm(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -773,7 +868,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={styleExecution}
-                                      onChange={(e) => setStyleExecution(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setStyleExecution(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -788,7 +886,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={individuality}
-                                      onChange={(e) => setIndividuality(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setIndividuality(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -805,7 +906,10 @@ function ReleasePage() {
                                       max="10"
                                       step="1"
                                       value={vibe}
-                                      onChange={(e) => setVibe(parseInt(e.target.value))}
+                                      onChange={(e) => {
+                                        setVibe(parseInt(e.target.value));
+                                        updateSliderFill(e);
+                                      }}
                                       className="rating-slider"
                                     />
                                   </div>
@@ -819,11 +923,11 @@ function ReleasePage() {
                               
                               <div className="review-submit-container">
                                 <div className="review-score-display">
-                                  <span className="review-score-value">{totalScore}</span>
+                                  <span className={`review-score-value ${totalScore === 100 ? 'perfect-score' : ''}`}>{totalScore}</span>
                                   <span className="review-score-max">/ 100</span>
                                 </div>
                                 <button 
-                                  className="review-submit-button" 
+                                  className={`review-submit-button ${totalScore === 100 ? 'perfect-score' : ''}`} 
                                   type="button" 
                                   aria-haspopup="dialog" 
                                   aria-expanded="false" 
