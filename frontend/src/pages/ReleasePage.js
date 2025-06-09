@@ -461,17 +461,16 @@ function ReleasePage() {
             
             {/* Блок создания рецензии - отображается только для авторизованных пользователей */}
             {isAuth && user ? (
-              <div className="my-10 mx-auto">
-                <div className="text-xl lg:text-2xl font-semibold mb-5">Оценить работу</div>
-                <div dir="ltr" data-orientation="vertical" className="w-full h-full grid lg:grid-cols-8 items-start gap-5">
+              <div className="review-form-container">
+                <div className="review-form-title">Оценить работу</div>
+                <div dir="ltr" data-orientation="vertical" className="review-form-grid">
                   <div className="lg:col-span-2">
                     <div 
                       role="tablist" 
                       aria-orientation="vertical" 
-                      className="rounded-md bg-muted p-1 text-muted-foreground grid w-full h-auto items-stretch justify-stretch" 
+                      className="review-tabs-container" 
                       tabIndex="0" 
-                      data-orientation="vertical" 
-                      style={{ outline: 'none' }}
+                      data-orientation="vertical"
                     >
                       <button 
                         type="button" 
@@ -480,7 +479,7 @@ function ReleasePage() {
                         aria-controls="radix-:rh:-content-review-form" 
                         data-state={tabState === 'review-form' ? 'active' : 'inactive'} 
                         id="radix-:rh:-trigger-review-form" 
-                        className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm w-full max-w-full h-12 font-semibold ${tabState === 'review-form' ? 'data-[state=active]:bg-white data-[state=active]:text-black' : ''}`} 
+                        className="review-tab-button" 
                         tabIndex="-1" 
                         data-orientation="vertical" 
                         data-radix-collection-item=""
@@ -495,7 +494,7 @@ function ReleasePage() {
                         aria-controls="radix-:rh:-content-score-review-form" 
                         data-state={tabState === 'score-review-form' ? 'active' : 'inactive'} 
                         id="radix-:rh:-trigger-score-review-form" 
-                        className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm w-full max-w-full h-12 font-semibold ${tabState === 'score-review-form' ? 'data-[state=active]:bg-white data-[state=active]:text-black' : ''}`} 
+                        className="review-tab-button" 
                         tabIndex="-1" 
                         data-orientation="vertical" 
                         data-radix-collection-item=""
@@ -506,31 +505,31 @@ function ReleasePage() {
                     </div>
                     <div 
                       role="alert" 
-                      className="relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground text-foreground border-red-500/50 bg-white/5 mt-5 max-lg:py-1.5 max-lg:px-3 flex-col"
+                      className="review-alert"
                     >
                       <svg 
                         stroke="currentColor" 
                         fill="currentColor" 
                         strokeWidth="0" 
                         viewBox="0 0 512 512" 
-                        className="h-5 w-5 fill-red-600 max-lg:!top-1.5" 
+                        className="review-alert-icon" 
                         height="1em" 
                         width="1em" 
                         xmlns="http://www.w3.org/2000/svg"
                       >
                         <path d="M228.9 79.9L51.8 403.1C40.6 423.3 55.5 448 78.9 448h354.3c23.3 0 38.2-24.7 27.1-44.9L283.1 79.9c-11.7-21.2-42.5-21.2-54.2 0zM273.6 214L270 336h-28l-3.6-122h35.2zM256 402.4c-10.7 0-19.1-8.1-19.1-18.4s8.4-18.4 19.1-18.4 19.1 8.1 19.1 18.4-8.4 18.4-19.1 18.4z"></path>
                       </svg>
-                      <h5 className="leading-none tracking-tight max-lg:text-sm font-bold mb-2">Ознакомьтесь с критериями.</h5>
-                      <div className="text-sm [&_p]:leading-relaxed max-lg:text-xs">
-                        <div className="">Будут отклонены рецензии:</div>
-                        <ul className="list-disc list-inside marker:text-red-500 ">
-                          <li>с матом</li>
-                          <li>с оскорблениями</li>
-                          <li>с рекламой и ссылками</li>
-                          <li>малосодержательные</li>
+                      <h5 className="review-alert-title">Ознакомьтесь с критериями.</h5>
+                      <div className="review-alert-content">
+                        <div>Будут отклонены рецензии:</div>
+                        <ul className="review-alert-list">
+                          <li className="review-alert-list-item">с матом</li>
+                          <li className="review-alert-list-item">с оскорблениями</li>
+                          <li className="review-alert-list-item">с рекламой и ссылками</li>
+                          <li className="review-alert-list-item">малосодержательные</li>
                         </ul>
                         <button 
-                          className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-9 rounded-md px-3 w-full mt-2" 
+                          className="review-criteria-button" 
                           type="button" 
                           aria-haspopup="dialog" 
                           aria-expanded="false" 
@@ -542,7 +541,7 @@ function ReleasePage() {
                       </div>
                     </div>
                   </div>
-                  <div className="lg:col-span-6 ">
+                  <div className="lg:col-span-6">
                     <div 
                       data-state={tabState === 'review-form' ? 'active' : 'inactive'} 
                       data-orientation="vertical" 
@@ -550,19 +549,19 @@ function ReleasePage() {
                       aria-labelledby="radix-:rh:-trigger-review-form" 
                       id="radix-:rh:-content-review-form" 
                       tabIndex="0" 
-                      className="ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 mt-0" 
-                      style={{ animationDuration: '0s', display: tabState === 'review-form' ? 'block' : 'none' }}
+                      className="review-tabpanel" 
+                      style={{ display: tabState === 'review-form' ? 'block' : 'none' }}
                     >
                       <form action="">
-                        <div className="border text-card-foreground shadow-sm bg-zinc-900 rounded-xl p-2">
-                          <div className="p-0">
-                            <div className="">
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                <div className="grid col-span-full px-5 pt-3 pb-5 w-full grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-2 lg:gap-y-3 lg:gap-x-5 border border-ratingText bg-gradient-to-br from-ratingText/20 to-ratingText/5 rounded-xl">
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Рифмы / Образы</div>
-                                      <div className="lg:text-xl font-bold">{rhymeImagery}</div>
+                        <div className="review-form-card">
+                          <div className="review-form-content">
+                            <div className="review-form-inner">
+                              <div className="review-ratings-grid">
+                                <div className="review-ratings-text">
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Рифмы / Образы</div>
+                                      <div className="rating-value">{rhymeImagery}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -571,13 +570,13 @@ function ReleasePage() {
                                       step="1"
                                       value={rhymeImagery}
                                       onChange={(e) => setRhymeImagery(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Структура / Ритмика</div>
-                                      <div className="lg:text-xl font-bold">{structureRhythm}</div>
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Структура / Ритмика</div>
+                                      <div className="rating-value">{structureRhythm}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -586,13 +585,13 @@ function ReleasePage() {
                                       step="1"
                                       value={structureRhythm}
                                       onChange={(e) => setStructureRhythm(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Реализация стиля</div>
-                                      <div className="lg:text-xl font-bold">{styleExecution}</div>
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Реализация стиля</div>
+                                      <div className="rating-value">{styleExecution}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -601,13 +600,13 @@ function ReleasePage() {
                                       step="1"
                                       value={styleExecution}
                                       onChange={(e) => setStyleExecution(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Индивидуальность / Харизма</div>
-                                      <div className="lg:text-xl font-bold">{individuality}</div>
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Индивидуальность / Харизма</div>
+                                      <div className="rating-value">{individuality}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -616,15 +615,15 @@ function ReleasePage() {
                                       step="1"
                                       value={individuality}
                                       onChange={(e) => setIndividuality(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
                                 </div>
-                                <div className="grid px-5 pt-2 slider-track-vibe pb-5 col-span-full items-start gap-10 border border-ratingVibe bg-gradient-to-br from-ratingVibe/20 to-ratingVibe/5 rounded-xl">
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Атмосфера / Вайб</div>
-                                      <div className="lg:text-xl font-bold">{vibe}</div>
+                                <div className="review-ratings-vibe">
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Атмосфера / Вайб</div>
+                                      <div className="rating-value">{vibe}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -633,15 +632,15 @@ function ReleasePage() {
                                       step="1"
                                       value={vibe}
                                       onChange={(e) => setVibe(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
                                 </div>
                               </div>
-                              <div className="mt-4 lg:mt-5">
+                              <div className="review-form-fields">
                                 <div className="mb-2 lg:mb-2">
                                   <input 
-                                    className="flex w-full border border-input bg-background px-3 py-2 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground outline-none ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-base max-lg:placeholder:text-sm h-14 rounded-lg transition-shadow duration-300" 
+                                    className="review-title-input" 
                                     id="review_title" 
                                     placeholder="Заголовок рецензии" 
                                     value={reviewTitle} 
@@ -651,7 +650,7 @@ function ReleasePage() {
                                 </div>
                                 <div className="space-y-1.5">
                                   <textarea 
-                                    className="flex w-full border border-input bg-background px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-base resize-y max-lg:placeholder:text-xs h-14 rounded-lg min-h-[140px] max-h-[500px] transition-shadow duration-300" 
+                                    className="review-content-textarea" 
                                     name="content" 
                                     id="content" 
                                     placeholder="Текст рецензии (от 300 до 8500 символов)" 
@@ -659,9 +658,9 @@ function ReleasePage() {
                                     value={reviewContent}
                                     onChange={handleContentChange}
                                   ></textarea>
-                                  <div className="flex justify-between items-stretch space-x-2">
+                                  <div className="review-form-actions">
                                     <button 
-                                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 space-x-2 text-xs lg:text-sm w-[200px]" 
+                                      className="review-clear-button" 
                                       type="button" 
                                       aria-haspopup="dialog" 
                                       aria-expanded="false" 
@@ -675,20 +674,22 @@ function ReleasePage() {
                                       </svg>
                                       <span>Очистить черновик</span>
                                     </button>
-                                    <div className="text-sm items-center bg-zinc-950 h-10 flex text-center px-2 rounded-md border text-muted-foreground font-semibold">{contentLength}/8500</div>
+                                    <div className="review-count-display">{contentLength}/8500</div>
                                   </div>
                                 </div>
+                                
                                 {/* Отображение ошибки */}
                                 {submitError && (
-                                  <div className="mt-2 text-red-500 text-sm">{submitError}</div>
+                                  <div className="review-error-message">{submitError}</div>
                                 )}
-                                <div className="mt-5 flex items-center space-x-10 justify-end">
-                                  <div className="relative">
-                                    <span className="font-bold text-4xl lg:text-5xl ">{totalScore}</span>
-                                    <span className="absolute top-1 text-xs -right-7 w-6 text-zinc-400 font-semibold">/ 100</span>
+                                
+                                <div className="review-submit-container">
+                                  <div className="review-score-display">
+                                    <span className="review-score-value">{totalScore}</span>
+                                    <span className="review-score-max">/ 100</span>
                                   </div>
                                   <button 
-                                    className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full size-16 p-0 hover:ring-4 hover:ring-white/40 hover:scale-90 transition-all duration-500" 
+                                    className="review-submit-button" 
                                     type="button" 
                                     aria-haspopup="dialog" 
                                     aria-expanded="false" 
@@ -698,12 +699,12 @@ function ReleasePage() {
                                     disabled={isSubmitting}
                                   >
                                     {isSubmitting ? (
-                                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <svg className="loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20">
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                       </svg>
                                     ) : (
-                                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="size-8" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="review-submit-icon" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path>
                                       </svg>
                                     )}
@@ -722,19 +723,19 @@ function ReleasePage() {
                       aria-labelledby="radix-:rh:-trigger-score-review-form" 
                       id="radix-:rh:-content-score-review-form" 
                       tabIndex="0" 
-                      className="ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 mt-0"
+                      className="review-tabpanel"
                       style={{ display: tabState === 'score-review-form' ? 'block' : 'none' }}
                     >
                       <form action="">
-                        <div className="border text-card-foreground shadow-sm bg-zinc-900 rounded-xl p-2">
-                          <div className="p-0">
-                            <div className="">
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                <div className="grid col-span-full px-5 pt-3 pb-5 w-full grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-2 lg:gap-y-3 lg:gap-x-5 border border-ratingText bg-gradient-to-br from-ratingText/20 to-ratingText/5 rounded-xl">
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Рифмы / Образы</div>
-                                      <div className="lg:text-xl font-bold">{rhymeImagery}</div>
+                        <div className="review-form-card">
+                          <div className="review-form-content">
+                            <div className="review-form-inner">
+                              <div className="review-ratings-grid">
+                                <div className="review-ratings-text">
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Рифмы / Образы</div>
+                                      <div className="rating-value">{rhymeImagery}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -743,13 +744,13 @@ function ReleasePage() {
                                       step="1"
                                       value={rhymeImagery}
                                       onChange={(e) => setRhymeImagery(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Структура / Ритмика</div>
-                                      <div className="lg:text-xl font-bold">{structureRhythm}</div>
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Структура / Ритмика</div>
+                                      <div className="rating-value">{structureRhythm}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -758,13 +759,13 @@ function ReleasePage() {
                                       step="1"
                                       value={structureRhythm}
                                       onChange={(e) => setStructureRhythm(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Реализация стиля</div>
-                                      <div className="lg:text-xl font-bold">{styleExecution}</div>
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Реализация стиля</div>
+                                      <div className="rating-value">{styleExecution}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -773,13 +774,13 @@ function ReleasePage() {
                                       step="1"
                                       value={styleExecution}
                                       onChange={(e) => setStyleExecution(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Индивидуальность / Харизма</div>
-                                      <div className="lg:text-xl font-bold">{individuality}</div>
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Индивидуальность / Харизма</div>
+                                      <div className="rating-value">{individuality}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -788,15 +789,15 @@ function ReleasePage() {
                                       step="1"
                                       value={individuality}
                                       onChange={(e) => setIndividuality(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
                                 </div>
-                                <div className="grid px-5 pt-2 slider-track-vibe pb-5 col-span-full items-start gap-10 border border-ratingVibe bg-gradient-to-br from-ratingVibe/20 to-ratingVibe/5 rounded-xl">
-                                  <div className="">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <div className="text-sm font-medium">Атмосфера / Вайб</div>
-                                      <div className="lg:text-xl font-bold">{vibe}</div>
+                                <div className="review-ratings-vibe">
+                                  <div className="rating-item">
+                                    <div className="rating-header">
+                                      <div className="rating-label">Атмосфера / Вайб</div>
+                                      <div className="rating-value">{vibe}</div>
                                     </div>
                                     <input 
                                       type="range"
@@ -805,7 +806,7 @@ function ReleasePage() {
                                       step="1"
                                       value={vibe}
                                       onChange={(e) => setVibe(parseInt(e.target.value))}
-                                      className="slider bg-white/10 h-[10px] w-full flex-grow rounded-full cursor-grab"
+                                      className="rating-slider"
                                     />
                                   </div>
                                 </div>
@@ -813,16 +814,16 @@ function ReleasePage() {
                               
                               {/* Отображение ошибки */}
                               {submitError && (
-                                <div className="mt-2 text-red-500 text-sm">{submitError}</div>
+                                <div className="review-error-message">{submitError}</div>
                               )}
                               
-                              <div className="mt-5 flex items-center space-x-10 justify-end">
-                                <div className="relative">
-                                  <span className="font-bold text-4xl lg:text-5xl ">{totalScore}</span>
-                                  <span className="absolute top-1 text-xs -right-7 w-6 text-zinc-400 font-semibold">/ 100</span>
+                              <div className="review-submit-container">
+                                <div className="review-score-display">
+                                  <span className="review-score-value">{totalScore}</span>
+                                  <span className="review-score-max">/ 100</span>
                                 </div>
                                 <button 
-                                  className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full size-16 p-0 hover:ring-4 hover:ring-white/40 hover:scale-90 transition-all duration-500" 
+                                  className="review-submit-button" 
                                   type="button" 
                                   aria-haspopup="dialog" 
                                   aria-expanded="false" 
@@ -832,12 +833,12 @@ function ReleasePage() {
                                   disabled={isSubmitting}
                                 >
                                   {isSubmitting ? (
-                                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <svg className="loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20">
                                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                   ) : (
-                                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="size-8" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="review-submit-icon" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                                       <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path>
                                     </svg>
                                   )}
@@ -852,10 +853,10 @@ function ReleasePage() {
                 </div>
               </div>
             ) : (
-              <div className="my-10 mx-auto text-center">
-                <div className="p-6 border border-gray-700 rounded-lg bg-zinc-900/50">
-                  <div className="text-xl font-semibold mb-4">Чтобы оставить рецензию, необходимо авторизоваться</div>
-                  <a href="/login" className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md">
+              <div className="review-auth-container">
+                <div className="review-auth-box">
+                  <div className="review-auth-message">Чтобы оставить рецензию, необходимо авторизоваться</div>
+                  <a href="/login" className="review-auth-button">
                     Войти
                   </a>
                 </div>
