@@ -132,6 +132,11 @@ public class ReviewService {
                 .map(reviewMapper::toDTO);
     }
 
+    public Page<ReviewDTO> getAllExtendedByRelease(Long releaseId, Pageable pageable) {
+        return reviewRepository.findAllByReleaseReleaseIdAndTypeAndIsDeletedFalse(releaseId, ReviewType.EXTENDED, pageable)
+                .map(reviewMapper::toDTO);
+    }
+
     public Page<ReviewDTO> getAllByUser(Long userId, Pageable pageable) {
         return reviewRepository.findAllByUserUserIdAndIsDeletedFalse(userId, pageable)
                 .map(reviewMapper::toDTO);

@@ -1085,4 +1085,588 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Стили для секции рецензий */
+.reviews-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .reviews-section {
+    gap: 0.75rem;
+    margin-top: 2.5rem;
+  }
+}
+
+/* Заголовок секции рецензий */
+.reviews-header {
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .reviews-header {
+    margin-top: 2.5rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.reviews-title-container {
+  font-weight: bold;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.reviews-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+@media (min-width: 1280px) {
+  .reviews-title {
+    font-size: 1.5rem;
+  }
+}
+
+.reviews-count-badge {
+  display: inline-flex;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  padding: 0.125rem 0.625rem;
+  font-size: 1.125rem;
+  font-weight: bold;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(39 39 42);
+  color: rgb(161 161 170);
+  transition: colors 0.2s;
+}
+
+.reviews-count-badge:hover {
+  background-color: rgb(39 39 42 / 0.8);
+}
+
+/* Контейнер сортировки */
+.reviews-sort-container {
+  display: flex;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .reviews-sort-container {
+    justify-content: flex-end;
+  }
+}
+
+.reviews-sort-card {
+  border-radius: 0.5rem;
+  border: 1px solid rgb(39 39 42);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  padding: 0.75rem;
+  background-color: rgb(24 24 27);
+}
+
+.reviews-sort-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .reviews-sort-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+
+.reviews-sort-label {
+  font-weight: bold;
+  color: rgb(161 161 170);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 767px) {
+  .reviews-sort-label {
+    display: none;
+  }
+}
+
+/* Выпадающий список сортировки */
+.reviews-sort-dropdown {
+  position: relative;
+}
+
+.reviews-sort-button {
+  display: flex;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0.375rem;
+  border: 1px solid rgb(63 63 70);
+  background-color: rgb(9 9 11);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: rgb(244 244 245);
+  outline: none;
+  cursor: pointer;
+  width: 150px;
+  transition: all 0.2s;
+}
+
+@media (min-width: 768px) {
+  .reviews-sort-button {
+    width: 260px;
+  }
+}
+
+.reviews-sort-button:focus {
+  ring: 2px;
+  ring-color: rgb(255 255 255 / 0.4);
+}
+
+.reviews-sort-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.reviews-sort-chevron {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.5;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.reviews-sort-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  background-color: rgb(24 24 27);
+  border: 1px solid rgb(63 63 70);
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.reviews-sort-option {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: rgb(244 244 245);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.reviews-sort-option:hover {
+  background-color: rgb(39 39 42);
+}
+
+/* Список рецензий */
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 800px;
+  margin: 0 auto 1.25rem auto;
+  width: 100%;
+}
+
+/* Элемент рецензии */
+.review-item {
+  background-color: rgb(24 24 27);
+  position: relative;
+  overflow: hidden;
+  padding: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  border: 1px solid rgb(39 39 42);
+  border-radius: 15px;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .review-item {
+    padding: 0.3125rem;
+    border-radius: 20px;
+  }
+}
+
+/* Заголовок рецензии */
+.review-header {
+  position: relative;
+}
+
+.review-author-section {
+  background-color: rgb(9 9 11 / 0.7);
+  padding: 0.5rem;
+  border-radius: 12px;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .review-author-section {
+    padding: 0.5rem;
+  }
+}
+
+/* Информация об авторе */
+.review-author-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .review-author-info {
+    gap: 0.75rem;
+  }
+}
+
+.review-author-link {
+  position: relative;
+}
+
+.review-author-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 50%;
+}
+
+@media (min-width: 1024px) {
+  .review-author-avatar {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+.review-author-avatar-placeholder {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 50%;
+  background-color: rgb(39 39 42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(161 161 170);
+}
+
+@media (min-width: 1024px) {
+  .review-author-avatar-placeholder {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+.review-author-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.review-author-name {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .review-author-name {
+    gap: 0.5rem;
+  }
+}
+
+.review-author-name a {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 14px;
+  display: block;
+  align-items: center;
+  max-width: 170px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  color: rgb(244 244 245);
+  text-decoration: none;
+}
+
+@media (min-width: 1024px) {
+  .review-author-name a {
+    font-size: 1.125rem;
+  }
+}
+
+.review-author-rank {
+  font-size: 0.75rem;
+  color: rgb(161 161 170);
+  font-weight: 400;
+}
+
+/* Секция оценок */
+.review-score-section {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (min-width: 1024px) {
+  .review-score-section {
+    gap: 1rem;
+  }
+}
+
+.review-total-score {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: bold;
+  line-height: 100%;
+  color: rgb(244 244 245);
+  text-decoration: none;
+  border: 0;
+  user-select: none;
+}
+
+@media (min-width: 1024px) {
+  .review-total-score {
+    font-size: 1.5rem;
+    margin-top: 0.25rem;
+  }
+}
+
+.review-individual-scores {
+  display: flex;
+  gap: 0.375rem;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .review-individual-scores {
+    font-size: 0.875rem;
+  }
+}
+
+.review-score-item {
+  color: var(--ratingText-color, #ffffff);
+  user-select: none;
+}
+
+.review-vibe-score {
+  color: var(--ratingVibe-color, #10b981);
+}
+
+/* Контент рецензии */
+.review-content {
+  max-height: min-content;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s;
+  margin-bottom: 1rem;
+  padding: 0 0.375rem;
+  display: block;
+}
+
+.review-title {
+  font-size: 1rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: rgb(244 244 245);
+}
+
+@media (min-width: 1024px) {
+  .review-title {
+    font-size: 1.125rem;
+  }
+}
+
+.review-text {
+  max-width: 100%;
+  font-size: 0.9375rem;
+  font-weight: 300;
+  letter-spacing: -0.2px;
+  padding-right: 1rem;
+  color: rgb(255 255 255);
+  line-height: 1.6;
+}
+
+@media (min-width: 1024px) {
+  .review-text {
+    font-size: 1.125rem;
+    line-height: 32px;
+  }
+}
+
+.review-date {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 0.25rem;
+  color: rgb(244 244 245);
+}
+
+/* Дата для простых рецензий */
+.review-simple-date {
+  padding: 0 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.review-simple-date .review-date {
+  margin-top: 0.75rem;
+}
+
+/* Действия с рецензией */
+.review-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding-right: 0.375rem;
+}
+
+.review-like-section {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.review-like-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: colors 0.2s;
+  outline: none;
+  border: 1px solid rgb(63 63 70);
+  background-color: rgb(255 255 255 / 0.05);
+  height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  gap: 0.25rem;
+}
+
+@media (max-width: 1023px) {
+  .review-like-button {
+    height: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .review-like-button {
+    gap: 0.375rem;
+  }
+}
+
+.review-like-button:hover {
+  background-color: rgb(63 63 70);
+  color: rgb(244 244 245);
+}
+
+.review-like-button.liked {
+  background-color: rgb(220 38 38 / 0.2);
+  border-color: rgb(220 38 38);
+  color: rgb(220 38 38);
+}
+
+.review-like-button.liked:hover {
+  background-color: rgb(220 38 38 / 0.3);
+}
+
+.review-like-button:focus-visible {
+  outline: 2px solid;
+  outline-color: rgb(255 255 255 / 0.4);
+  outline-offset: 2px;
+}
+
+.review-like-button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.review-like-icon {
+  width: 1.25rem;
+  height: 1rem;
+  opacity: 0.5;
+  transition: all 0.3s;
+}
+
+@media (min-width: 1024px) {
+  .review-like-icon {
+    width: 1.75rem;
+    height: 1.4rem;
+  }
+}
+
+.review-like-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.review-like-button:hover .review-like-icon {
+  opacity: 1;
+}
+
+.review-like-count {
+  font-weight: bold;
+  color: rgb(244 244 245);
+}
+
+@media (min-width: 1024px) {
+  .review-like-count {
+    font-size: 1.125rem;
+  }
+}
+
+/* Состояния загрузки и ошибок */
+.reviews-loading,
+.reviews-error,
+.reviews-empty {
+  text-align: center;
+  padding: 2rem;
+  color: rgb(161 161 170);
+  font-size: 1.125rem;
+}
+
+.reviews-error {
+  color: rgb(239 68 68);
 } 

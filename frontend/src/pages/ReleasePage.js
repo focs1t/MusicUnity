@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { releaseApi } from '../shared/api/release';
 import { reviewApi } from '../shared/api/review';
+import { likeApi } from '../shared/api/like';
 import { useAuth } from '../app/providers/AuthProvider';
 import './ReleasePage.css';
 
@@ -35,6 +36,17 @@ function ReleasePage() {
   // Состояние для процесса отправки
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  
+  // Состояния для рецензий
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState(null);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [sortBy, setSortBy] = useState('newest');
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  
+  // Состояния для лайков
+  const [likedReviews, setLikedReviews] = useState(new Set());
   
   // Рассчитываем общий счет на основе формулы из бэкенда
   const calculateTotalScore = () => {
@@ -134,11 +146,60 @@ function ReleasePage() {
       const updatedRelease = await releaseApi.getReleaseById(id);
       setRelease(updatedRelease);
       
+      // Обновление списка рецензий
+      fetchReviews();
+      
     } catch (err) {
       console.error('Ошибка при создании рецензии:', err);
       setSubmitError('Не удалось сохранить рецензию. Пожалуйста, попробуйте позже.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Получение ID текущего пользователя
+  const getCurrentUserId = () => {
+    if (!user || !user.id) return null;
+    return user.id;
+  };
+
+  // Загрузка рецензий
+  const fetchReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      // Получаем только расширенные рецензии с сортировкой
+      const reviewsData = await reviewApi.getExtendedReviewsByRelease(id, 0, 20, sortBy);
+      setReviews(reviewsData.content || []);
+      setTotalReviews(reviewsData.totalElements || 0);
+      
+      // Загружаем информацию о лайках пользователя
+      await fetchLikedReviews(reviewsData.content || []);
+    } catch (err) {
+      setReviewsError('Не удалось загрузить рецензии');
+      console.error('Ошибка загрузки рецензий:', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  // Загрузка лайкнутых рецензий пользователя
+  const fetchLikedReviews = async (reviewsList) => {
+    const userId = getCurrentUserId();
+    if (!userId || !reviewsList.length) return;
+    
+    try {
+      const likedSet = new Set();
+      for (const review of reviewsList) {
+        const reviewId = review.id;
+        const likes = await likeApi.getLikesByReview(reviewId);
+        const isLiked = likes.some(like => like.userId === userId);
+        if (isLiked) {
+          likedSet.add(reviewId);
+        }
+      }
+      setLikedReviews(likedSet);
+    } catch (err) {
+      console.error('Ошибка загрузки лайков:', err);
     }
   };
 
@@ -160,7 +221,15 @@ function ReleasePage() {
     };
 
     fetchRelease();
+    fetchReviews();
   }, [id]);
+
+  // Перезагружаем рецензии при изменении сортировки
+  useEffect(() => {
+    if (id) {
+      fetchReviews();
+    }
+  }, [sortBy]);
 
   const handleToggleFavorite = async () => {
     if (!release) return;
@@ -257,6 +326,160 @@ function ReleasePage() {
     const timer = setTimeout(updateSliderValues, 50);
     return () => clearTimeout(timer);
   }, [rhymeImagery, structureRhythm, styleExecution, individuality, vibe]);
+
+  // Функция для форматирования даты
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  // Функция для получения текста сортировки
+  const getSortText = (sortType) => {
+    switch (sortType) {
+      case 'newest': return 'Новые';
+      case 'oldest': return 'Старые';
+      case 'popular': return 'Популярные';
+      case 'top_rated': return 'Высоко оцененные';
+      default: return 'Новые';
+    }
+  };
+
+  // Функция для получения ранга пользователя (временная заглушка)
+  const getUserRank = (userId) => {
+    // TODO: Получать ранг из API или данных пользователя
+    if (userId === 7) return 1; // Маресев
+    return 2; // Другие пользователи
+  };
+
+  // Обработчик изменения сортировки
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    setSortDropdownOpen(false);
+    // Перезагружаем рецензии с новой сортировкой
+    fetchReviews();
+  };
+
+  // Обработчик лайка рецензии
+  const handleLikeToggle = async (reviewId) => {
+    const userId = getCurrentUserId();
+    if (!userId) {
+      console.warn('Пользователь не авторизован');
+      return;
+    }
+
+    // Находим рецензию в массиве
+    const review = reviews.find(r => r.id === reviewId);
+    if (!review) {
+      console.error(`Рецензия с ID ${reviewId} не найдена`);
+      return;
+    }
+
+    // Проверяем, что пользователь не лайкает свою собственную рецензию
+    const reviewUserId = review.userId || (review.user && review.user.id) || 0;
+    if (reviewUserId === userId) {
+      console.warn('Нельзя лайкать собственные рецензии');
+      return;
+    }
+
+    try {
+      const isLiked = likedReviews.has(reviewId);
+      
+      if (isLiked) {
+        // Оптимистично обновляем UI
+        setLikedReviews(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reviewId);
+          return newSet;
+        });
+        
+        setReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.id === reviewId 
+              ? {...r, likesCount: Math.max(0, (r.likesCount || 0) - 1)} 
+              : r
+          )
+        );
+        
+        // Удаляем лайк в бэкенде
+        await likeApi.removeLike(reviewId, userId);
+        
+        // Получаем актуальное количество лайков
+        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+        setReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.id === reviewId 
+              ? {...r, likesCount: updatedLikesCount} 
+              : r
+          )
+        );
+      } else {
+        // Оптимистично обновляем UI
+        setLikedReviews(prev => {
+          const newSet = new Set(prev);
+          newSet.add(reviewId);
+          return newSet;
+        });
+        
+        setReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.id === reviewId 
+              ? {...r, likesCount: (r.likesCount || 0) + 1} 
+              : r
+          )
+        );
+        
+        // Добавляем лайк в бэкенде
+        await likeApi.createLike(reviewId, userId, 'REGULAR');
+        
+        // Получаем актуальное количество лайков
+        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+        setReviews(prevReviews => 
+          prevReviews.map(r => 
+            r.id === reviewId 
+              ? {...r, likesCount: updatedLikesCount} 
+              : r
+          )
+        );
+      }
+    } catch (error) {
+      console.error(`Ошибка при переключении лайка для рецензии ${reviewId}:`, error);
+      // Восстанавливаем предыдущее состояние при ошибке
+      await fetchLikedReviews(reviews);
+      // Обновляем счетчики лайков
+      for (const review of reviews) {
+        try {
+          const likesCount = await likeApi.getLikesCountByReview(review.id);
+          setReviews(prevReviews => 
+            prevReviews.map(r => 
+              r.id === review.id 
+                ? {...r, likesCount: likesCount} 
+                : r
+            )
+          );
+        } catch (countError) {
+          console.error('Ошибка при получении количества лайков:', countError);
+        }
+      }
+    }
+  };
+
+  // Закрытие выпадающего списка при клике вне его области
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortDropdownOpen && !event.target.closest('.reviews-sort-dropdown')) {
+        setSortDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [sortDropdownOpen]);
 
   if (loading) {
     return (
@@ -966,6 +1189,175 @@ function ReleasePage() {
                 </div>
               </div>
             )}
+
+            {/* Секция с рецензиями пользователей */}
+            <section className="reviews-section">
+              <div className="reviews-header">
+                                 <div className="reviews-title-container">
+                   <div className="reviews-title">Рецензии пользователей</div>
+                   <div className="reviews-count-badge">{totalReviews}</div>
+                 </div>
+                <div className="reviews-sort-container">
+                  <div className="reviews-sort-card">
+                    <div className="reviews-sort-content">
+                      <div className="reviews-sort-label">Сортировать по:</div>
+                      <div className="reviews-sort-dropdown">
+                        <button 
+                          type="button" 
+                          className="reviews-sort-button"
+                          onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                        >
+                          <span>{getSortText(sortBy)}</span>
+                          <svg className="reviews-sort-chevron" viewBox="0 0 24 24" width="24" height="24">
+                            <path d="m6 9 6 6 6-6"></path>
+                          </svg>
+                        </button>
+                        {sortDropdownOpen && (
+                          <div className="reviews-sort-options">
+                            <div 
+                              className="reviews-sort-option"
+                              onClick={() => handleSortChange('newest')}
+                            >
+                              Новые
+                            </div>
+                            <div 
+                              className="reviews-sort-option"
+                              onClick={() => handleSortChange('oldest')}
+                            >
+                              Старые
+                            </div>
+                            <div 
+                              className="reviews-sort-option"
+                              onClick={() => handleSortChange('popular')}
+                            >
+                              Популярные
+                            </div>
+                            <div 
+                              className="reviews-sort-option"
+                              onClick={() => handleSortChange('top_rated')}
+                            >
+                              Высоко оцененные
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {reviewsLoading ? (
+                <div className="reviews-loading">Загрузка рецензий...</div>
+              ) : reviewsError ? (
+                <div className="reviews-error">{reviewsError}</div>
+              ) : reviews.length === 0 ? (
+                <div className="reviews-empty">У этого релиза пока нет рецензий</div>
+              ) : (
+                <div className="reviews-list">
+                  {reviews.map((review, index) => (
+                    <div key={review.id || index} className="review-item">
+                      <div className="review-header">
+                        <div className="review-author-section">
+                          <div className="review-author-info">
+                                                         <a className="review-author-link" href={`/user/${review.user?.id || ''}`}>
+                               {review.user?.avatarUrl ? (
+                                 <img 
+                                   alt={review.user?.username || 'Пользователь'} 
+                                   loading="lazy" 
+                                   width="38" 
+                                   height="38" 
+                                   className="review-author-avatar"
+                                   src={review.user.avatarUrl}
+                                   onError={(e) => {
+                                     e.target.style.display = 'none';
+                                     e.target.nextSibling.style.display = 'flex';
+                                   }}
+                                 />
+                               ) : null}
+                               <div 
+                                 className="review-author-avatar-placeholder"
+                                 style={{ display: review.user?.avatarUrl ? 'none' : 'flex' }}
+                               >
+                                 <svg 
+                                   viewBox="0 0 24 24" 
+                                   fill="currentColor" 
+                                   width="24" 
+                                   height="24"
+                                 >
+                                   <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V17C3 18.11 3.89 19 5 19H11V21C11 21.55 11.45 22 12 22S13 21.55 13 21V19H19C20.11 19 21 18.11 21 17V9Z"/>
+                                 </svg>
+                               </div>
+                             </a>
+                                                         <div className="review-author-details">
+                               <div className="review-author-name">
+                                 <a href={`/user/${review.user?.id || ''}`}>
+                                   {review.user?.username || 'Аноним'}
+                                 </a>
+                                 <div className="review-author-rank">
+                                   ТОП {getUserRank(review.user?.id)}
+                                 </div>
+                               </div>
+                             </div>
+                          </div>
+                          <div className="review-score-section">
+                            <div className="review-total-score">{review.totalScore || 0}</div>
+                            <div className="review-individual-scores">
+                              <div className="review-score-item">{review.rhymeImagery || 0}</div>
+                              <div className="review-score-item">{review.structureRhythm || 0}</div>
+                              <div className="review-score-item">{review.styleExecution || 0}</div>
+                              <div className="review-score-item">{review.individuality || 0}</div>
+                              <div className="review-score-item review-vibe-score">{review.vibe || 0}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {review.title ? (
+                        <div className="review-content">
+                          <div className="review-title">{review.title}</div>
+                          {review.content && (
+                            <div className="review-text">
+                              <div>{review.content}</div>
+                              <div className="review-date">{formatDate(review.createdAt)}</div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="review-simple-date">
+                          <div className="review-date">{formatDate(review.createdAt)}</div>
+                        </div>
+                      )}
+
+                      <div className="review-actions">
+                        <div className="review-like-section">
+                          <button 
+                            className={`review-like-button ${likedReviews.has(review.id) ? 'liked' : ''}`}
+                            onClick={() => handleLikeToggle(review.id)}
+                            disabled={!isAuth || (review.user?.id === user?.id)}
+                          >
+                            <div className="review-like-icon">
+                              <svg 
+                                width="30" 
+                                height="25" 
+                                viewBox="0 0 24 24" 
+                                fill={likedReviews.has(review.id) ? "currentColor" : "none"}
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                              >
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                              </svg>
+                            </div>
+                            <span className="review-like-count">{review.likesCount || 0}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
         </main>
       </div>

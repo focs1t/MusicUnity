@@ -87,6 +87,17 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getAllByRelease(releaseId, pageable));
     }
 
+    @Operation(summary = "Получение расширенных отзывов на релиз")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список расширенных отзывов")
+    })
+    @GetMapping("/release/{releaseId}/extended")
+    public ResponseEntity<Page<ReviewDTO>> getExtendedReviewsByRelease(
+        @Parameter(description = "ID релиза") @PathVariable Long releaseId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(reviewService.getAllExtendedByRelease(releaseId, pageable));
+    }
+
     @Operation(summary = "Получение отзывов пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Список отзывов")

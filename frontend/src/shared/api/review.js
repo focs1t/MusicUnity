@@ -100,6 +100,54 @@ export const reviewApi = {
   },
 
   /**
+   * Получение расширенных отзывов на релиз с сортировкой
+   * @param {number} releaseId - ID релиза
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @param {string} sortBy - Тип сортировки (newest, oldest, popular, top_rated)
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getExtendedReviewsByRelease: async (releaseId, page = 0, size = 10, sortBy = 'newest') => {
+    try {
+      // Преобразуем параметр sortBy в параметры sort и direction для Spring Data
+      let sort, direction;
+      
+      switch (sortBy) {
+        case 'newest':
+          sort = 'createdAt';
+          direction = 'desc';
+          break;
+        case 'oldest':
+          sort = 'createdAt';
+          direction = 'asc';
+          break;
+        case 'popular':
+          sort = 'likesCount';
+          direction = 'desc';
+          break;
+        case 'top_rated':
+          sort = 'totalScore';
+          direction = 'desc';
+          break;
+        default:
+          sort = 'createdAt';
+          direction = 'desc';
+      }
+      
+      const response = await httpClient.get(`${API_URL}/release/${releaseId}/extended`, {
+        params: { 
+          page, 
+          size, 
+          sort: `${sort},${direction}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Получение отзывов пользователя
    * @param {number} userId - ID пользователя
    * @param {number} page - Номер страницы
