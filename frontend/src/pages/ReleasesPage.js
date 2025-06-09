@@ -158,15 +158,61 @@ function ReleasesPage() {
 
   // Создание пагинации
   const renderPagination = () => {
-    const paginationItems = [];
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
     
-    // Добавляем первые 5 страниц
-    for (let i = 0; i < Math.min(5, totalPages); i++) {
-      paginationItems.push(
-        React.createElement('li', { key: i }, 
+    // Определяем диапазон видимых страниц
+    let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
+    
+    // Корректируем начальную страницу если диапазон слишком мал
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+
+    // Добавляем кнопку "Предыдущая" если не на первой странице
+    if (currentPage > 0) {
+      pages.push(
+        React.createElement('li', { key: 'prev' }, 
+          React.createElement('a', {
+            href: `/releases?page=${currentPage}`,
+            'aria-label': 'Перейти на предыдущую страницу',
+            className: 'pagination-button prev-next',
+            onClick: (e) => {
+              e.preventDefault();
+              handlePageChange(currentPage - 1);
+            }
+          }, [
+            React.createElement('svg', {
+              key: 'prev-icon',
+              xmlns: 'http://www.w3.org/2000/svg',
+              width: '16',
+              height: '16',
+              viewBox: '0 0 24 24',
+              fill: 'none',
+              stroke: 'currentColor',
+              strokeWidth: '2',
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round'
+            }, React.createElement('path', { d: 'm15 18-6-6 6-6' })),
+            React.createElement('span', {
+              key: 'prev-text',
+              className: 'prev-next-text'
+            }, 'Предыдущая')
+          ])
+        )
+      );
+    }
+
+    // Добавляем кнопки страниц
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        React.createElement('li', { key: i },
           React.createElement('a', {
             'aria-current': currentPage === i ? 'page' : undefined,
-            className: `inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${currentPage === i ? 'border border-white/20 bg-background' : ''} hover:bg-accent hover:text-accent-foreground h-10 w-10 max-lg:size-7 max-lg:text-[12px]`,
+            className: `pagination-button ${currentPage === i ? 'active' : ''}`,
             href: `/releases?page=${i + 1}`,
             onClick: (e) => {
               e.preventDefault();
@@ -176,55 +222,13 @@ function ReleasesPage() {
         )
       );
     }
-    
-    // Если страниц больше 5, добавляем многоточие и последнюю страницу
-    if (totalPages > 5) {
-      paginationItems.push(
-        React.createElement('span', {
-          key: 'ellipsis',
-          'aria-hidden': 'true',
-          className: 'flex h-7 w-3.5 md:h-9 md:w-9 items-center justify-center'
-        }, 
-          React.createElement('svg', {
-            xmlns: 'http://www.w3.org/2000/svg',
-            width: '24',
-            height: '24',
-            viewBox: '0 0 24 24',
-            fill: 'none',
-            stroke: 'currentColor',
-            strokeWidth: '2',
-            strokeLinecap: 'round',
-            strokeLinejoin: 'round',
-            className: 'lucide lucide-ellipsis w-3 h-3 md:h-4 md:w-4'
-          }, [
-            React.createElement('circle', { key: 'c1', cx: '12', cy: '12', r: '1' }),
-            React.createElement('circle', { key: 'c2', cx: '19', cy: '12', r: '1' }),
-            React.createElement('circle', { key: 'c3', cx: '5', cy: '12', r: '1' })
-          ]),
-          React.createElement('span', { className: 'sr-only' }, 'Больше страниц')
-        )
-      );
-      
-      paginationItems.push(
-        React.createElement('li', { key: 'last' }, 
-          React.createElement('a', {
-            className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10 max-lg:size-7 max-lg:text-[12px]',
-            href: `/releases?page=${totalPages}`,
-            onClick: (e) => {
-              e.preventDefault();
-              handlePageChange(totalPages - 1);
-            }
-          }, totalPages)
-        )
-      );
-    }
-    
-    // Кнопка "Следующая" если не на последней странице
+
+    // Добавляем кнопку "Следующая" если не на последней странице
     if (currentPage < totalPages - 1) {
-      paginationItems.push(
+      pages.push(
         React.createElement('li', { key: 'next' }, 
           React.createElement('a', {
-            className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-1 max-md:h-7 max-md:w-7 max-md:p-0 md:pr-2.5 max-lg:text-[12px]',
+            className: 'pagination-button prev-next',
             'aria-label': 'Go to next page',
             href: `/releases?page=${currentPage + 2}`,
             onClick: (e) => {
@@ -232,30 +236,36 @@ function ReleasesPage() {
               handlePageChange(currentPage + 1);
             }
           }, [
-            React.createElement('span', { key: 'text', className: 'max-md:hidden' }, 'Следующая'),
+            React.createElement('span', {
+              key: 'next-text',
+              className: 'prev-next-text'
+            }, 'Следующая'),
             React.createElement('svg', {
-              key: 'icon',
+              key: 'next-icon',
               xmlns: 'http://www.w3.org/2000/svg',
-              width: '24',
-              height: '24',
+              width: '16',
+              height: '16',
               viewBox: '0 0 24 24',
               fill: 'none',
               stroke: 'currentColor',
               strokeWidth: '2',
               strokeLinecap: 'round',
-              strokeLinejoin: 'round',
-              className: 'lucide lucide-chevron-right h-4 w-4'
+              strokeLinejoin: 'round'
             }, React.createElement('path', { d: 'm9 18 6-6-6-6' }))
           ])
         )
       );
     }
-    
-    return React.createElement('nav', {
-      role: 'navigation',
-      'aria-label': 'pagination',
-      className: 'mx-auto flex w-full justify-center'
-    }, React.createElement('ul', { className: 'flex flex-row items-center gap-1' }, paginationItems));
+
+    return React.createElement('div', { className: 'pagination-container' },
+      React.createElement('nav', {
+        role: 'navigation',
+        'aria-label': 'pagination',
+        className: 'pagination-nav'
+      }, 
+        React.createElement('ul', { className: 'pagination-list' }, pages)
+      )
+    );
   };
 
   // Отрисовка карточки релиза
@@ -451,7 +461,7 @@ function ReleasesPage() {
       ),
       
       // Пагинация
-      React.createElement('div', { key: 'pagination', className: 'mt-10 col-span-full' }, renderPagination())
+      React.createElement('div', { key: 'pagination', className: 'col-span-full' }, renderPagination())
     ])
   );
 }

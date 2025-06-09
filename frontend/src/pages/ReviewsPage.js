@@ -14,7 +14,7 @@ import ChevronDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
-const REVIEWS_PER_PAGE = 9;
+const REVIEWS_PER_PAGE = 1;
 
 // Встроенный плейсхолдер в формате data URI для аватара
 const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -577,6 +577,8 @@ const ReviewsPage = () => {
         ]);
         
         console.log('Ответ API рецензий:', reviewsResponse);
+        console.log('totalPages из API:', reviewsResponse.totalPages);
+        console.log('totalElements из API:', reviewsResponse.totalElements);
         setLikedReviews(likedReviewsSet);
         
         if (reviewsResponse && reviewsResponse.content) {
@@ -589,7 +591,9 @@ const ReviewsPage = () => {
           const reviewsWithLikes = await updateReviewsLikes(formattedReviews);
           
           setReviews(reviewsWithLikes);
-          setTotalPages(reviewsResponse.totalPages || 1);
+          const totalPagesFromApi = reviewsResponse.totalPages || 1;
+          console.log('Устанавливаем totalPages:', totalPagesFromApi);
+          setTotalPages(totalPagesFromApi);
         } else {
           console.warn('Ответ API не содержит данных рецензий');
           throw new Error('Некорректные данные от API');
@@ -761,8 +765,9 @@ const ReviewsPage = () => {
     }
   };
 
-  // Создание элементов пагинации
+  // Создание элементов пагинации с новыми CSS классами
   const renderPaginationButtons = () => {
+    console.log('renderPaginationButtons вызван. currentPage:', currentPage, 'totalPages:', totalPages);
     const buttons = [];
     const maxVisiblePages = 5;
     
@@ -774,6 +779,8 @@ const ReviewsPage = () => {
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
+    
+    console.log('Пагинация: startPage =', startPage, 'endPage =', endPage);
 
     // Добавляем кнопку "Предыдущая" если не на первой странице
     if (currentPage > 1) {
@@ -809,7 +816,7 @@ const ReviewsPage = () => {
       );
     }
     
-    // Показываем страницы в диапазоне
+    // Показываем страницы в диапазоне (обновлено)
     for (let i = startPage; i <= endPage; i++) {
       buttons.push(
         React.createElement('li', { key: i }, 
@@ -859,6 +866,7 @@ const ReviewsPage = () => {
       );
     }
 
+    console.log('Пагинация: сгенерировано кнопок:', buttons.length);
     return buttons;
   };
 
@@ -976,7 +984,7 @@ const ReviewsPage = () => {
         ),
         
         // Пагинация
-        !loading && !error && totalPages > 0 && React.createElement('div', {
+        !loading && !error && totalPages > 1 && React.createElement('div', {
           className: 'pagination-container',
           key: 'pagination'
         }, 
