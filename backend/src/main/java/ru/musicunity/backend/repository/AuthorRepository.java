@@ -39,4 +39,24 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
 
     @Query("SELECT a FROM Author a JOIN a.followings f WHERE f.user.userId = :userId AND a.isDeleted = false")
     Page<Author> findByFollowingsUserUserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT AVG(rv.totalScore) " +
+           "FROM Author a JOIN a.releases ra JOIN ra.release r JOIN r.reviews rv " +
+           "WHERE a.authorId = :authorId AND r.type = ru.musicunity.backend.pojo.enums.ReleaseType.ALBUM AND r.isDeleted = false AND rv.isDeleted = false AND rv.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED")
+    Double findAverageAlbumExtendedRating(@Param("authorId") Long authorId);
+
+    @Query("SELECT AVG(rv.totalScore) " +
+           "FROM Author a JOIN a.releases ra JOIN ra.release r JOIN r.reviews rv " +
+           "WHERE a.authorId = :authorId AND r.type = ru.musicunity.backend.pojo.enums.ReleaseType.ALBUM AND r.isDeleted = false AND rv.isDeleted = false AND rv.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE")
+    Double findAverageAlbumSimpleRating(@Param("authorId") Long authorId);
+
+    @Query("SELECT AVG(rv.totalScore) " +
+           "FROM Author a JOIN a.releases ra JOIN ra.release r JOIN r.reviews rv " +
+           "WHERE a.authorId = :authorId AND (r.type = ru.musicunity.backend.pojo.enums.ReleaseType.SINGLE OR r.type = ru.musicunity.backend.pojo.enums.ReleaseType.EP) AND r.isDeleted = false AND rv.isDeleted = false AND rv.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED")
+    Double findAverageSingleEpExtendedRating(@Param("authorId") Long authorId);
+
+    @Query("SELECT AVG(rv.totalScore) " +
+           "FROM Author a JOIN a.releases ra JOIN ra.release r JOIN r.reviews rv " +
+           "WHERE a.authorId = :authorId AND (r.type = ru.musicunity.backend.pojo.enums.ReleaseType.SINGLE OR r.type = ru.musicunity.backend.pojo.enums.ReleaseType.EP) AND r.isDeleted = false AND rv.isDeleted = false AND rv.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE")
+    Double findAverageSingleEpSimpleRating(@Param("authorId") Long authorId);
 }

@@ -28,7 +28,7 @@ public class AuthorService {
 
     public Page<AuthorDTO> findAllSorted(Pageable pageable) {
         return authorRepository.findAllSorted(pageable)
-                .map(authorMapper::toDTO);
+                .map(this::toDTOWithRatings);
     }
 
     public Page<AuthorDTO> searchAuthorsByName(String name, Pageable pageable) {
@@ -49,12 +49,21 @@ public class AuthorService {
 
     public Page<AuthorDTO> findArtists(Pageable pageable) {
         return authorRepository.findByIsArtistTrue(pageable)
-                .map(authorMapper::toDTO);
+                .map(this::toDTOWithRatings);
     }
 
     public Page<AuthorDTO> findProducers(Pageable pageable) {
         return authorRepository.findByIsProducerTrue(pageable)
-                .map(authorMapper::toDTO);
+                .map(this::toDTOWithRatings);
+    }
+
+    private AuthorDTO toDTOWithRatings(Author author) {
+        AuthorDTO dto = authorMapper.toDTO(author);
+        dto.setAverageAlbumExtendedRating(authorRepository.findAverageAlbumExtendedRating(author.getAuthorId()));
+        dto.setAverageAlbumSimpleRating(authorRepository.findAverageAlbumSimpleRating(author.getAuthorId()));
+        dto.setAverageSingleEpExtendedRating(authorRepository.findAverageSingleEpExtendedRating(author.getAuthorId()));
+        dto.setAverageSingleEpSimpleRating(authorRepository.findAverageSingleEpSimpleRating(author.getAuthorId()));
+        return dto;
     }
 
     @Transactional

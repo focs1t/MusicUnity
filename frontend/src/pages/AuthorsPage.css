@@ -198,6 +198,240 @@
   margin-top: 2rem;
 }
 
+/* Список авторов */
+.authors-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .authors-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .authors-list {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .authors-list {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Карточка автора */
+.author-card {
+  border: 1px solid rgba(39, 39, 42, 1);
+  color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  background-color: #18181b;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.author-card:hover {
+  background-color: rgba(39, 39, 42, 0.6);
+  transform: translateY(-2px);
+}
+
+.author-link {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Аватар автора */
+.author-avatar-container {
+  aspect-ratio: 1;
+  max-width: 120px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+@media (min-width: 768px) {
+  .author-avatar-container {
+    max-width: 180px;
+  }
+}
+
+.author-avatar {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Имя автора и верификация */
+.author-name-container {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .author-name-container {
+    font-size: 1.25rem;
+  }
+}
+
+.author-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verification-button {
+  background: none;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.verification-icon {
+  width: 20px;
+  height: 20px;
+}
+
+@media (min-width: 768px) {
+  .verification-icon {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+/* Количество подписчиков */
+.followers-count {
+  margin-bottom: 0.5rem;
+}
+
+.followers-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.bookmark-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: #3a82f7;
+}
+
+/* Сетка рейтингов */
+.ratings-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  margin-top: auto;
+}
+
+.rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.rating-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #ffffff;
+}
+
+/* Круги рейтинга */
+.rating-circle {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.rating-circle.filled {
+  background-color: #3a82f7;
+  color: #ffffff;
+}
+
+.rating-circle.outlined {
+  border: 2px solid #3a82f7;
+  color: #ffffff;
+  background: transparent;
+}
+
+.rating-circle.dashed {
+  border: 2px dashed rgba(58, 130, 247, 0.4);
+  color: transparent;
+  background: transparent;
+}
+
+/* Состояния загрузки и ошибки */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: #ffffff;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #3a82f7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 1rem;
+  margin: 0;
+}
+
 /* Заглушка для авторов */
 .authors-placeholder {
   text-align: center;

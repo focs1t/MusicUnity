@@ -16,4 +16,8 @@ public class AuthorDTO {
     private Boolean isProducer;
     private Integer followingCount;
     private LocalDateTime createdAt;
+    private Double averageAlbumExtendedRating;
+    private Double averageAlbumSimpleRating;
+    private Double averageSingleEpExtendedRating;
+    private Double averageSingleEpSimpleRating;
 } 
