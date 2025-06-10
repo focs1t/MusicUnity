@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.29",
+    "http-proxy-middleware": "^3.0.5",
     "react-app-rewired": "^2.2.1"
   }
 }

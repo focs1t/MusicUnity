@@ -28,9 +28,9 @@
 }
 
 .logo {
-  width: 150px;
-  height: 50px;
-  margin-right: 40px;
+  width: 200px;
+  height: 80px;
+  margin-right: 8px;
   flex-shrink: 0;
 }
 
@@ -38,13 +38,13 @@
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  max-width: 100px;
-  margin-right: 40px;
+  max-width: 160px;
+  margin-right: 8px;
 }
 
 @media (min-width: 1024px) {
   .logoImage {
-    max-width: 150px;
+    max-width: 200px;
   }
 }
 
@@ -178,6 +178,7 @@
 @media (min-width: 1024px) {
   .searchWrapper {
     display: block;
+    margin-left: -40px;
   }
 }
 
