@@ -131,17 +131,24 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
             registerData.password
           ));
         } else {
-          // Отправка заявки на регистрацию автора
-          const response = await httpClient.post('/api/registration/author-request', {
-            email: registerData.email,
-            username: registerData.username,
-            password: registerData.password,
-            authorName: registerData.authorName
-          });
-          
-          // Показываем особое сообщение об успехе для заявок авторов
+          // Показываем сообщение об успехе немедленно для лучшего UX
           setRegistrationSuccess(true);
           setRegisterData(prev => ({ ...prev, userType: 'author-request-sent' }));
+          
+          try {
+            // Отправка заявки на регистрацию автора
+            const response = await httpClient.post('/api/registration/author-request', {
+              email: registerData.email,
+              username: registerData.username,
+              password: registerData.password,
+              authorName: registerData.authorName
+            });
+          } catch (authorError) {
+            // Если ошибка при отправке заявки автора, возвращаем к форме
+            setRegistrationSuccess(false);
+            setRegisterData(prev => ({ ...prev, userType: 'author' }));
+            throw authorError; // Передаем ошибку дальше для обработки
+          }
         }
       } catch (error) {
         console.error('Ошибка регистрации:', error);
@@ -167,7 +174,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
       open={open} 
       onClose={registrationSuccess ? handleCloseAfterSuccess : handleModalClose}
       fullWidth
-      maxWidth="xs"
+      maxWidth="sm"
       PaperProps={{
         sx: modalStyles.paper
       }}
@@ -217,7 +224,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
           // Форма регистрации
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
-              margin="normal"
+              margin="dense"
               required
               fullWidth
               id="username"
@@ -230,6 +237,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               error={!!errors.username}
               helperText={errors.username}
               variant="outlined"
+              size="small"
               InputLabelProps={{ 
                 sx: modalStyles.inputLabel,
                 required: true
@@ -238,7 +246,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               sx={modalStyles.textField}
             />
             <TextField
-              margin="normal"
+              margin="dense"
               required
               fullWidth
               id="email"
@@ -250,6 +258,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               error={!!errors.email}
               helperText={errors.email}
               variant="outlined"
+              size="small"
               InputLabelProps={{ 
                 sx: modalStyles.inputLabel,
                 required: true
@@ -258,7 +267,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               sx={modalStyles.textField}
             />
             <TextField
-              margin="normal"
+              margin="dense"
               required
               fullWidth
               name="password"
@@ -271,6 +280,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               error={!!errors.password}
               helperText={errors.password}
               variant="outlined"
+              size="small"
               InputLabelProps={{ 
                 sx: modalStyles.inputLabel,
                 required: true
@@ -279,7 +289,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               sx={modalStyles.textField}
             />
             <TextField
-              margin="normal"
+              margin="dense"
               required
               fullWidth
               name="confirmPassword"
@@ -292,6 +302,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               error={!!errors.confirmPassword}
               helperText={errors.confirmPassword}
               variant="outlined"
+              size="small"
               InputLabelProps={{ 
                 sx: modalStyles.inputLabel,
                 required: true
@@ -301,25 +312,27 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
             />
 
             {/* Выбор типа регистрации */}
-            <FormControl component="fieldset" sx={{ mt: 2, mb: 1 }}>
-              <FormLabel component="legend" sx={{ color: 'white', '&.Mui-focused': { color: 'white' } }}>
+            <FormControl component="fieldset" sx={{ mt: 1, mb: 0 }}>
+              <FormLabel component="legend" sx={{ color: 'white', '&.Mui-focused': { color: 'white' }, fontSize: '0.9em' }}>
                 Тип аккаунта
               </FormLabel>
               <RadioGroup
                 name="userType"
                 value={registerData.userType}
                 onChange={handleChange}
-                sx={{ mt: 1 }}
+                sx={{ mt: 0.25 }}
               >
                 <FormControlLabel 
                   value="user" 
-                  control={<Radio sx={{ color: 'white', '&.Mui-checked': { color: '#1976d2' } }} />} 
-                  label={<Typography sx={{ color: 'white' }}>Пользователь (слушатель)</Typography>}
+                  control={<Radio size="small" sx={{ color: 'white', '&.Mui-checked': { color: '#1976d2' }, py: 0.25 }} />} 
+                  label={<Typography sx={{ color: 'white', fontSize: '0.9em' }}>Пользователь (слушатель)</Typography>}
+                  sx={{ mb: 0 }}
                 />
                 <FormControlLabel 
                   value="author" 
-                  control={<Radio sx={{ color: 'white', '&.Mui-checked': { color: '#1976d2' } }} />} 
-                  label={<Typography sx={{ color: 'white' }}>Автор (музыкант/артист)</Typography>}
+                  control={<Radio size="small" sx={{ color: 'white', '&.Mui-checked': { color: '#1976d2' }, py: 0.25 }} />} 
+                  label={<Typography sx={{ color: 'white', fontSize: '0.9em' }}>Автор (музыкант/артист)</Typography>}
+                  sx={{ mb: 0 }}
                 />
               </RadioGroup>
             </FormControl>
@@ -327,7 +340,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
             {/* Поле имени автора */}
             {registerData.userType === 'author' && (
               <TextField
-                margin="normal"
+                margin="dense"
                 required
                 fullWidth
                 id="authorName"
@@ -339,6 +352,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
                 error={!!errors.authorName}
                 helperText={errors.authorName}
                 variant="outlined"
+                size="small"
                 InputLabelProps={{ 
                   sx: modalStyles.inputLabel,
                   required: true
@@ -350,15 +364,12 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
 
             {/* Информация для авторов */}
             {registerData.userType === 'author' && (
-              <Alert severity="info" sx={{ mt: 2, bgcolor: 'rgba(33, 150, 243, 0.1)', color: '#2196f3' }}>
-                <Typography sx={{ fontWeight: 'bold', mb: 1 }}>Подтверждение статуса автора:</Typography>
-                <Typography>
-                  После регистрации напишите на email{' '}
+              <Alert severity="info" sx={{ mt: 1.5, mb: 1, bgcolor: 'rgba(33, 150, 243, 0.1)', color: '#2196f3', py: 1 }}>
+                <Typography sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.95em' }}>Подтверждение статуса автора:</Typography>
+                <Typography sx={{ fontSize: '0.85em', lineHeight: 1.3 }}>
+                  После регистрации напишите на{' '}
                   <strong style={{ color: '#1976d2' }}>musicunity@mail.ru</strong>{' '}
-                  для подтверждения, что вы являетесь автором музыки.
-                </Typography>
-                <Typography sx={{ mt: 1, fontSize: '0.9em' }}>
-                  В письме укажите ваши музыкальные работы, ссылки на треки или альбомы.
+                  с доказательствами ваших музыкальных работ.
                 </Typography>
               </Alert>
             )}
@@ -377,7 +388,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
                   Я согласен с <span style={{ textDecoration: 'underline', cursor: 'pointer', color: 'white' }}>условиями использования</span>
                 </Typography>
               }
-              sx={{ mt: 2 }}
+              sx={{ mt: 1 }}
             />
             {errors.agreeTerms && (
               <Typography variant="caption" sx={{ display: 'block', ml: 2, color: '#bf616a' }}>
