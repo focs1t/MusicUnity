@@ -633,8 +633,11 @@ const ProfilePage = () => {
   
   // Для кеширования URL аватара
   const [avatarUrl, setAvatarUrl] = useState(() => {
-    // Пытаемся получить аватар из localStorage для синхронизации с Header
-    return localStorage.getItem('user_avatar_url') || null;
+    // Используем localStorage только при просмотре собственного профиля
+    if (!profileUserId || profileUserId === authUser?.id) {
+      return localStorage.getItem('user_avatar_url') || null;
+    }
+    return null; // Для чужих профилей - изначально null
   });
   const [authorAvatarUrls, setAuthorAvatarUrls] = useState({});
   const [reviewAuthorAvatarUrls, setReviewAuthorAvatarUrls] = useState({});
@@ -715,11 +718,18 @@ const ProfilePage = () => {
         setTabValue(getTabValueFromPath());
         setReviewFilter('extended');
         
+        // Очищаем кеш аватара при переходе между профилями
+        if (profileUserId && profileUserId !== authUser?.id) {
+          setAvatarUrl(null);
+        }
+        
         // Сохраняем URL аватара в кеш при первой загрузке
         if (userData?.avatarUrl) {
           setAvatarUrl(userData.avatarUrl);
-          // Сохраняем в localStorage для синхронизации с Header
-          localStorage.setItem('user_avatar_url', userData.avatarUrl);
+          // Сохраняем в localStorage только при просмотре собственного профиля
+          if (!profileUserId || profileUserId === authUser?.id) {
+            localStorage.setItem('user_avatar_url', userData.avatarUrl);
+          }
         }
         
         // Получение ранга пользователя
@@ -1613,9 +1623,11 @@ const ProfilePage = () => {
     // Затем данные пользователя
     if (userDetails?.avatarUrl) return userDetails.avatarUrl;
     
-    // Затем localStorage (на случай, если Header обновил аватар)
-    const localStorageAvatar = localStorage.getItem('user_avatar_url');
-    if (localStorageAvatar) return localStorageAvatar;
+    // Если смотрим свой профиль, можем использовать localStorage как fallback
+    if (isOwnProfile) {
+      const localStorageAvatar = localStorage.getItem('user_avatar_url');
+      if (localStorageAvatar) return localStorageAvatar;
+    }
     
     // И наконец, возвращаем встроенный placeholder вместо локального файла
     return DEFAULT_AVATAR_PLACEHOLDER;
