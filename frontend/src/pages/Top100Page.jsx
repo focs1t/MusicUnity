@@ -1,28 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Avatar, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Paper, 
-  Box, 
-  Typography, 
-  CircularProgress, 
-  Container,
-  useTheme,
-  Alert
-} from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { userApi } from '../shared/api';
+import './Top100Page.css';
+
+// Встроенный плейсхолдер в формате data URI для аватара
+const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
 
 const Top100Page = () => {
-  const theme = useTheme();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Функция для обработки ошибок изображений
+  const handleImageError = (e, user) => {
+    console.log(`Ошибка загрузки аватара для пользователя ${user?.username || 'неизвестного'}, использую placeholder`);
+    e.target.onerror = null;
+    e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+  };
 
   useEffect(() => {
     const fetchTop100Users = async () => {
@@ -50,189 +44,160 @@ const Top100Page = () => {
 
   if (loading) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '70vh',
-          backgroundColor: theme.palette.background.default
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className="site-content top100-page">
+        <main>
+          <div className="container">
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Загрузка рейтинга...</p>
+            </div>
+          </div>
+        </main>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            flexDirection: 'column',
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '70vh'
-          }}
-        >
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-          <Typography>
-            Обратитесь к администратору для решения проблемы.
-          </Typography>
-        </Box>
-      </Container>
+      <div className="site-content top100-page">
+        <main>
+          <div className="container">
+            <div className="error-container">
+              <div className="error-message">{error}</div>
+            </div>
+          </div>
+        </main>
+      </div>
     );
   }
 
   if (users.length === 0) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '70vh' 
-          }}
-        >
-          <Typography>В настоящее время рейтинг пуст.</Typography>
-        </Box>
-      </Container>
+      <div className="site-content top100-page">
+        <main>
+          <div className="container">
+            <div className="empty-container">
+              <p>В настоящее время рейтинг пуст.</p>
+            </div>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography 
-        variant="h3" 
-        component="h1" 
-        gutterBottom 
-        sx={{ 
-          fontWeight: 'bold', 
-          mb: 4, 
-          textAlign: 'center',
-          color: theme.palette.primary.main
-        }}
-      >
-        ТОП-100 пользователей
-      </Typography>
-      
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          Рейтинг пользователей формируется на основе активности на платформе, включая количество авторских лайков, 
-          рецензий, поставленных и полученных лайков.
-        </Typography>
-      </Box>
-      
-      <TableContainer 
-        component={Paper} 
-        sx={{ 
-          boxShadow: 3, 
-          borderRadius: 2,
-          bgcolor: theme.palette.background.paper,
-          overflow: 'hidden'
-        }}
-      >
-        <Table sx={{ minWidth: 650 }} aria-label="top 100 users table">
-          <TableHead>
-            <TableRow sx={{ 
-              backgroundColor: theme.palette.mode === 'dark' 
-                ? theme.palette.grey[800] 
-                : theme.palette.grey[100]
-            }}>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>№</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Баллы</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Пользователь</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Авторские лайки</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Рецензии</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Поставлено лайков</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Получено лайков</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow
-                key={user.id}
-                sx={{ 
-                  '&:nth-of-type(odd)': { 
-                    backgroundColor: theme.palette.mode === 'dark' 
-                      ? 'rgba(255, 255, 255, 0.05)' 
-                      : 'rgba(0, 0, 0, 0.02)' 
-                  },
-                  '&:hover': { 
-                    backgroundColor: theme.palette.mode === 'dark' 
-                      ? 'rgba(255, 255, 255, 0.1)' 
-                      : 'rgba(0, 0, 0, 0.04)' 
-                  },
-                  transition: 'background-color 0.2s ease'
-                }}
-              >
-                <TableCell align="center" sx={{ fontWeight: user.rank <= 3 ? 'bold' : 'normal' }}>
-                  {user.rank <= 3 ? (
-                    <Box 
-                      sx={{ 
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 30,
-                        height: 30,
-                        borderRadius: '50%',
-                        backgroundColor: 
-                          user.rank === 1 ? 'gold' : 
-                          user.rank === 2 ? 'silver' : 
-                          'bronze',
-                        color: user.rank === 1 ? 'black' : 'white',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      {user.rank}
-                    </Box>
-                  ) : user.rank}
-                </TableCell>
-                <TableCell align="center" sx={{ 
-                  fontWeight: 'bold',
-                  color: theme.palette.primary.main
-                }}>
-                  {user.points}
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar 
-                      src={user.avatarUrl} 
-                      alt={user.username} 
-                      sx={{ mr: 2 }} 
-                      component={RouterLink} 
-                      to={`/profile/${user.id}`}
-                    />
-                    <Typography 
-                      component={RouterLink} 
-                      to={`/profile/${user.id}`} 
-                      sx={{ 
-                        textDecoration: 'none', 
-                        color: 'inherit',
-                        '&:hover': { 
-                          color: theme.palette.primary.main, 
-                          textDecoration: 'underline' 
-                        }
-                      }}
-                    >
-                      {user.username}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell align="center">{user.authorLikes}</TableCell>
-                <TableCell align="center">{user.reviews}</TableCell>
-                <TableCell align="center">{user.likesGiven}</TableCell>
-                <TableCell align="center">{user.likesReceived}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Container>
+    <div className="site-content top100-page">
+      <main>
+        <div className="container">
+          <h1 className="top100-title">ТОП-100 пользователей</h1>
+          
+          <div className="top100-description">
+            <p>Рейтинг пользователей формируется на основе активности на платформе, включая количество авторских лайков, рецензий, поставленных и полученных лайков.</p>
+          </div>
+          
+          <div className="top100-table-container">
+            <div className="top100-table-wrapper">
+              <table className="top100-table">
+                <thead>
+                  <tr>
+                    <th className="rank-column">
+                      <div className="header-content">
+                        <svg className="header-icon" viewBox="0 0 24 24" fill="white">
+                          <path d="M3 15h4v6H3v-6zm6.5-8h3v14h-3V7zm6.5 4h4v10h-4V11z"/>
+                        </svg>
+                        №
+                      </div>
+                    </th>
+                    <th className="points-column">
+                      <div className="header-content">
+                        <svg className="header-icon" viewBox="0 0 24 24" fill="white">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        Баллы
+                      </div>
+                    </th>
+                    <th className="user-column">
+                      <div className="header-content">
+                        <svg className="header-icon" viewBox="0 0 24 24" fill="white">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                        Пользователь
+                      </div>
+                    </th>
+                    <th className="stat-column">
+                      <div className="header-content">
+                        <svg className="header-icon" viewBox="0 0 24 24" fill="#ef4444">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        Авторские лайки
+                      </div>
+                    </th>
+                    <th className="stat-column">
+                      <div className="header-content">
+                        <svg className="header-icon" viewBox="0 0 24 24" fill="white">
+                          <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
+                          <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                        </svg>
+                        Рецензии
+                      </div>
+                    </th>
+                    <th className="stat-column">
+                      <div className="header-content">
+                        <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        Поставлено лайков
+                      </div>
+                    </th>
+                    <th className="stat-column">
+                      <div className="header-content">
+                        <svg className="header-icon" viewBox="0 0 24 24" fill="white">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        Получено лайков
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.id} className="user-row">
+                      <td className="rank-cell">
+                        <div className={`rank-number ${user.rank <= 3 ? `rank-${user.rank}` : ''}`}>
+                          {user.rank}
+                        </div>
+                      </td>
+                      <td className="points-cell">
+                        <span className="points-value" style={{ color: 'white' }}>{user.points}</span>
+                      </td>
+                      <td className="user-cell">
+                        <div className="user-info">
+                          <Link to={`/profile/${user.id}`} className="user-avatar-link">
+                            <img 
+                              src={user.avatarUrl || DEFAULT_AVATAR_PLACEHOLDER} 
+                              alt={user.username}
+                              className="user-avatar"
+                              onError={(e) => handleImageError(e, user)}
+                            />
+                          </Link>
+                          <Link to={`/profile/${user.id}`} className="user-name-link">
+                            {user.username}
+                          </Link>
+                        </div>
+                      </td>
+                      <td className="stat-cell">{user.authorLikes}</td>
+                      <td className="stat-cell">{user.reviews}</td>
+                      <td className="stat-cell">{user.likesGiven}</td>
+                      <td className="stat-cell">{user.likesReceived}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 
