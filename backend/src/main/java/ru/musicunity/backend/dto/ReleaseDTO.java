@@ -25,6 +25,11 @@ public class ReleaseDTO {
     private Integer extendedReviewsCount;
     private Integer simpleReviewsCount;
     private Integer commentCount;
+    
+    // Поля для совместимости с фронтендом
+    private Double averageRating;
+    private Double avgRating;
+    private Double averageExtendedRating;
 
     @Data
     public static class AuthorDTO {

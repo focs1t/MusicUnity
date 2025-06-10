@@ -68,11 +68,15 @@ public class ReleaseMapper {
                     .filter(review -> review.getType() == ReviewType.EXTENDED && review.getTotalScore() != null)
                     .collect(Collectors.toList());
                     
+            double extendedAvg = 0.0;
             if (!extendedReviews.isEmpty()) {
-                dto.setFullReviewRating(extendedReviews.stream()
+                extendedAvg = extendedReviews.stream()
                         .mapToDouble(review -> review.getTotalScore())
                         .average()
-                        .orElse(0.0));
+                        .orElse(0.0);
+                        
+                dto.setFullReviewRating(extendedAvg);
+                dto.setAverageExtendedRating(extendedAvg);
                 
                 // Устанавливаем количество полных рецензий
                 dto.setExtendedReviewsCount(extendedReviews.size());
@@ -85,16 +89,34 @@ public class ReleaseMapper {
                     .filter(review -> review.getType() == ReviewType.SIMPLE && review.getTotalScore() != null)
                     .collect(Collectors.toList());
                     
+            double simpleAvg = 0.0;
             if (!simpleReviews.isEmpty()) {
-                dto.setSimpleReviewRating(simpleReviews.stream()
+                simpleAvg = simpleReviews.stream()
                         .mapToDouble(review -> review.getTotalScore())
                         .average()
-                        .orElse(0.0));
+                        .orElse(0.0);
+                        
+                dto.setSimpleReviewRating(simpleAvg);
                 
                 // Устанавливаем количество простых рецензий
                 dto.setSimpleReviewsCount(simpleReviews.size());
             } else {
                 dto.setSimpleReviewsCount(0);
+            }
+            
+            // Общий средний рейтинг (все типы рецензий)
+            List<Review> allRatedReviews = reviews.stream()
+                    .filter(review -> review.getTotalScore() != null)
+                    .collect(Collectors.toList());
+                    
+            if (!allRatedReviews.isEmpty()) {
+                double overallAvg = allRatedReviews.stream()
+                        .mapToDouble(review -> review.getTotalScore())
+                        .average()
+                        .orElse(0.0);
+                        
+                dto.setAverageRating(overallAvg);
+                dto.setAvgRating(overallAvg);
             }
         } else {
             dto.setReviewsCount(0);

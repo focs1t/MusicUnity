@@ -199,4 +199,85 @@ public class ReleaseController {
         releaseService.softDeleteRelease(id);
         return ResponseEntity.ok().build();
     }
+
+    @Operation(summary = "Получение топ релизов по рейтингу")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список топ релизов по рейтингу")
+    })
+    @GetMapping("/top-rated")
+    public ResponseEntity<Page<ReleaseDTO>> getTopRatedReleases(
+        @Parameter(description = "Год для фильтрации") @RequestParam(required = false) Integer year,
+        @Parameter(description = "Месяц для фильтрации") @RequestParam(required = false) Integer month,
+        @Parameter(description = "Тип релиза для фильтрации") @RequestParam(required = false) String releaseType,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(releaseService.getTopRatedReleases(year, month, releaseType, pageable));
+    }
+
+    @Operation(summary = "Получение топ релизов определенного типа по рейтингу")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список топ релизов указанного типа"),
+        @ApiResponse(responseCode = "400", description = "Неподдерживаемый тип релиза")
+    })
+    @GetMapping("/top-rated/{type}")
+    public ResponseEntity<Page<ReleaseDTO>> getTopRatedReleasesByType(
+        @Parameter(description = "Тип релиза (SINGLE, ALBUM, EP, MIXTAPE, COMPILATION)") @PathVariable String type,
+        @Parameter(description = "Год для фильтрации") @RequestParam(required = false) Integer year,
+        @Parameter(description = "Месяц для фильтрации") @RequestParam(required = false) Integer month,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        try {
+            return ResponseEntity.ok(releaseService.getTopRatedReleasesByType(type, year, month, pageable));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Получение доступных годов для фильтрации")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список доступных годов")
+    })
+    @GetMapping("/years")
+    public ResponseEntity<List<Integer>> getAvailableYears() {
+        return ResponseEntity.ok(releaseService.getAvailableYears());
+    }
+
+    @Operation(summary = "Получение доступных годов для определенного типа релиза")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список доступных годов для типа релиза"),
+        @ApiResponse(responseCode = "400", description = "Неподдерживаемый тип релиза")
+    })
+    @GetMapping("/years/{type}")
+    public ResponseEntity<List<Integer>> getAvailableYearsByType(
+        @Parameter(description = "Тип релиза (SINGLE, ALBUM, EP, MIXTAPE, COMPILATION)") @PathVariable String type) {
+        try {
+            return ResponseEntity.ok(releaseService.getAvailableYearsByType(type));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Получение доступных месяцев для года")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список доступных месяцев")
+    })
+    @GetMapping("/months")
+    public ResponseEntity<List<Integer>> getAvailableMonthsByYear(
+        @Parameter(description = "Год для фильтрации") @RequestParam Integer year) {
+        return ResponseEntity.ok(releaseService.getAvailableMonthsByYear(year));
+    }
+
+    @Operation(summary = "Получение доступных месяцев для года и типа релиза")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список доступных месяцев для года и типа"),
+        @ApiResponse(responseCode = "400", description = "Неподдерживаемый тип релиза")
+    })
+    @GetMapping("/months/{type}")
+    public ResponseEntity<List<Integer>> getAvailableMonthsByYearAndType(
+        @Parameter(description = "Год для фильтрации") @RequestParam Integer year,
+        @Parameter(description = "Тип релиза (SINGLE, ALBUM, EP, MIXTAPE, COMPILATION)") @PathVariable String type) {
+        try {
+            return ResponseEntity.ok(releaseService.getAvailableMonthsByYearAndType(year, type));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
 }
