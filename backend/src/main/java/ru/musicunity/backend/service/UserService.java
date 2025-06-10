@@ -221,48 +221,22 @@ public class UserService {
     public void changeUserRole(Long userId, UserRole role) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+        
+        // Запрещаем назначать роли AUTHOR и ADMIN
+        if (role == UserRole.AUTHOR || role == UserRole.ADMIN) {
+            throw new RuntimeException("Нельзя назначить роль " + role.name() + " через админ панель");
+        }
+        
+        // Запрещаем забирать роль AUTHOR, если она уже есть
+        if (user.getRights() == UserRole.AUTHOR && role != UserRole.AUTHOR) {
+            throw new RuntimeException("Нельзя изменить роль пользователя с ролью AUTHOR");
+        }
+        
         user.setRights(role);
         userRepository.save(user);
     }
 
-    @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
-    public void linkUserToAuthor(Long userId, Long authorId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
-        Author author = authorRepository.findById(authorId)
-                .orElseThrow(() -> new AuthorNotFoundException(authorId));
-        
-        // Привязываем пользователя к автору
-        author.setUser(user);
-        // Присваиваем роль AUTHOR
-        user.setRights(UserRole.AUTHOR);
-        // Верифицируем автора если пользователь привязан
-        author.setIsVerified(true);
-        
-        authorRepository.save(author);
-        userRepository.save(user);
-    }
 
-    @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
-    public void unlinkUserFromAuthor(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
-        
-        // Находим автора, привязанного к пользователю
-        Author author = authorRepository.findByUserUserId(userId).orElse(null);
-        if (author != null) {
-            // Отвязываем пользователя от автора
-            author.setUser(null);
-            author.setIsVerified(false);
-            authorRepository.save(author);
-        }
-        
-        // Меняем роль пользователя на USER
-        user.setRights(UserRole.USER);
-        userRepository.save(user);
-    }
 
     public Optional<AuthorDTO> getLinkedAuthor(Long userId) {
         return authorRepository.findByUserUserId(userId)

@@ -14,14 +14,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.service.UserService;
-import ru.musicunity.backend.service.AuthorService;
 
 @Controller
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor
 public class UserAdminController {
     private final UserService userService;
-    private final AuthorService authorService;
 
     @GetMapping
     public String users(
@@ -102,8 +100,7 @@ public class UserAdminController {
         model.addAttribute("currentSort", sort);
         model.addAttribute("currentDirection", direction);
         
-        // Добавляем всех авторов для модального окна привязки
-        model.addAttribute("allAuthors", authorService.getAllAuthors(Pageable.unpaged()));
+
 
         // Если это AJAX-запрос, возвращаем только таблицу
         if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
@@ -147,29 +144,11 @@ public class UserAdminController {
 
     @PostMapping("/{id}/role")
     public String changeUserRole(@PathVariable Long id, @RequestParam UserRole role, RedirectAttributes redirectAttributes) {
-        userService.changeUserRole(id, role);
-        redirectAttributes.addFlashAttribute("success", "Роль пользователя успешно изменена");
-        return "redirect:/admin/users";
-    }
-
-    @PostMapping("/{userId}/link-author")
-    public String linkUserToAuthor(@PathVariable Long userId, @RequestParam Long authorId, RedirectAttributes redirectAttributes) {
         try {
-            userService.linkUserToAuthor(userId, authorId);
-            redirectAttributes.addFlashAttribute("success", "Пользователь успешно привязан к автору");
+            userService.changeUserRole(id, role);
+            redirectAttributes.addFlashAttribute("success", "Роль пользователя успешно изменена");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Ошибка при привязке пользователя к автору: " + e.getMessage());
-        }
-        return "redirect:/admin/users";
-    }
-
-    @PostMapping("/{userId}/unlink-author")
-    public String unlinkUserFromAuthor(@PathVariable Long userId, RedirectAttributes redirectAttributes) {
-        try {
-            userService.unlinkUserFromAuthor(userId);
-            redirectAttributes.addFlashAttribute("success", "Пользователь успешно отвязан от автора");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Ошибка при отвязке пользователя от автора: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Ошибка при изменении роли: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
