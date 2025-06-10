@@ -1881,14 +1881,6 @@ const ProfilePage = () => {
                       </a>
                     </button>
                   )}
-                  
-                  {userDetails?.vkId && (
-                    <button className="social-button">
-                      <a target="_blank" href={`https://vk.com/${userDetails.vkId}`} rel="noopener noreferrer">
-                        <VkIcon />
-                      </a>
-                    </button>
-                  )}
                 </div>
               </div>
               
@@ -2014,7 +2006,7 @@ const ProfilePage = () => {
                               
                               return (
                                 <div key={author.authorId} className="artist-item">
-                                  <Link className="artist-link" to={`/authors/${author.authorId}`}>
+                                  <Link className="artist-link" to={`/author/${author.authorId}`}>
                                     <img 
                                       alt={author.name || "Автор"} 
                                       loading="lazy" 
@@ -2023,7 +2015,7 @@ const ProfilePage = () => {
                                       onError={(e) => handleAuthorImageError(e, author)}
                                     />
                                   </Link>
-                                  <Link className="artist-name text-white no-underline" to={`/authors/${author.authorId}`}>
+                                  <Link className="artist-name text-white no-underline" to={`/author/${author.authorId}`}>
                                     {author.name || "Автор"}
                                   </Link>
                                 </div>

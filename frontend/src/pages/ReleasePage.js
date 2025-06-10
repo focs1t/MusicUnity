@@ -1167,7 +1167,7 @@ function ReleasePage() {
                     <div key={`artist-${artist.id || index}`}>
                       <a 
                         className="artist-link" 
-                        href={`/artist/${artist.id || ''}`}
+                        href={`/author/${artist.id || ''}`}
                       >
                         {renderAuthorImage(artist)}
                         <span className="artist-name">{artist.authorName || 'Автор'}</span>
@@ -1184,7 +1184,7 @@ function ReleasePage() {
                           <a 
                             key={`producer-${producer.id || index}`}
                             className="producer-link" 
-                            href={`/producer/${producer.id || ''}`}
+                            href={`/author/${producer.id || ''}`}
                           >
                             {producer.avatarUrl && (
                               <img 
