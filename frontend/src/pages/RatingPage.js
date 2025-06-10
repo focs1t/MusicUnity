@@ -10,6 +10,7 @@ import {
 import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
 import './RatingPage.css';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 
 const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMTExODI3Ii8+CjxwYXRoIGQ9Ik0yMCAxMkM5IDE4IDkgMjYgMjAgMzJDMzEgMjYgMzEgMTggMjAgMTJaIiBmaWxsPSIjMzc0MTUxIi8+CjxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjQiIGZpbGw9IiM2Mzc0OEEiLz4KPC9zdmc+';
 
@@ -321,9 +322,10 @@ const RatingPage = () => {
       <div className="site-content rating-page">
         <main>
           <div className="container">
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-            </div>
+            <LoadingSpinner 
+              text="Загрузка рейтинга..." 
+              className="loading-container--center"
+            />
           </div>
         </main>
       </div>

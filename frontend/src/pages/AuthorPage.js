@@ -6,6 +6,7 @@ import { userApi } from '../shared/api/user';
 import Notification from '../components/Notification';
 import ReportButton from '../shared/ui/ReportButton/ReportButton';
 import { ReportType } from '../entities/report/model/types';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 import './AuthorPage.css';
 
 const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -147,16 +148,11 @@ const AuthorPage = () => {
     return (
       <div className="author-page-container">
         <div className="min-h-screen flex items-center justify-center bg-black">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-zinc-800 border-t-zinc-400 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-500 rounded-full animate-spin animation-delay-150"></div>
-            </div>
-            <div className="text-center">
-              <h2 className="text-xl font-semibold text-white mb-2">Загрузка автора</h2>
-              <p className="text-zinc-400">Получаем данные...</p>
-            </div>
-          </div>
+          <LoadingSpinner 
+            size="large"
+            text="Загрузка автора..."
+            className="loading-container--center"
+          />
         </div>
       </div>
     );

@@ -5,6 +5,7 @@ import { userApi } from '../shared/api/user';
 import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
 import { releaseApi } from '../shared/api/release';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VkIcon from '@mui/icons-material/Facebook'; // Используем Facebook как заменитель VK
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -1892,9 +1893,10 @@ const ProfilePage = () => {
   
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-      </div>
+      <LoadingSpinner 
+        text="Загрузка профиля..." 
+        className="loading-container--center"
+      />
     );
   }
   

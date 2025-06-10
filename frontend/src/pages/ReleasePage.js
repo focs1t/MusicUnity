@@ -6,6 +6,7 @@ import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
 import { userApi } from '../shared/api/user';
 import { useAuth } from '../app/providers/AuthProvider';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 import './ReleasePage.css';
 import Notification from '../components/Notification';
 import LoginModal from '../widgets/AuthModal/ui/LoginModal';
@@ -1231,22 +1232,11 @@ function ReleasePage() {
         <div className="site-content">
           <main className="main-container">
             <div className="container">
-              <div className="min-h-screen flex items-center justify-center bg-black">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 border-4 border-zinc-800 border-t-zinc-400 rounded-full animate-spin"></div>
-                    <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-500 rounded-full animate-spin animation-delay-150"></div>
-                  </div>
-                  <div className="text-center">
-                    <h2 className="text-xl font-semibold text-white mb-2">
-                      {loading ? 'Загрузка релиза' : 'Проверка прав доступа'}
-                    </h2>
-                    <p className="text-zinc-400">
-                      {loading ? 'Получаем данные релиза...' : 'Определяем роль пользователя...'}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <LoadingSpinner 
+                size="large"
+                text={loading ? 'Загрузка релиза...' : 'Проверка прав доступа...'} 
+                className="loading-container--center"
+              />
             </div>
           </main>
         </div>
@@ -1787,12 +1777,9 @@ function ReleasePage() {
                                     onClick={handleSubmitReview}
                                     disabled={isSubmitting}
                                   >
-                                    {isSubmitting ? (
-                                      <svg className="loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                      </svg>
-                                    ) : (
+                                                                      {isSubmitting ? (
+                                    <LoadingSpinner size="small" />
+                                  ) : (
                                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="review-submit-icon" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path>
                                       </svg>
@@ -1937,10 +1924,7 @@ function ReleasePage() {
                                   disabled={isSubmitting}
                                 >
                                   {isSubmitting ? (
-                                    <svg className="loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
+                                    <LoadingSpinner size="small" />
                                   ) : (
                                     <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="review-submit-icon" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                                       <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../index';
+import { LoadingSpinner } from '../../../../shared/ui/LoadingSpinner';
 
 const AuthGuard = ({ children }) => {
   const { isAuthenticated } = useSelector(state => state.auth);
@@ -11,15 +12,10 @@ const AuthGuard = ({ children }) => {
   // Если проверка авторизации еще не завершена, показываем загрузчик
   if (!authChecked) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '50vh',
-        color: '#fff'
-      }}>
-        Загрузка...
-      </div>
+      <LoadingSpinner 
+        text="Проверка авторизации..." 
+        className="loading-container--center"
+      />
     );
   }
 

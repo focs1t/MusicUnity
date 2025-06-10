@@ -9,7 +9,6 @@ import {
   Avatar,
   Chip,
   Grid,
-  CircularProgress,
   Alert,
   Pagination
 } from '@mui/material';
@@ -21,6 +20,7 @@ import {
 import { authorApi } from '../shared/api/author';
 import { releaseApi } from '../shared/api/release';
 import { userApi } from '../shared/api/user';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 import './SearchPage.css';
 
 // Встроенный плейсхолдер в формате data URI для аватара
@@ -543,9 +543,10 @@ const SearchPage = () => {
         )}
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress sx={{ color: '#4fc3f7' }} />
-          </Box>
+          <LoadingSpinner 
+            text="Поиск..." 
+            className="loading-container--center"
+          />
         ) : results.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Typography variant="h6" gutterBottom>

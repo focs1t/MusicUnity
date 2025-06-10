@@ -9,7 +9,6 @@ import {
   Button,
   Avatar,
   Grid,
-  CircularProgress,
   Snackbar,
   Alert,
   Divider,
@@ -31,6 +30,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import InfoIcon from '@mui/icons-material/Info';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Link as RouterLink } from 'react-router-dom';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 
 // Стилизованные компоненты
 const MainContainer = styled(Box)(({ theme }) => ({
@@ -489,9 +489,10 @@ const SettingsPage = () => {
   if (loading) {
     return (
       <MainContainer>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress />
-        </Box>
+        <LoadingSpinner 
+          text="Загрузка настроек..." 
+          className="loading-container--center"
+        />
       </MainContainer>
     );
   }

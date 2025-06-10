@@ -8,6 +8,7 @@ import './ReviewsPage.css'; // Импорт CSS
 import Notification from '../components/Notification';
 import ReportButton from '../shared/ui/ReportButton/ReportButton';
 import { ReportType } from '../entities/report/model/types';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 
 // Импорт иконок
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -1090,14 +1091,11 @@ const ReviewsPage = () => {
         }, error),
         
         // Индикатор загрузки
-        loading && React.createElement('div', {
-          className: 'flex justify-center my-10',
+        loading && React.createElement(LoadingSpinner, {
+          text: 'Загрузка рецензий...',
+          className: 'loading-container--center',
           key: 'loading-spinner'
-        }, 
-          React.createElement('div', {
-            className: 'w-8 h-8 border-4 border-zinc-600 border-t-white rounded-full animate-spin'
-          })
-        ),
+        }),
         
         // Рецензии
         !loading && !error && React.createElement('section', {

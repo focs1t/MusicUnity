@@ -20,7 +20,6 @@ import {
   DialogActions, 
   TextField,
   Pagination,
-  CircularProgress,
   IconButton,
   Container,
   Tooltip
@@ -40,6 +39,7 @@ import { reportApi } from '../shared/api/report';
 import { userApi } from '../shared/api/user';
 import { useNavigate } from 'react-router-dom';
 import { ReportType } from '../entities/report/model/types';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 
 const ModeratorReportsPage = () => {
   const navigate = useNavigate();
@@ -449,9 +449,10 @@ const ModeratorReportsPage = () => {
         }}>
           <CardContent>
             {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress />
-              </Box>
+              <LoadingSpinner 
+                text="Загрузка жалоб..." 
+                className="loading-container--inline"
+              />
             ) : reports.length === 0 ? (
               <Typography variant="body1" sx={{ textAlign: 'center', py: 4 }}>
                 Нет ожидающих жалоб

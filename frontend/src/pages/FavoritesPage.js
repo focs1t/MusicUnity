@@ -6,7 +6,6 @@ import {
   Grid, 
   Card, 
   CardContent, 
-  CircularProgress,
   Pagination,
   Tabs,
   Tab
@@ -15,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
 import { reviewApi } from '../shared/api/review';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 
 // Компонент для TabPanel (содержимое вкладки)
 function TabPanel(props) {
@@ -101,9 +101,10 @@ const FavoritesPage = () => {
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
-          <CircularProgress />
-        </Box>
+        <LoadingSpinner 
+          text="Загрузка избранного..." 
+          className="loading-container--center"
+        />
       </Container>
     );
   }

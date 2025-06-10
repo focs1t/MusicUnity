@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authorApi } from '../shared/api/author';
 import './AuthorsPage.css';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 
 // Встроенный плейсхолдер в формате data URI для аватара
 const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -325,10 +326,10 @@ const VerifiedAuthorsPage = () => {
           {/* Список авторов */}
           <div className="authors-grid">
             {loading && (
-              <div className="loading-container">
-                <div className="loading-spinner"></div>
-                <p>Загрузка авторов...</p>
-              </div>
+              <LoadingSpinner 
+                text="Загрузка авторов..." 
+                className="loading-container--center"
+              />
             )}
             
             {error && (

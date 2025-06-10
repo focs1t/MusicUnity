@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, Typography, Alert, MenuItem, FormControl, InputLabel, Select, Chip, OutlinedInput, FormControlLabel, Checkbox, Card, Autocomplete, IconButton, Paper, CircularProgress } from '@mui/material';
+import { Box, TextField, Button, Typography, Alert, MenuItem, FormControl, InputLabel, Select, Chip, OutlinedInput, FormControlLabel, Checkbox, Card, Autocomplete, IconButton, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -11,6 +11,7 @@ import { authorApi } from '../shared/api/author';
 import { fileApi } from '../shared/api/file';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 
 // Стилизованные компоненты
 const MainContainer = styled(Box)(({ theme }) => ({
@@ -496,9 +497,10 @@ const ModeratorCreateReleasePage = () => {
   if (!user) {
     return (
       <MainContainer>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress />
-        </Box>
+        <LoadingSpinner 
+          text="Проверка доступа..." 
+          className="loading-container--center"
+        />
       </MainContainer>
     );
   }
@@ -507,9 +509,10 @@ const ModeratorCreateReleasePage = () => {
   if (accessLoading || !userDetails) {
     return (
       <MainContainer>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress />
-        </Box>
+        <LoadingSpinner 
+          text="Загрузка данных..." 
+          className="loading-container--center"
+        />
       </MainContainer>
     );
   }
