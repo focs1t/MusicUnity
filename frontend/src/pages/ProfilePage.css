@@ -235,11 +235,6 @@
   flex: 1;
 }
 
-/* Табы */
-.tabs-container {
-  margin-top: 1.25rem;
-}
-
 /* Новые стили для основных табов */
 .main-tabs {
   display: flex;
