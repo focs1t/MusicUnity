@@ -64,7 +64,7 @@ public class FileController {
 
     @Operation(
         summary = "Загрузить обложку релиза",
-        description = "Загружает файл обложки в S3 хранилище. Доступно только авторам."
+        description = "Загружает файл обложки в S3 хранилище. Доступно авторам и модераторам."
     )
     @ApiResponses({
         @ApiResponse(
@@ -81,7 +81,7 @@ public class FileController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Пользователь не является автором"
+            description = "Пользователь не является автором или модератором"
         ),
         @ApiResponse(
             responseCode = "400",
@@ -89,7 +89,7 @@ public class FileController {
         )
     })
     @PostMapping(value = "/upload/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('AUTHOR')")
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR')")
     public ResponseEntity<FileUploadResponse> uploadCover(
         @Parameter(
             description = "Файл обложки (изображение)",

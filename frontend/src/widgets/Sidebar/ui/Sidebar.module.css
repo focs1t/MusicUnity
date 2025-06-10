@@ -30,6 +30,18 @@
   margin-bottom: 1rem;
 }
 
+.groupTitle {
+  display: flex;
+  align-items: center;
+  height: 2rem;
+  margin-bottom: 0.5rem;
+  color: #888;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .navLink {
   position: relative;
   display: flex;

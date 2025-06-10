@@ -12,8 +12,10 @@ export const authorApi = {
       const response = await httpClient.get(API_URL, {
         params: { size: 1000 }
       });
+      // Возвращаем content если это Page, или весь ответ если это Array
       return response.data.content || response.data;
     } catch (error) {
+      console.error('Ошибка при загрузке авторов:', error);
       throw error;
     }
   },

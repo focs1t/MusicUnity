@@ -18,5 +18,7 @@ export const ROUTES = {
   RELEASES: '/releases',
   RELEASE: '/release/:id',
   CREATE_RELEASE: '/create-release',
+  MODERATOR_CREATE_RELEASE: '/moderator/create-release',
+  MODERATOR_REPORTS: '/moderator/reports',
   CONTACT: '/contact'
 }; 

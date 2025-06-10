@@ -2,6 +2,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Sidebar } from '../widgets/Sidebar';
 import { ROUTES } from '../shared/config/routes';
+// Импорт страниц модератора
+import ModeratorCreateReleasePage from '../pages/ModeratorCreateReleasePage';
+import ModeratorReportsPage from '../pages/ModeratorReportsPage';
 
 // Заглушки для страниц
 const Home = () => <div style={{ marginLeft: '4rem', padding: '2rem' }}>Главная страница</div>;
@@ -45,6 +48,9 @@ function App() {
             <Route path={ROUTES.AUTHORS} element={<Authors />} />
             <Route path={ROUTES.REVIEWS} element={<Reviews />} />
             <Route path={ROUTES.RELEASES} element={<Releases />} />
+            {/* Роуты для модератора */}
+            <Route path={ROUTES.MODERATOR_CREATE_RELEASE} element={<ModeratorCreateReleasePage />} />
+            <Route path={ROUTES.MODERATOR_REPORTS} element={<ModeratorReportsPage />} />
             <Route path={ROUTES.CONTACT} element={<Contact />} />
           </Routes>
         </main>

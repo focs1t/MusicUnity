@@ -19,6 +19,9 @@ import VerifiedAuthorsPage from '../../../../pages/VerifiedAuthorsPage';
 import ProfileAuthorsPage from '../../../../pages/ProfileAuthorsPage';
 import ProfileAlbumsPage from '../../../../pages/ProfileAlbumsPage';
 import ProfileSinglesPage from '../../../../pages/ProfileSinglesPage';
+// Страницы для модератора
+import ModeratorCreateReleasePage from '../../../../pages/ModeratorCreateReleasePage';
+import ModeratorReportsPage from '../../../../pages/ModeratorReportsPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -49,6 +52,10 @@ const AppRouter = () => {
       <Route path="/settings" element={<ProtectedRoute element={<SettingsPage />} />} />
       <Route path="/following-releases" element={<ProtectedRoute element={<FollowingReleasesPage />} />} />
       <Route path={ROUTES.CREATE_RELEASE} element={<ProtectedRoute element={<CreateReleasePage />} />} />
+      
+      {/* Роуты для модератора */}
+      <Route path={ROUTES.MODERATOR_CREATE_RELEASE} element={<ProtectedRoute element={<ModeratorCreateReleasePage />} />} />
+      <Route path={ROUTES.MODERATOR_REPORTS} element={<ProtectedRoute element={<ModeratorReportsPage />} />} />
       
       {/* Общедоступные страницы */}
       <Route path={ROUTES.RELEASES} element={<PublicRoute element={<ReleasesPage />} />} />
