@@ -12,6 +12,7 @@ import CreateReleasePage from '../../../../pages/CreateReleasePage';
 import RatingPage from '../../../../pages/RatingPage';
 import { ROUTES } from '../../../../shared/config/routes';
 import ReviewsPage from '../../../../pages/ReviewsPage';
+import AuthorLikesPage from '../../../../pages/AuthorLikesPage';
 import AuthorsPage from '../../../../pages/AuthorsPage';
 import AuthorPage from '../../../../pages/AuthorPage';
 import VerifiedAuthorsPage from '../../../../pages/VerifiedAuthorsPage';
@@ -53,7 +54,7 @@ const AppRouter = () => {
       <Route path={ROUTES.TOP_100} element={<PublicRoute element={<Top100Page />} />} />
       <Route path={ROUTES.FAQ} element={<PublicRoute element={<div>Часто задаваемые вопросы</div>} />} />
       <Route path={ROUTES.RATING} element={<PublicRoute element={<RatingPage />} />} />
-      <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<div>А лайки</div>} />} />
+      <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<AuthorLikesPage />} />} />
       <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<VerifiedAuthorsPage />} />} />
       <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<ReviewsPage />} />} />
       <Route path={ROUTES.CONTACT} element={<PublicRoute element={<div>Обратная связь</div>} />} />
