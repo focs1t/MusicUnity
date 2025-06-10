@@ -2,10 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authorApi } from '../shared/api/author';
 import { releaseApi } from '../shared/api/release';
+import { userApi } from '../shared/api/user';
 import './AuthorPage.css';
 
-const DEFAULT_AVATAR_PLACEHOLDER = '/icons/default-avatar.png';
+const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
 const userColor = '#3a82f7';
+
+// Утилитарная функция для получения ID текущего пользователя
+const getCurrentUserId = () => {
+  try {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      return user.id || user.userId;
+    }
+  } catch (error) {
+    console.error('Ошибка парсинга данных пользователя из localStorage:', error);
+  }
+  return null;
+};
 
 const AuthorPage = () => {
   const { id } = useParams();
@@ -28,6 +43,18 @@ const AuthorPage = () => {
         setAuthor(authorData);
         setFollowersCount(authorData.followingCount || 0);
 
+        // Проверяем подписку на автора
+        const currentUserId = getCurrentUserId();
+        if (currentUserId) {
+          try {
+            const isFollowingAuthor = await authorApi.checkFollowStatus(id);
+            setIsFollowing(isFollowingAuthor);
+          } catch (err) {
+            console.error('Ошибка при проверке подписки:', err);
+            setIsFollowing(false);
+          }
+        }
+
         // Получаем релизы автора (лучшие работы)
         const releasesData = await releaseApi.getReleasesByAuthor(id, 0, 10);
         setAuthorReleases(releasesData.content || []);
@@ -47,9 +74,14 @@ const AuthorPage = () => {
 
   const handleFollowClick = async () => {
     try {
+      const currentUserId = getCurrentUserId();
+      if (!currentUserId) {
+        console.error('Пользователь не авторизован');
+        return;
+      }
+
       if (isFollowing) {
-        // Логика отписки (если есть в API)
-        // await authorApi.unfollowAuthor(id, currentUserId);
+        await authorApi.unfollowAuthor(id, currentUserId);
         setIsFollowing(false);
         setFollowersCount(prev => prev - 1);
       } else {
@@ -119,21 +151,21 @@ const AuthorPage = () => {
           <div className="author-hero-section">
             <div className="like-button-container">
               <button 
-                className="like-button"
+                className={`like-button ${isFollowing ? 'following' : ''}`}
                 onClick={handleFollowClick}
                 title={isFollowing ? "Отписаться" : "Подписаться"}
               >
                 <svg 
-                  stroke="currentColor" 
-                  fill="currentColor" 
-                  strokeWidth="0" 
                   viewBox="0 0 24 24" 
                   className="heart-icon" 
                   height="1em" 
                   width="1em"
+                  fill={isFollowing ? "#ef4444" : "none"}
+                  stroke={isFollowing ? "none" : "currentColor"}
+                  strokeWidth={isFollowing ? "0" : "2"}
                 >
                   <path fill="none" d="M0 0h24v24H0z"></path>
-                  <path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"></path>
+                  <path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
                 </svg>
               </button>
             </div>
@@ -193,28 +225,6 @@ const AuthorPage = () => {
                     stroke="currentColor" 
                     fill="currentColor" 
                     strokeWidth="0" 
-                    viewBox="0 0 512 512" 
-                    className="rating-icon" 
-                    height="1em" 
-                    width="1em"
-                  >
-                    <path d="M406.3 48.2c-4.7.9-202 39.2-206.2 40-4.2.8-8.1 3.6-8.1 8v240.1c0 1.6-.1 7.2-2.4 11.7-3.1 5.9-8.5 10.2-16.1 12.7-3.3 1.1-7.8 2.1-13.1 3.3-24.1 5.4-64.4 14.6-64.4 51.8 0 31.1 22.4 45.1 41.7 47.5 2.1.3 4.5.7 7.1.7 6.7 0 36-3.3 51.2-13.2 11-7.2 24.1-21.4 24.1-47.8V190.5c0-3.8 2.7-7.1 6.4-7.8l152-30.7c5-1 9.6 2.8 9.6 7.8v130.9c0 4.1-.2 8.9-2.5 13.4-3.1 5.9-8.5 10.2-16.2 12.7-3.3 1.1-8.8 2.1-14.1 3.3-24.1 5.4-64.4 14.5-64.4 51.7 0 33.7 25.4 47.2 41.8 48.3 6.5.4 11.2.3 19.4-.9s23.5-5.5 36.5-13c17.9-10.3 27.5-26.8 27.5-48.2V55.9c-.1-4.4-3.8-8.9-9.8-7.7z"></path>
-                  </svg>
-                  <div className="rating-circles">
-                    <div className="rating-circle filled">
-                      {formatRating(author.averageAlbumExtendedRating)}
-                    </div>
-                    <div className="rating-circle outlined">
-                      {formatRating(author.averageAlbumSimpleRating)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rating-row">
-                  <svg 
-                    stroke="currentColor" 
-                    fill="currentColor" 
-                    strokeWidth="0" 
                     viewBox="0 0 24 24" 
                     className="rating-icon" 
                     height="1em" 
@@ -225,12 +235,50 @@ const AuthorPage = () => {
                     <path d="M12 6a6 6 0 0 0-6 6h2a4 4 0 0 1 4-4z"></path>
                   </svg>
                   <div className="rating-circles">
-                    <div className="rating-circle filled">
-                      {formatRating(author.averageSingleEpExtendedRating)}
-                    </div>
-                    <div className="rating-circle outlined">
-                      {formatRating(author.averageSingleEpSimpleRating)}
-                    </div>
+                    {author.averageAlbumExtendedRating ? (
+                      <div className="rating-circle filled">
+                        {formatRating(author.averageAlbumExtendedRating)}
+                      </div>
+                    ) : (
+                      <div className="rating-circle dashed"></div>
+                    )}
+                    {author.averageAlbumSimpleRating ? (
+                      <div className="rating-circle outlined">
+                        {formatRating(author.averageAlbumSimpleRating)}
+                      </div>
+                    ) : (
+                      <div className="rating-circle dashed"></div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rating-row">
+                  <svg 
+                    stroke="currentColor" 
+                    fill="currentColor" 
+                    strokeWidth="0" 
+                    viewBox="0 0 512 512" 
+                    className="rating-icon" 
+                    height="1em" 
+                    width="1em"
+                  >
+                    <path d="M406.3 48.2c-4.7.9-202 39.2-206.2 40-4.2.8-8.1 3.6-8.1 8v240.1c0 1.6-.1 7.2-2.4 11.7-3.1 5.9-8.5 10.2-16.1 12.7-3.3 1.1-7.8 2.1-13.1 3.3-24.1 5.4-64.4 14.6-64.4 51.8 0 31.1 22.4 45.1 41.7 47.5 2.1.3 4.5.7 7.1.7 6.7 0 36-3.3 51.2-13.2 11-7.2 24.1-21.4 24.1-47.8V190.5c0-3.8 2.7-7.1 6.4-7.8l152-30.7c5-1 9.6 2.8 9.6 7.8v130.9c0 4.1-.2 8.9-2.5 13.4-3.1 5.9-8.5 10.2-16.2 12.7-3.3 1.1-8.8 2.1-14.1 3.3-24.1 5.4-64.4 14.5-64.4 51.7 0 33.7 25.4 47.2 41.8 48.3 6.5.4 11.2.3 19.4-.9s23.5-5.5 36.5-13c17.9-10.3 27.5-26.8 27.5-48.2V55.9c-.1-4.4-3.8-8.9-9.8-7.7z"></path>
+                  </svg>
+                  <div className="rating-circles">
+                    {author.averageSingleEpExtendedRating ? (
+                      <div className="rating-circle filled">
+                        {formatRating(author.averageSingleEpExtendedRating)}
+                      </div>
+                    ) : (
+                      <div className="rating-circle dashed"></div>
+                    )}
+                    {author.averageSingleEpSimpleRating ? (
+                      <div className="rating-circle outlined">
+                        {formatRating(author.averageSingleEpSimpleRating)}
+                      </div>
+                    ) : (
+                      <div className="rating-circle dashed"></div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -264,7 +312,6 @@ const AuthorPage = () => {
                             </div>
                             <div className="stat-item">
                               <svg className="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
                                 <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
                               </svg>
                               <span>{release.simpleReviewsCount || 0}</span>
@@ -291,25 +338,33 @@ const AuthorPage = () => {
                         <a href={`/release/${release.releaseId}`} className="release-title">
                           {release.title}
                         </a>
-                        <div className="release-authors">
+                        <div className="flex flex-wrap leading-3 mt-1 text-[13px]">
                           {release.authors && release.authors.map((author, index) => (
                             <span key={author.id}>
-                              <a href={`/author/${author.id}`} className="author-link">
+                              <a href={`/author/${author.id}`} className="border-b border-b-white/0 hover:border-white/30 opacity-70">
                                 {author.authorName}
                               </a>
-                              {index < release.authors.length - 1 && <span className="separator">, </span>}
+                              {index < release.authors.length - 1 && <span className="text-muted-foreground">,&nbsp;</span>}
                             </span>
                           ))}
                         </div>
                       </div>
 
                       <div className="release-ratings">
-                        <div className="rating-circle filled">
-                          {formatRating(release.fullReviewRating)}
-                        </div>
-                        <div className="rating-circle outlined">
-                          {formatRating(release.simpleReviewRating)}
-                        </div>
+                        {release.fullReviewRating ? (
+                          <div className="rating-circle filled">
+                            {formatRating(release.fullReviewRating)}
+                          </div>
+                        ) : (
+                          <div className="rating-circle dashed"></div>
+                        )}
+                        {release.simpleReviewRating ? (  
+                          <div className="rating-circle outlined">
+                            {formatRating(release.simpleReviewRating)}
+                          </div>
+                        ) : (
+                          <div className="rating-circle dashed"></div>
+                        )}
                       </div>
                     </div>
                   </div>

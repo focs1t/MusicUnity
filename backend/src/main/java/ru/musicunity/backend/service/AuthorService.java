@@ -33,18 +33,18 @@ public class AuthorService {
 
     public Page<AuthorDTO> searchAuthorsByName(String name, Pageable pageable) {
         return authorRepository.findByAuthorNameContainingIgnoreCase(name, pageable)
-                .map(authorMapper::toDTO);
+                .map(this::toDTOWithRatings);
     }
 
     public AuthorDTO getAuthorById(Long id) {
         return authorRepository.findById(id)
-                .map(authorMapper::toDTO)
+                .map(this::toDTOWithRatings)
                 .orElseThrow(() -> new RuntimeException("Author not found with id: " + id));
     }
 
     public Optional<AuthorDTO> findByAuthorName(String authorName) {
         return authorRepository.findByAuthorName(authorName)
-                .map(authorMapper::toDTO);
+                .map(this::toDTOWithRatings);
     }
 
     public Page<AuthorDTO> findArtists(Pageable pageable) {
@@ -59,10 +59,18 @@ public class AuthorService {
 
     private AuthorDTO toDTOWithRatings(Author author) {
         AuthorDTO dto = authorMapper.toDTO(author);
-        dto.setAverageAlbumExtendedRating(authorRepository.findAverageAlbumExtendedRating(author.getAuthorId()));
-        dto.setAverageAlbumSimpleRating(authorRepository.findAverageAlbumSimpleRating(author.getAuthorId()));
-        dto.setAverageSingleEpExtendedRating(authorRepository.findAverageSingleEpExtendedRating(author.getAuthorId()));
-        dto.setAverageSingleEpSimpleRating(authorRepository.findAverageSingleEpSimpleRating(author.getAuthorId()));
+        
+        Double albumExtendedRating = authorRepository.findAverageAlbumExtendedRating(author.getAuthorId());
+        Double albumSimpleRating = authorRepository.findAverageAlbumSimpleRating(author.getAuthorId());
+        Double singleEpExtendedRating = authorRepository.findAverageSingleEpExtendedRating(author.getAuthorId());
+        Double singleEpSimpleRating = authorRepository.findAverageSingleEpSimpleRating(author.getAuthorId());
+        
+
+        
+        dto.setAverageAlbumExtendedRating(albumExtendedRating);
+        dto.setAverageAlbumSimpleRating(albumSimpleRating);
+        dto.setAverageSingleEpExtendedRating(singleEpExtendedRating);
+        dto.setAverageSingleEpSimpleRating(singleEpSimpleRating);
         return dto;
     }
 

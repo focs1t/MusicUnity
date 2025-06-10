@@ -157,6 +157,19 @@ public class AuthorController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Проверка подписки на автора")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Статус подписки"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
+    @GetMapping("/{authorId}/follow-status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> checkFollowStatus(
+            @Parameter(description = "ID автора") @PathVariable Long authorId) {
+        boolean isFollowing = authorFollowingService.isFollowing(authorId, userService.getCurrentUser().getUserId());
+        return ResponseEntity.ok(isFollowing);
+    }
+
     @Operation(summary = "Мягкое удаление автора (только для модераторов)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Автор успешно помечен как удаленный"),

@@ -167,6 +167,20 @@ export const authorApi = {
   },
 
   /**
+   * Проверка подписки на автора
+   * @param {number} authorId - ID автора
+   * @returns {Promise<boolean>}
+   */
+  checkFollowStatus: async (authorId) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/${authorId}/follow-status`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Мягкое удаление автора (только для модераторов)
    * @param {number} id - ID автора
    * @returns {Promise<void>}

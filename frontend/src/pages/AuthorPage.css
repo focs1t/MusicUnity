@@ -138,9 +138,20 @@
   color: #3a82f7;
 }
 
+.author-page-container .like-button.following {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.author-page-container .like-button.following:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.2);
+}
+
 .author-page-container .heart-icon {
   width: 1.5rem;
   height: 1.5rem;
+  transition: all 0.2s ease;
 }
 
 .author-page-container .hero-background-image {
@@ -189,6 +200,9 @@
   font-size: 0.875rem;
   font-weight: 700;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (min-width: 1024px) {
@@ -357,6 +371,12 @@
 .author-page-container .rating-circle.outlined {
   border: 2px solid #3a82f7;
   color: white;
+  background: transparent;
+}
+
+.author-page-container .rating-circle.dashed {
+  border: 2px dashed rgba(58, 130, 247, 0.4);
+  color: transparent;
   background: transparent;
 }
 
@@ -539,7 +559,6 @@
 
 .author-page-container .release-ratings {
   display: flex;
-  justify-content: space-between;
   gap: 0.25rem;
   align-items: center;
   margin-top: auto;

@@ -26,7 +26,24 @@ public class AuthorFollowingService {
 
     public Page<AuthorDTO> getFollowedAuthors(User user, Pageable pageable) {
         return authorRepository.findByFollowingsUserUserId(user.getUserId(), pageable)
-                .map(authorMapper::toDTO);
+                .map(this::toDTOWithRatings);
+    }
+
+    private AuthorDTO toDTOWithRatings(Author author) {
+        AuthorDTO dto = authorMapper.toDTO(author);
+        
+        Double albumExtendedRating = authorRepository.findAverageAlbumExtendedRating(author.getAuthorId());
+        Double albumSimpleRating = authorRepository.findAverageAlbumSimpleRating(author.getAuthorId());
+        Double singleEpExtendedRating = authorRepository.findAverageSingleEpExtendedRating(author.getAuthorId());
+        Double singleEpSimpleRating = authorRepository.findAverageSingleEpSimpleRating(author.getAuthorId());
+        
+
+        
+        dto.setAverageAlbumExtendedRating(albumExtendedRating);
+        dto.setAverageAlbumSimpleRating(albumSimpleRating);
+        dto.setAverageSingleEpExtendedRating(singleEpExtendedRating);
+        dto.setAverageSingleEpSimpleRating(singleEpSimpleRating);
+        return dto;
     }
 
     @Transactional
@@ -57,5 +74,12 @@ public class AuthorFollowingService {
         author.getFollowings().removeIf(following -> following.getUser().getUserId().equals(userId));
         author.setFollowingCount(author.getFollowingCount() - 1);
         authorRepository.save(author);
+    }
+
+    public boolean isFollowing(Long authorId, Long userId) {
+        Author author = authorRepository.findById(authorId)
+                .orElseThrow(() -> new AuthorNotFoundException(authorId));
+        return author.getFollowings().stream()
+                .anyMatch(following -> following.getUser().getUserId().equals(userId));
     }
 } 
