@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { authModel } from '../../../../entities/auth';
 
 // Создаем селекторы для authModel
@@ -22,6 +23,7 @@ export const useAuth = () => {
 
 const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   
   // Получаем данные о пользователе и статусе авторизации из redux
   const isAuth = useSelector(selectIsAuth);
@@ -39,13 +41,39 @@ const AuthProvider = ({ children }) => {
   };
   
   // Функция для входа в систему
-  const login = (username, password, rememberMe) => {
-    return dispatch(authModel.login(username, password, rememberMe));
+  const login = async (username, password, rememberMe) => {
+    try {
+      const result = await dispatch(authModel.login(username, password, rememberMe));
+      if (result.meta.requestStatus === 'fulfilled') {
+        // Проверяем, есть ли сохраненный путь для перенаправления
+        const redirectPath = localStorage.getItem('redirectAfterAuth');
+        if (redirectPath) {
+          localStorage.removeItem('redirectAfterAuth');
+          navigate(redirectPath);
+        }
+      }
+      return result;
+    } catch (error) {
+      throw error;
+    }
   };
   
   // Функция для регистрации
-  const register = (username, email, password) => {
-    return dispatch(authModel.register(username, email, password));
+  const register = async (username, email, password) => {
+    try {
+      const result = await dispatch(authModel.register(username, email, password));
+      if (result.meta.requestStatus === 'fulfilled') {
+        // Проверяем, есть ли сохраненный путь для перенаправления
+        const redirectPath = localStorage.getItem('redirectAfterAuth');
+        if (redirectPath) {
+          localStorage.removeItem('redirectAfterAuth');
+          navigate(redirectPath);
+        }
+      }
+      return result;
+    } catch (error) {
+      throw error;
+    }
   };
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { releaseApi } from '../shared/api/release';
 import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
@@ -7,6 +7,9 @@ import { userApi } from '../shared/api/user';
 import { useAuth } from '../app/providers/AuthProvider';
 import './ReleasePage.css';
 import Notification from '../components/Notification';
+import LoginModal from '../widgets/AuthModal/ui/LoginModal';
+import RegisterModal from '../widgets/AuthModal/ui/RegisterModal';
+import ForgotPasswordModal from '../widgets/AuthModal/ui/ForgotPasswordModal';
 
 // Получение ID текущего пользователя (как в ReviewsPage)
 const getCurrentUserId = () => {
@@ -341,11 +344,17 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
  */
 function ReleasePage() {
   const { id } = useParams();
+  const location = useLocation();
   const { user, isAuth } = useAuth();
   const [release, setRelease] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [inFavorites, setInFavorites] = useState(false);
+  
+  // Состояния для модальных окон авторизации
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
   
   // Проверка роли пользователя
   const [userRole, setUserRole] = useState(null);
@@ -911,6 +920,49 @@ function ReleasePage() {
     }
   };
 
+  // Функции для модальных окон авторизации
+  const handleOpenLoginModal = () => {
+    // Сохраняем текущую страницу для возврата после авторизации
+    localStorage.setItem('redirectAfterAuth', location.pathname + location.search);
+    setLoginModalOpen(true);
+  };
+
+  const handleCloseLoginModal = () => {
+    setLoginModalOpen(false);
+  };
+
+  const handleOpenRegisterModal = () => {
+    localStorage.setItem('redirectAfterAuth', location.pathname + location.search);
+    setRegisterModalOpen(true);
+  };
+
+  const handleCloseRegisterModal = () => {
+    setRegisterModalOpen(false);
+  };
+
+  const handleOpenForgotPasswordModal = () => {
+    setForgotPasswordModalOpen(true);
+  };
+
+  const handleCloseForgotPasswordModal = () => {
+    setForgotPasswordModalOpen(false);
+  };
+
+  const handleSwitchToRegister = () => {
+    setLoginModalOpen(false);
+    setRegisterModalOpen(true);
+  };
+
+  const handleSwitchToLogin = () => {
+    setRegisterModalOpen(false);
+    setLoginModalOpen(true);
+  };
+
+  const handleSwitchToForgotPassword = () => {
+    setLoginModalOpen(false);
+    setForgotPasswordModalOpen(true);
+  };
+
   // Функция для создания кнопок пагинации
   const renderPagination = () => {
     if (totalPages <= 1) return null;
@@ -1271,7 +1323,8 @@ function ReleasePage() {
   };
 
   return (
-    <div className="release-page">
+    <>
+      <div className="release-page">
       {notification && (
         <Notification
           message={notification.message}
@@ -1878,9 +1931,9 @@ function ReleasePage() {
               <div className="review-auth-container">
                 <div className="review-auth-box">
                   <div className="review-auth-message">Чтобы оставить рецензию, необходимо авторизоваться</div>
-                  <a href="/login" className="review-auth-button">
+                  <button onClick={handleOpenLoginModal} className="review-auth-button">
                     Войти
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}
@@ -1948,8 +2001,29 @@ function ReleasePage() {
             </section>
           </div>
         </main>
+              </div>
       </div>
-    </div>
+
+      {/* Модальные окна авторизации */}
+      <LoginModal 
+        open={loginModalOpen} 
+        onClose={handleCloseLoginModal}
+        onSwitchToRegister={handleSwitchToRegister}
+        onSwitchToForgotPassword={handleSwitchToForgotPassword}
+      />
+      
+      <RegisterModal 
+        open={registerModalOpen} 
+        onClose={handleCloseRegisterModal}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+      
+      <ForgotPasswordModal 
+        open={forgotPasswordModalOpen} 
+        onClose={handleCloseForgotPasswordModal}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+    </>
   );
 }
 

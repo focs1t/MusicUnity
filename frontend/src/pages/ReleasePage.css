@@ -1082,15 +1082,20 @@
   white-space: nowrap;
   font-size: 0.875rem;
   font-weight: 500;
-  background-color: var(--primary-color, #f45d48);
-  color: white;
+  background-color: white;
+  color: black;
   height: 2.5rem;
   padding: 0 1rem;
   border-radius: 0.375rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .review-auth-button:hover {
-  background-color: rgba(244, 93, 72, 0.9);
+  background-color: rgba(255, 255, 255, 0.9);
+  color: black;
 }
 
 .loading-spinner {
