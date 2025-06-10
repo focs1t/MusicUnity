@@ -142,6 +142,15 @@ public class ReleaseService {
         
         release = releaseRepository.save(release);
 
+        // Обновляем роли текущего автора если необходимо
+        if (request.isArtist() && !userAuthor.getIsArtist()) {
+            userAuthor.setIsArtist(true);
+        }
+        if (request.isProducer() && !userAuthor.getIsProducer()) {
+            userAuthor.setIsProducer(true);
+        }
+        userAuthor = authorRepository.save(userAuthor);
+        
         // Добавляем текущего пользователя как автора
         ReleaseAuthor userReleaseAuthor = ReleaseAuthor.builder()
                 .id(new ReleaseAuthor.ReleaseAuthorId(release.getReleaseId(), userAuthor.getAuthorId()))
