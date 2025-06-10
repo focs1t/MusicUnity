@@ -93,6 +93,7 @@ const ModeratorReportsPage = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedReport, setSelectedReport] = useState(null);
   const [actionDialog, setActionDialog] = useState({ open: false, type: '', report: null });
+  const [reasonDialog, setReasonDialog] = useState({ open: false, reason: '' });
 
   // Загрузка репортов
   const loadReports = async (pageNumber = 0) => {
@@ -286,6 +287,60 @@ const ModeratorReportsPage = () => {
     return new Date(dateString).toLocaleString('ru-RU');
   };
 
+  // Открытие модального окна с полной причиной
+  const openReasonDialog = (reason) => {
+    setReasonDialog({ open: true, reason });
+  };
+
+  // Компонент для отображения причины с сокращением
+  const ReasonCell = ({ report }) => {
+    const maxLength = 40;
+    const needsTruncation = report.reason.length > maxLength;
+
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="body2" sx={{ 
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flex: 1
+        }}>
+          {needsTruncation ? report.reason.substring(0, maxLength) : report.reason}
+        </Typography>
+        {needsTruncation && (
+          <span 
+            onClick={() => openReasonDialog(report.reason)}
+            style={{ 
+              color: '#ffffff', 
+              cursor: 'pointer',
+              fontSize: '16px',
+              userSelect: 'none',
+              border: '1px solid #333333',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#1a1a1a',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#333333';
+              e.target.style.borderColor = '#555555';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#1a1a1a';
+              e.target.style.borderColor = '#333333';
+            }}
+          >
+            ...
+          </span>
+        )}
+      </Box>
+    );
+  };
+
   // Если нет пользователя, показываем загрузку
   if (!user) {
     return (
@@ -323,9 +378,9 @@ const ModeratorReportsPage = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh', 
-      bgcolor: '#0a0a0a',
-      backgroundImage: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
-      color: '#e0e0e0'
+      bgcolor: '#000000',
+      background: '#000000',
+      color: '#ffffff'
     }}>
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Box sx={{ mb: 4 }}>
@@ -333,13 +388,11 @@ const ModeratorReportsPage = () => {
             variant="h3" 
             component="h1" 
             sx={{ 
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              fontWeight: 600,
+              color: '#ffffff',
               textAlign: 'center',
-              mb: 2
+              mb: 2,
+              fontSize: '2rem'
             }}
           >
             Управление жалобами
@@ -348,8 +401,9 @@ const ModeratorReportsPage = () => {
             variant="h6" 
             sx={{ 
               textAlign: 'center',
-              color: '#888',
-              fontWeight: 400
+              color: '#666666',
+              fontWeight: 400,
+              fontSize: '1rem'
             }}
           >
             Модерация пользовательского контента
@@ -387,12 +441,11 @@ const ModeratorReportsPage = () => {
         )}
 
         <Card sx={{ 
-          bgcolor: 'rgba(30, 30, 30, 0.8)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-          color: '#e0e0e0'
+          bgcolor: '#111111',
+          border: '1px solid #333333',
+          borderRadius: 2,
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.8)',
+          color: '#ffffff'
         }}>
           <CardContent>
             {loading ? (
@@ -408,22 +461,21 @@ const ModeratorReportsPage = () => {
                 <TableContainer 
                   component={Paper} 
                   sx={{ 
-                    bgcolor: 'rgba(20, 20, 20, 0.9)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    borderRadius: 2
+                    bgcolor: '#0a0a0a',
+                    border: '1px solid #222222',
+                    borderRadius: 1
                   }}
                 >
                   <Table>
                     <TableHead>
-                      <TableRow sx={{ bgcolor: 'rgba(40, 40, 40, 0.8)' }}>
-                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>ID</TableCell>
-                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Тип</TableCell>
-                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Переход</TableCell>
-                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Причина</TableCell>
-                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Статус</TableCell>
-                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Дата</TableCell>
-                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Действия</TableCell>
+                      <TableRow sx={{ bgcolor: '#1a1a1a' }}>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>ID</TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Тип</TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Переход</TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Причина</TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Статус</TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Дата</TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Действия</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -434,14 +486,15 @@ const ModeratorReportsPage = () => {
                           <TableRow 
                             key={report.reportId}
                             sx={{ 
-                              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' },
-                              borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+                              bgcolor: '#0a0a0a',
+                              '&:hover': { bgcolor: '#1a1a1a' },
+                              borderBottom: '1px solid #222222'
                             }}
                           >
-                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <TableCell sx={{ color: '#ffffff', borderBottom: '1px solid #222222' }}>
                               #{report.reportId}
                             </TableCell>
-                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <TableCell sx={{ color: '#ffffff', borderBottom: '1px solid #222222' }}>
                               <Chip 
                                 icon={report.type ? getReportTypeIcon(report.type) : <OpenIcon />}
                                 label={report.type ? getReportTypeText(report.type) : 'Неизвестно'} 
@@ -469,7 +522,7 @@ const ModeratorReportsPage = () => {
                                 size="small"
                               />
                             </TableCell>
-                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <TableCell sx={{ color: '#ffffff', borderBottom: '1px solid #222222' }}>
                               <Tooltip title="Перейти к объекту" arrow>
                                 <IconButton
                                   size="small"
@@ -498,18 +551,10 @@ const ModeratorReportsPage = () => {
                                 </IconButton>
                               </Tooltip>
                             </TableCell>
-                            <TableCell sx={{ color: '#e0e0e0', maxWidth: 200, borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                              <Typography variant="body2" sx={{ 
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {report.reason.length > 40 
-                                  ? `${report.reason.substring(0, 40)}...` 
-                                  : report.reason}
-                              </Typography>
+                            <TableCell sx={{ color: '#ffffff', maxWidth: 200, borderBottom: '1px solid #222222' }}>
+                              <ReasonCell report={report} />
                             </TableCell>
-                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <TableCell sx={{ color: '#ffffff', borderBottom: '1px solid #222222' }}>
                               <Chip 
                                 label={getStatusText(report.status)} 
                                 color={getStatusColor(report.status)}
@@ -534,12 +579,12 @@ const ModeratorReportsPage = () => {
                                 }}
                               />
                             </TableCell>
-                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                              <Typography variant="body2" sx={{ color: '#aaa' }}>
+                            <TableCell sx={{ color: '#ffffff', borderBottom: '1px solid #222222' }}>
+                              <Typography variant="body2" sx={{ color: '#888888' }}>
                                 {formatDate(report.createdAt)}
                               </Typography>
                             </TableCell>
-                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <TableCell sx={{ color: '#ffffff', borderBottom: '1px solid #222222' }}>
                               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                 {availableActions.map((action) => (
                                   <Tooltip key={action.type} title={action.label} arrow>
@@ -561,20 +606,21 @@ const ModeratorReportsPage = () => {
                                         disabled={report.status !== 'PENDING'}
                                         sx={{ 
                                           color: action.color,
-                                          bgcolor: `${action.color}20`,
-                                          border: `1px solid ${action.color}40`,
+                                          bgcolor: '#1a1a1a',
+                                          border: `1px solid #333333`,
                                           borderRadius: '50%',
                                           width: 32,
                                           height: 32,
                                           '&:hover': { 
-                                            bgcolor: `${action.color}30`,
+                                            bgcolor: action.color,
+                                            color: '#000000',
                                             borderColor: action.color,
                                             transform: 'scale(1.1)'
                                           },
                                           '&:disabled': {
-                                            color: 'rgba(255, 255, 255, 0.3)',
-                                            bgcolor: 'rgba(255, 255, 255, 0.05)',
-                                            borderColor: 'rgba(255, 255, 255, 0.1)'
+                                            color: '#555555',
+                                            bgcolor: '#0a0a0a',
+                                            borderColor: '#222222'
                                           },
                                           transition: 'all 0.3s ease'
                                         }}
@@ -619,20 +665,21 @@ const ModeratorReportsPage = () => {
           onClose={() => setActionDialog({ open: false, type: '', report: null })}
           PaperProps={{
             sx: { 
-              bgcolor: 'rgba(20, 20, 20, 0.95)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 3,
-              color: '#e0e0e0'
+              bgcolor: '#121212',
+              backgroundImage: 'linear-gradient(135deg, #121212 0%, #1e1e1e 100%)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: 2,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+              color: '#ffffff'
             }
           }}
         >
           <DialogTitle sx={{ 
-            background: 'linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 600
+            color: '#ffffff',
+            fontWeight: 600,
+            textAlign: 'center',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            pb: 2
           }}>
             Подтверждение действия
           </DialogTitle>
@@ -648,38 +695,137 @@ const ModeratorReportsPage = () => {
               <Box sx={{ 
                 mt: 2, 
                 p: 2, 
-                bgcolor: 'rgba(40, 40, 40, 0.5)',
-                borderRadius: 2,
-                border: '1px solid rgba(255, 255, 255, 0.1)'
+                bgcolor: 'rgba(0,0,0,0.3)',
+                borderRadius: 1.5,
+                border: '1px solid rgba(255,255,255,0.1)',
+                maxWidth: '100%',
+                overflow: 'hidden'
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   {getReportTypeIcon(actionDialog.report.type)}
-                  <Typography variant="body2" sx={{ color: '#e0e0e0', ml: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#ffffff', ml: 1 }}>
                     <strong>Тип:</strong> {getReportTypeText(actionDialog.report.type)}
                   </Typography>
                 </Box>
-                <Typography variant="body2" sx={{ color: '#e0e0e0', mb: 1 }}>
+                <Typography variant="body2" sx={{ color: '#ffffff', mb: 1 }}>
                   <strong>ID объекта:</strong> {actionDialog.report.targetId}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#e0e0e0' }}>
+                <Typography variant="body2" sx={{ 
+                  color: '#ffffff',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-wrap',
+                  overflowWrap: 'break-word'
+                }}>
                   <strong>Причина:</strong> {actionDialog.report.reason}
                 </Typography>
               </Box>
             )}
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ 
+            borderTop: '1px solid rgba(255,255,255,0.05)', 
+            pt: 3,
+            gap: 2,
+            justifyContent: 'center'
+          }}>
             <Button 
               onClick={() => setActionDialog({ open: false, type: '', report: null })}
-              color="inherit"
+              sx={{ 
+                color: 'rgba(255,255,255,0.8)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 1.5,
+                px: 3,
+                py: 1,
+                textTransform: 'none',
+                '&:hover': { 
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                  color: 'white',
+                  borderColor: 'rgba(255,255,255,0.2)'
+                }
+              }}
             >
               Отмена
             </Button>
             <Button 
               onClick={() => handleReportAction(actionDialog.type, actionDialog.report?.reportId, actionDialog.report?.type)}
-              color="error"
               variant="contained"
+              sx={{ 
+                bgcolor: 'rgba(255,255,255,0.9)',
+                color: '#000',
+                borderRadius: 1.5,
+                px: 3,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                '&:hover': { 
+                  bgcolor: 'white',
+                  boxShadow: '0 6px 16px rgba(0,0,0,0.5)'
+                }
+              }}
             >
               Подтвердить
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Диалог для отображения полной причины */}
+        <Dialog
+          open={reasonDialog.open}
+          onClose={() => setReasonDialog({ open: false, reason: '' })}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: { 
+              bgcolor: '#121212',
+              backgroundImage: 'linear-gradient(135deg, #121212 0%, #1e1e1e 100%)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: 2,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+              color: '#ffffff'
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            color: '#ffffff',
+            fontWeight: 600,
+            textAlign: 'center',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            pb: 2
+          }}>
+            Полная причина жалобы
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            <Typography variant="body1" sx={{ 
+              color: '#ffffff',
+              lineHeight: 1.6,
+              wordBreak: 'break-word'
+            }}>
+              {reasonDialog.reason}
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ 
+            borderTop: '1px solid rgba(255,255,255,0.05)', 
+            pt: 3,
+            justifyContent: 'center'
+          }}>
+            <Button 
+              onClick={() => setReasonDialog({ open: false, reason: '' })}
+              sx={{ 
+                bgcolor: 'rgba(255,255,255,0.9)',
+                color: '#000',
+                borderRadius: 1.5,
+                px: 3,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                '&:hover': { 
+                  bgcolor: 'white',
+                  boxShadow: '0 6px 16px rgba(0,0,0,0.5)'
+                }
+              }}
+            >
+              Закрыть
             </Button>
           </DialogActions>
         </Dialog>

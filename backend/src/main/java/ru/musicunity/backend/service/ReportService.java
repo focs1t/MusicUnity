@@ -90,7 +90,7 @@ public class ReportService {
                 
             case REVIEW:
                 // Проверяем, что пользователь не репортит свою рецензию
-                Review review = reviewMapper.toEntity(reviewService.getReviewById(targetId));
+                Review review = reviewService.getReviewEntityById(targetId);
                 if (review.getUser().getUserId().equals(userId)) {
                     throw new IllegalArgumentException("Вы не можете пожаловаться на свою рецензию");
                 }
@@ -170,7 +170,7 @@ public class ReportService {
         
         // Для репортов типа REVIEW получаем пользователя через reviewService
         if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.REVIEW) {
-            Review review = reviewMapper.toEntity(reviewService.getReviewById(report.getTargetId()));
+            Review review = reviewService.getReviewEntityById(report.getTargetId());
             User userToBan = review.getUser();
             userService.banUser(userToBan.getUserId());
         }

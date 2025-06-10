@@ -34,6 +34,16 @@ public class ReviewService {
                 .orElseThrow(() -> new ReviewNotFoundException(id));
     }
 
+    /**
+     * Получение рецензии в виде Entity по ID (для внутреннего использования)
+     * @param id ID рецензии
+     * @return объект Review
+     */
+    public Review getReviewEntityById(Long id) {
+        return reviewRepository.findById(id)
+                .orElseThrow(() -> new ReviewNotFoundException(id));
+    }
+
     private void checkIfUserIsAuthor(Release release, User user) {
         boolean isAuthor = release.getAuthors().stream()
                 .anyMatch(releaseAuthor -> releaseAuthor.getAuthor().getUser() != null &&
