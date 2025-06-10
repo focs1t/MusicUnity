@@ -9,6 +9,7 @@ import './index.css';
 // Импорт страниц
 import Top100Page from './pages/Top100Page';
 import AuthorsPage from './pages/AuthorsPage';
+import AuthorPage from './pages/AuthorPage';
 
 // Заглушки для страниц
 const Home = () => <div>Главная страница</div>;
@@ -38,6 +39,7 @@ function App() {
               <Route path={ROUTES.AUTHOR_LIKES} element={<AuthorLikes />} />
               <Route path={ROUTES.AUTHORS_VERIFIED} element={<AuthorsVerified />} />
               <Route path={ROUTES.AUTHORS} element={<AuthorsPage />} />
+              <Route path={ROUTES.AUTHOR} element={<AuthorPage />} />
               <Route path={ROUTES.REVIEWS} element={<Reviews />} />
               <Route path={ROUTES.RELEASES} element={<Releases />} />
               <Route path={ROUTES.CONTACT} element={<Contact />} />

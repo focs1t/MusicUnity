@@ -13,6 +13,7 @@ export const ROUTES = {
   AUTHOR_COMMENTS: '/author-comments',
   AUTHORS_VERIFIED: '/authors-verified',
   AUTHORS: '/authors',
+  AUTHOR: '/author/:id',
   REVIEWS: '/reviews',
   RELEASES: '/releases',
   RELEASE: '/release/:id',
