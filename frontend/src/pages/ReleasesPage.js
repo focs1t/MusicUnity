@@ -19,7 +19,7 @@ function ReleasesPage() {
   const pageSize = 12;
   
   // Типы релизов для фильтрации
-  const releaseTypes = ['Все', 'Треки', 'Альбомы', 'EP', 'Синглы'];
+  const releaseTypes = ['Все', 'Альбомы', 'Синглы/EP'];
   
   /**
    * Загрузка релизов
@@ -32,7 +32,21 @@ function ReleasesPage() {
         
         const response = await releaseApi.getNewReleases(currentPage, pageSize);
         
-        setReleases(response.content);
+        // Фильтрация релизов по типу
+        let filteredReleases = response.content;
+        if (releaseType !== 'Все') {
+          filteredReleases = response.content.filter(release => {
+            const releaseTypeUpper = release.type?.toUpperCase();
+            if (releaseType === 'Альбомы') {
+              return releaseTypeUpper === 'ALBUM';
+            } else if (releaseType === 'Синглы/EP') {
+              return releaseTypeUpper === 'SINGLE' || releaseTypeUpper === 'EP';
+            }
+            return false;
+          });
+        }
+        
+        setReleases(filteredReleases);
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
       } catch (err) {
@@ -44,7 +58,7 @@ function ReleasesPage() {
     };
     
     fetchReleases();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, releaseType]);
   
   /**
    * Обработчик выбора типа релиза
@@ -53,7 +67,6 @@ function ReleasesPage() {
     setReleaseType(type);
     setIsDropdownOpen(false);
     setCurrentPage(0);
-    // В реальном приложении здесь нужно отправить запрос с фильтром по типу
   };
   
   /**
@@ -68,7 +81,7 @@ function ReleasesPage() {
    */
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isDropdownOpen && !event.target.closest('.filter-dropdown')) {
+      if (isDropdownOpen && !event.target.closest('[data-dropdown-wrapper]')) {
         setIsDropdownOpen(false);
       }
     };
@@ -273,7 +286,7 @@ function ReleasesPage() {
     // Убираем генерацию случайных рейтингов
     return React.createElement('div', {
       key: release.releaseId,
-      className: 'bg-opacity-5 hover:bg-opacity-10 bg-white p-1 lg:p-1 overflow-hidden flex flex-col justify-start relative origin-bottom-left w-full h-full rounded-xl border border-zinc-800 group duration-300'
+      className: 'release-card group'
     }, [
       // Обложка и информация релиза
       React.createElement('div', { key: 'cover', className: 'relative z-10' }, 
@@ -410,36 +423,48 @@ function ReleasesPage() {
     React.createElement('main', {}, [
       React.createElement('div', { key: 'header', className: 'container' }, [
         React.createElement('h1', { key: 'title', className: 'text-lg md:text-xl lg:text-3xl font-bold mb-4 lg:mb-8' }, 'Добавленные Релизы'),
-        React.createElement('div', { key: 'filter', className: 'rounded-lg border text-card-foreground shadow-sm p-3 bg-zinc-900 flex items-center gap-5' },
-          React.createElement('div', { className: 'md:flex md:items-center' }, [
-            React.createElement('div', { key: 'label', className: 'max-md:hidden font-bold text-muted-foreground mr-5 max-md:mb-3 max-md:text-sm' }, 'Тип релизов:'),
-            React.createElement('button', {
-              key: 'dropdown',
-              type: 'button',
-              role: 'combobox',
-              'aria-controls': 'radix-:r1c4:',
-              'aria-expanded': isDropdownOpen,
-              'aria-autocomplete': 'none',
-              dir: 'ltr',
-              'data-state': isDropdownOpen ? 'open' : 'closed',
-              className: 'flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-full md:w-[130px]',
-              onClick: () => setIsDropdownOpen(!isDropdownOpen)
-            }, [
-              React.createElement('span', { key: 'text', style: { pointerEvents: 'none' } }, releaseType),
-              React.createElement('svg', {
-                key: 'icon',
-                xmlns: 'http://www.w3.org/2000/svg',
-                width: '24',
-                height: '24',
-                viewBox: '0 0 24 24',
-                fill: 'none',
-                stroke: 'currentColor',
-                strokeWidth: '2',
-                strokeLinecap: 'round',
-                strokeLinejoin: 'round',
-                className: 'lucide lucide-chevron-down h-4 w-4 opacity-50',
-                'aria-hidden': 'true'
-              }, React.createElement('path', { d: 'm6 9 6 6 6-6' }))
+        React.createElement('div', { key: 'filter', className: 'releases-filter' },
+          React.createElement('div', { className: 'filter-content' }, [
+            React.createElement('div', { key: 'label', className: 'filter-label' }, 'Тип релизов:'),
+            React.createElement('div', { key: 'dropdown-wrapper', className: 'dropdown-wrapper', 'data-dropdown-wrapper': true }, [
+              React.createElement('button', {
+                key: 'dropdown',
+                type: 'button',
+                role: 'combobox',
+                'aria-expanded': isDropdownOpen,
+                'aria-autocomplete': 'none',
+                dir: 'ltr',
+                'data-state': isDropdownOpen ? 'open' : 'closed',
+                className: 'filter-dropdown',
+                onClick: () => setIsDropdownOpen(!isDropdownOpen)
+              }, [
+                React.createElement('span', { key: 'text', className: 'dropdown-text' }, releaseType),
+                React.createElement('svg', {
+                  key: 'icon',
+                  xmlns: 'http://www.w3.org/2000/svg',
+                  width: '24',
+                  height: '24',
+                  viewBox: '0 0 24 24',
+                  fill: 'none',
+                  stroke: 'currentColor',
+                  strokeWidth: '2',
+                  strokeLinecap: 'round',
+                  strokeLinejoin: 'round',
+                  className: 'dropdown-icon',
+                  'aria-hidden': 'true'
+                }, React.createElement('path', { d: 'm6 9 6 6 6-6' }))
+              ]),
+              // Выпадающее меню
+              isDropdownOpen ? React.createElement('div', {
+                key: 'menu',
+                className: 'dropdown-menu'
+              }, React.createElement('ul', { className: 'dropdown-list' },
+                releaseTypes.map(type => React.createElement('li', {
+                  key: type,
+                  className: `dropdown-item ${type === releaseType ? 'selected' : ''}`,
+                  onClick: () => handleReleaseTypeSelect(type)
+                }, type))
+              )) : null
             ])
           ])
         )
@@ -448,7 +473,7 @@ function ReleasesPage() {
       // Контент с релизами
       React.createElement('div', { key: 'content', className: 'container mt-5' },
         React.createElement('div', {},
-          React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xl:gap-5 xl:col-span-full' },
+          React.createElement('div', { className: 'releases-grid' },
             isLoading ? 
               React.createElement('div', { className: 'col-span-full text-center py-8' }, 'Загрузка...') :
             error ? 
