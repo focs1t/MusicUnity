@@ -2096,7 +2096,7 @@ const ProfilePage = () => {
                         {/* Авторы (объединенные артисты и продюсеры) */}
                         <div className="category-block">
                           <div className="category-header">
-                            <Link to="/authors" className="category-title">
+                            <Link to={`/profile/${userDetails?.userId || profileUserId}/authors`} className="category-title">
                               <PersonIcon className="category-icon" />
                               Авторы
                             </Link>
@@ -2137,7 +2137,7 @@ const ProfilePage = () => {
                         {/* Альбомы */}
                         <div className="category-block">
                           <div className="category-header">
-                            <Link to="/albums" className="category-title">
+                            <Link to={`/profile/${userDetails?.userId || profileUserId}/albums`} className="category-title">
                               <AlbumIcon className="category-icon" />
                               Альбомы
                             </Link>
@@ -2151,7 +2151,7 @@ const ProfilePage = () => {
                         {/* Синглы и EP */}
                         <div className="category-block">
                           <div className="category-header">
-                            <Link to="/singles" className="category-title">
+                            <Link to={`/profile/${userDetails?.userId || profileUserId}/singles`} className="category-title">
                               <MusicNoteIcon className="category-icon" />
                               Синглы и EP
                             </Link>
@@ -2166,7 +2166,7 @@ const ProfilePage = () => {
                         {otherReleases.length > 0 && (
                           <div className="category-block">
                             <div className="category-header">
-                              <Link to="/releases" className="category-title">
+                              <Link to={`/profile/${userDetails?.userId || profileUserId}/releases`} className="category-title">
                                 <LibraryMusicIcon className="category-icon" />
                                 Другие релизы
                               </Link>

@@ -194,6 +194,37 @@ export const userApi = {
       throw error;
     }
   },
+
+  /**
+   * Получение избранных релизов пользователя (алиас для getUserFavorites)
+   * @param {number} userId - ID пользователя
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getFavoriteReleases: async (userId, page = 0, size = 10) => {
+    return userApi.getUserFavorites(userId, page, size);
+  },
+
+  /**
+   * Получение отслеживаемых авторов пользователя (алиас для getUserFollowedAuthors)
+   * @param {number} userId - ID пользователя
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getFollowedAuthors: async (userId, page = 0, size = 10) => {
+    return userApi.getUserFollowedAuthors(userId, page, size);
+  },
+
+  /**
+   * Получение детальной информации о пользователе (алиас для getUserById)
+   * @param {number} userId - ID пользователя
+   * @returns {Promise<import('../../entities/user/model/types').User>}
+   */
+  getUserDetails: async (userId) => {
+    return userApi.getUserById(userId);
+  },
   
   /**
    * Получение отслеживаемых авторов пользователя

@@ -16,6 +16,9 @@ import AuthorLikesPage from '../../../../pages/AuthorLikesPage';
 import AuthorsPage from '../../../../pages/AuthorsPage';
 import AuthorPage from '../../../../pages/AuthorPage';
 import VerifiedAuthorsPage from '../../../../pages/VerifiedAuthorsPage';
+import ProfileAuthorsPage from '../../../../pages/ProfileAuthorsPage';
+import ProfileAlbumsPage from '../../../../pages/ProfileAlbumsPage';
+import ProfileSinglesPage from '../../../../pages/ProfileSinglesPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -40,6 +43,9 @@ const AppRouter = () => {
       <Route path="/profile/:userId" element={<PublicRoute element={<ProfilePage />} />} />
       <Route path="/profile/:userId/reviews" element={<PublicRoute element={<ProfilePage />} />} />
       <Route path="/profile/:userId/liked" element={<PublicRoute element={<ProfilePage />} />} />
+      <Route path="/profile/:userId/authors" element={<PublicRoute element={<ProfileAuthorsPage />} />} />
+      <Route path="/profile/:userId/albums" element={<PublicRoute element={<ProfileAlbumsPage />} />} />
+      <Route path="/profile/:userId/singles" element={<PublicRoute element={<ProfileSinglesPage />} />} />
       <Route path="/settings" element={<ProtectedRoute element={<SettingsPage />} />} />
       <Route path="/following-releases" element={<ProtectedRoute element={<FollowingReleasesPage />} />} />
       <Route path={ROUTES.CREATE_RELEASE} element={<ProtectedRoute element={<CreateReleasePage />} />} />
