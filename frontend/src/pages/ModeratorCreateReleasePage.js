@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, Typography, Alert, MenuItem, FormControl, InputLabel, Select, Chip, OutlinedInput, FormControlLabel, Checkbox, Card, Autocomplete, Paper, CircularProgress, IconButton } from '@mui/material';
+import { Box, TextField, Button, Typography, Alert, MenuItem, FormControl, InputLabel, Select, Chip, OutlinedInput, FormControlLabel, Checkbox, Card, Autocomplete, IconButton, Paper, CircularProgress } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -9,6 +9,8 @@ import { releaseApi } from '../shared/api/release';
 import { genreApi } from '../shared/api/genre';
 import { authorApi } from '../shared/api/author';
 import { fileApi } from '../shared/api/file';
+import { useAuth } from '../app/providers/AuthProvider';
+import { userApi } from '../shared/api/user';
 
 // Стилизованные компоненты
 const MainContainer = styled(Box)(({ theme }) => ({
@@ -196,8 +198,48 @@ const MenuProps = {
   },
 };
 
-const CreateReleasePage = () => {
+const ModeratorCreateReleasePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [userDetails, setUserDetails] = useState(null);
+  const [accessLoading, setAccessLoading] = useState(true);
+  
+  // Загружаем полные данные пользователя
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!user) {
+        setAccessLoading(false);
+        return;
+      }
+
+      // Если у пользователя уже есть поле rights, используем его
+      if (user.rights) {
+        setUserDetails(user);
+        setAccessLoading(false);
+        if (user.rights !== 'MODERATOR') {
+          navigate('/');
+        }
+        return;
+      }
+
+      // Иначе загружаем через API
+      try {
+        const userData = await userApi.getCurrentUser();
+        setUserDetails(userData);
+        setAccessLoading(false);
+        
+        if (userData.rights !== 'MODERATOR') {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки данных пользователя:', error);
+        setAccessLoading(false);
+        navigate('/');
+      }
+    };
+
+    checkAccess();
+  }, [user, navigate]);
   
   // Основные поля формы
   const [formData, setFormData] = useState({
@@ -205,46 +247,64 @@ const CreateReleasePage = () => {
     type: '',
     releaseDate: new Date().toISOString().split('T')[0],
     coverFile: null,
-    isArtist: false,
-    isProducer: false,
     genreIds: [],
-    otherAuthors: []
+    authors: []
   });
   
   // Состояния для интерфейса
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [genres, setGenres] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [coverPreview, setCoverPreview] = useState(null);
   
-  // Поля для добавления соавторов
+  // Поля для добавления авторов
   const [authorInput, setAuthorInput] = useState('');
   const [selectedAuthor, setSelectedAuthor] = useState(null);
   const [newAuthorIsArtist, setNewAuthorIsArtist] = useState(false);
   const [newAuthorIsProducer, setNewAuthorIsProducer] = useState(false);
 
-  // Загружаем список жанров и авторов при монтировании компонента
+  // Загрузка данных при монтировании
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
+      if (!userDetails || userDetails.rights !== 'MODERATOR') {
+        return; // Не загружаем данные пока не подтвердились права
+      }
+
       try {
+        setDataLoading(true);
+        console.log('Загружаем жанры и авторов...');
+        
         const [genresResponse, authorsResponse] = await Promise.all([
           genreApi.getAllGenres(),
           authorApi.getAllAuthorsForAutocomplete()
         ]);
-        setGenres(genresResponse);
-        setAuthors(authorsResponse);
+        
+        console.log('Жанры загружены:', genresResponse);
+        console.log('Авторы загружены:', authorsResponse);
+        
+        // Обрабатываем ответ от API - может быть Page или Array
+        const genresList = genresResponse?.content || genresResponse || [];
+        const authorsList = authorsResponse?.content || authorsResponse || [];
+        
+        setGenres(genresList);
+        setAuthors(authorsList);
+        
+        setError(''); // Очищаем ошибки при успешной загрузке
       } catch (err) {
-        console.error('Ошибка при загрузке данных:', err);
-        setError('Не удалось загрузить данные');
+        console.error('Ошибка загрузки данных:', err);
+        setError('Ошибка при загрузке данных: ' + (err.response?.data?.message || err.message));
+      } finally {
+        setDataLoading(false);
       }
     };
-    
-    fetchData();
-  }, []);
 
-  // Обработчики изменения полей формы
+    loadData();
+  }, [userDetails]); // Зависим от userDetails
+
+  // Обработчики изменений
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -260,61 +320,53 @@ const CreateReleasePage = () => {
     }));
   };
 
-  // Обработка загрузки обложки
   const handleCoverChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Проверяем тип файла
-      if (!file.type.startsWith('image/')) {
-        setError('Выберите файл изображения');
-        return;
-      }
+      handleInputChange('coverFile', file);
       
-      // Проверяем размер файла (максимум 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Размер файла не должен превышать 5MB');
-        return;
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        coverFile: file
-      }));
-
-      // Создаем предварительный просмотр
+      // Предварительный просмотр
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setCoverPreview(e.target.result);
-      };
+      reader.onload = (e) => setCoverPreview(e.target.result);
       reader.readAsDataURL(file);
-      setError('');
     }
   };
 
-  // Добавление соавтора
-  const handleAddAuthor = () => {
+  // Добавление автора
+  const addAuthor = () => {
     if (!authorInput.trim()) {
-      setError('Введите имя автора');
+      setError('Введите или выберите автора');
       return;
     }
-    
+
     if (!newAuthorIsArtist && !newAuthorIsProducer) {
       setError('Выберите хотя бы одну роль для автора');
       return;
     }
 
     const newAuthor = {
-      authorName: selectedAuthor ? selectedAuthor.authorName : authorInput.trim(),
+      authorId: selectedAuthor?.authorId || null, // ID если выбран из списка
+      authorName: authorInput.trim(),
       artist: newAuthorIsArtist,
       producer: newAuthorIsProducer
     };
 
+    // Проверяем, что автор не добавлен уже
+    const exists = formData.authors.some(author => 
+      author.authorName.toLowerCase() === newAuthor.authorName.toLowerCase()
+    );
+
+    if (exists) {
+      setError('Этот автор уже добавлен');
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
-      otherAuthors: [...prev.otherAuthors, newAuthor]
+      authors: [...prev.authors, newAuthor]
     }));
 
-    // Очищаем поля
+    // Очищаем форму добавления автора
     setAuthorInput('');
     setSelectedAuthor(null);
     setNewAuthorIsArtist(false);
@@ -322,11 +374,11 @@ const CreateReleasePage = () => {
     setError('');
   };
 
-  // Удаление соавтора
-  const handleRemoveAuthor = (index) => {
+  // Удаление автора
+  const removeAuthor = (index) => {
     setFormData(prev => ({
       ...prev,
-      otherAuthors: prev.otherAuthors.filter((_, i) => i !== index)
+      authors: prev.authors.filter((_, i) => i !== index)
     }));
   };
 
@@ -347,15 +399,17 @@ const CreateReleasePage = () => {
       return;
     }
 
-    if (!formData.isArtist && !formData.isProducer) {
-      setError('Выберите хотя бы одну роль для себя');
-      return;
-    }
-
     if (formData.genreIds.length === 0) {
       setError('Выберите хотя бы один жанр');
       return;
     }
+
+    if (formData.authors.length === 0) {
+      setError('Добавьте хотя бы одного автора');
+      return;
+    }
+
+
 
     setLoading(true);
 
@@ -366,47 +420,51 @@ const CreateReleasePage = () => {
         console.log('Загружаем обложку:', formData.coverFile.name);
         try {
           const uploadResult = await fileApi.uploadCover(formData.coverFile);
-          coverUrl = uploadResult.permanentUrl; // Постоянная ссылка на файл
+          coverUrl = uploadResult.permanentUrl;
           console.log('Обложка загружена успешно:', uploadResult);
         } catch (uploadError) {
           console.error('Ошибка при загрузке обложки:', uploadError);
-          setError('Ошибка при загрузке обложки: ' + (uploadError.response?.data?.message || uploadError.message));
-          setLoading(false);
-          return;
+          // Предлагаем создать релиз без обложки
+          const shouldContinue = window.confirm(
+            'Ошибка при загрузке обложки. Хотите создать релиз без обложки?'
+          );
+          if (!shouldContinue) {
+            setLoading(false);
+            setError('Создание релиза отменено из-за ошибки загрузки обложки');
+            return;
+          }
+          console.log('Создаем релиз без обложки...');
+          coverUrl = ""; // Продолжаем без обложки
         }
       }
 
-      // Преобразуем данные в правильный формат для бэкенда (точно как в Swagger)
+      // Преобразуем данные в правильный формат для модераторского API
       const requestData = {
         title: formData.title.trim(),
-        type: formData.type, // Строка, как ожидает enum
-        releaseDate: formData.releaseDate, // Строка в формате YYYY-MM-DD
-        coverUrl: coverUrl, // Полная ссылка на файл
-        releaseLink: "", // Пустая строка вместо null
-        artist: Boolean(formData.isArtist),
-        producer: Boolean(formData.isProducer),
-        genreIds: formData.genreIds.map(id => Number(id)), // Массив чисел (Jackson преобразует в Set)
-        otherAuthors: formData.otherAuthors.length > 0 ? formData.otherAuthors.map(author => ({
+        type: formData.type,
+        releaseDate: formData.releaseDate,
+        coverUrl: coverUrl,
+        releaseLink: "",
+        authors: formData.authors.map(author => ({
           authorName: String(author.authorName).trim(),
           artist: Boolean(author.artist),
           producer: Boolean(author.producer)
-        })) : [] // Пустой массив вместо null
+        })),
+        genreIds: formData.genreIds.map(id => Number(id))
       };
 
-      console.log('=== ОТПРАВЛЯЕМЫЕ ДАННЫЕ ===');
+      console.log('=== ОТПРАВЛЯЕМЫЕ ДАННЫЕ (МОДЕРАТОР) ===');
       console.log('title:', requestData.title, typeof requestData.title);
       console.log('type:', requestData.type, typeof requestData.type);
       console.log('releaseDate:', requestData.releaseDate, typeof requestData.releaseDate);
       console.log('coverUrl:', requestData.coverUrl, 'длина:', requestData.coverUrl.length);
       console.log('releaseLink:', requestData.releaseLink);
-      console.log('artist:', requestData.artist, typeof requestData.artist);
-      console.log('producer:', requestData.producer, typeof requestData.producer);
+      console.log('authors:', requestData.authors);
       console.log('genreIds:', requestData.genreIds, requestData.genreIds.map(id => typeof id));
-      console.log('otherAuthors:', requestData.otherAuthors);
       console.log('Полный объект requestData:', JSON.stringify(requestData, null, 2));
-      console.log('==========================');
+      console.log('==========================================');
 
-      const result = await releaseApi.createOwnRelease(requestData);
+      const result = await releaseApi.createRelease(requestData);
       setSuccess('Релиз успешно создан!');
       
       // Перенаправляем на страницу созданного релиза через 2 секунды
@@ -434,6 +492,46 @@ const CreateReleasePage = () => {
     }
   };
 
+  // Если нет пользователя, показываем загрузку
+  if (!user) {
+    return (
+      <MainContainer>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <CircularProgress />
+        </Box>
+      </MainContainer>
+    );
+  }
+
+  // Если данные еще загружаются, показываем загрузку
+  if (accessLoading || !userDetails) {
+    return (
+      <MainContainer>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <CircularProgress />
+        </Box>
+      </MainContainer>
+    );
+  }
+
+  // Если нет прав модератора, показываем ошибку
+  if (userDetails.rights !== 'MODERATOR') {
+    return (
+      <MainContainer>
+        <Box sx={{ textAlign: 'center', minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 600, fontSize: '1.5rem', mb: 2, color: 'white' }}>
+              Доступ запрещен
+            </Typography>
+            <Typography sx={{ color: 'rgba(161, 161, 170, 0.8)', fontSize: '0.875rem' }}>
+              У вас нет прав для просмотра этой страницы.
+            </Typography>
+          </Box>
+        </Box>
+      </MainContainer>
+    );
+  }
+
   return (
     <MainContainer>
       <ContentContainer>
@@ -455,6 +553,12 @@ const CreateReleasePage = () => {
           </Alert>
         )}
 
+        {dataLoading && (
+          <Alert severity="info" sx={{ mb: 3, bgcolor: '#1976d2', color: 'white' }}>
+            Загружаем жанры и авторов...
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit}>
           <FormCard>
             <CardHeader>
@@ -467,7 +571,8 @@ const CreateReleasePage = () => {
             </CardHeader>
             
             <CardContent>
-              <StyledTextField
+              
+                            <StyledTextField
                 fullWidth
                 label="Название релиза"
                 value={formData.title}
@@ -506,6 +611,8 @@ const CreateReleasePage = () => {
                   shrink: true
                 }}
               />
+
+
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle1" gutterBottom>
@@ -555,45 +662,14 @@ const CreateReleasePage = () => {
           <FormCard>
             <CardHeader>
               <Typography variant="h4" sx={{ fontWeight: 600, fontSize: '1.5rem' }}>
-                Ваша роль в релизе <span style={{ color: '#ef4444' }}>*</span>
-              </Typography>
-            </CardHeader>
-            
-            <CardContent>
-              
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.isArtist}
-                    onChange={(e) => handleInputChange('isArtist', e.target.checked)}
-                    sx={{ color: '#aaa', '&.Mui-checked': { color: '#1976d2' } }}
-                  />
-                }
-                label="Исполнитель"
-              />
-              
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.isProducer}
-                    onChange={(e) => handleInputChange('isProducer', e.target.checked)}
-                    sx={{ color: '#aaa', '&.Mui-checked': { color: '#1976d2' } }}
-                  />
-                }
-                label="Продюсер"
-              />
-            </CardContent>
-          </FormCard>
-
-          <FormCard>
-            <CardHeader>
-              <Typography variant="h4" sx={{ fontWeight: 600, fontSize: '1.5rem' }}>
                 Жанры
               </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(161, 161, 170, 0.8)', fontSize: '0.875rem' }}>
+                Выберите один или несколько жанров для релиза
+              </Typography>
             </CardHeader>
             
             <CardContent>
-              
               <StyledFormControl fullWidth margin="normal" required>
                 <InputLabel>Выберите жанры</InputLabel>
                 <Select
@@ -604,11 +680,12 @@ const CreateReleasePage = () => {
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {selected.map((value) => {
-                        const genre = genres.find(g => g.genreId === value);
+                        const genre = genres.find(g => g.genreId === parseInt(value));
                         return (
                           <Chip 
                             key={value} 
                             label={genre?.name || value}
+                            size="small"
                             sx={{ bgcolor: '#444', color: 'white' }}
                           />
                         );
@@ -654,15 +731,11 @@ const CreateReleasePage = () => {
                 <Autocomplete
                   fullWidth
                   options={authors}
-                  getOptionLabel={(option) => typeof option === 'string' ? option : option.authorName}
+                  getOptionLabel={(option) => option.authorName}
                   value={selectedAuthor}
                   onChange={(event, newValue) => {
-                    if (typeof newValue === 'object' && newValue !== null) {
-                      setSelectedAuthor(newValue);
-                      setAuthorInput(newValue.authorName);
-                    } else {
-                      setSelectedAuthor(null);
-                    }
+                    setSelectedAuthor(newValue);
+                    setAuthorInput(newValue ? newValue.authorName : '');
                   }}
                   onInputChange={(event, newInputValue) => {
                     setAuthorInput(newInputValue);
@@ -707,19 +780,19 @@ const CreateReleasePage = () => {
                 </Box>
 
                 <SecondaryButton
-                  onClick={handleAddAuthor}
+                  onClick={addAuthor}
                 >
                   Добавить автора
                 </SecondaryButton>
               </Box>
 
               {/* Список добавленных авторов */}
-              {formData.otherAuthors.length > 0 && (
+              {formData.authors.length > 0 && (
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="subtitle2" gutterBottom sx={{ color: 'white', fontWeight: 500 }}>
                     Добавленные авторы:
                   </Typography>
-                  {formData.otherAuthors.map((author, index) => (
+                  {formData.authors.map((author, index) => (
                     <AuthorBlock key={index}>
                       <Box>
                         <Typography variant="body1" sx={{ color: 'white', fontWeight: 500 }}>
@@ -735,7 +808,7 @@ const CreateReleasePage = () => {
                       <DeleteButton
                         variant="outlined"
                         size="small"
-                        onClick={() => handleRemoveAuthor(index)}
+                        onClick={() => removeAuthor(index)}
                         startIcon={<DeleteIcon />}
                       >
                         Удалить
@@ -769,4 +842,4 @@ const CreateReleasePage = () => {
   );
 };
 
-export default CreateReleasePage;
+export default ModeratorCreateReleasePage; 
