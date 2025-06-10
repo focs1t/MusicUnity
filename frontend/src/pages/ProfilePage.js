@@ -1849,6 +1849,8 @@ const ProfilePage = () => {
     // В противном случае используем значение из данных рецензии
     return review.likesCount !== undefined ? review.likesCount : 0;
   };
+
+
   
   return (
     <div className="site-content">

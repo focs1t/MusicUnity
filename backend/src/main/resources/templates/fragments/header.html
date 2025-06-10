@@ -138,6 +138,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activePage == 'registration-requests' ? 'active' : ''}" href="/admin/registration-requests">
+                        <i class="bi bi-person-plus"></i> Заявки на регистрацию
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" th:classappend="${activePage == 'genres' ? 'active' : ''}" href="/admin/genres">
                         <i class="bi bi-tags"></i> Жанры
                     </a>

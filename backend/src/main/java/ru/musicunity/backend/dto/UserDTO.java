@@ -22,4 +22,7 @@ public class UserDTO {
     private Long totalReviewsCount;
     private Long extendedReviewsCount;
     private Long simpleReviewsCount;
+    
+    // Информация о привязанном авторе
+    private AuthorDTO linkedAuthor;
 } 

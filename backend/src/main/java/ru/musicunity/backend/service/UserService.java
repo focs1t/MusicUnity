@@ -14,15 +14,19 @@ import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
 import ru.musicunity.backend.dto.UserRatingDTO;
+import ru.musicunity.backend.exception.AuthorNotFoundException;
 import ru.musicunity.backend.exception.UserNotFoundException;
+import ru.musicunity.backend.mapper.AuthorMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Audit;
+import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.LikeType;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.repository.AuditRepository;
+import ru.musicunity.backend.repository.AuthorRepository;
 import ru.musicunity.backend.repository.LikeRepository;
 import ru.musicunity.backend.repository.ReviewRepository;
 import ru.musicunity.backend.repository.UserRepository;
@@ -46,6 +50,8 @@ public class UserService {
     private final AuthorFollowingService authorFollowingService;
     private final FollowedReleasesService followedReleasesService;
     private final UserMapper userMapper;
+    private final AuthorRepository authorRepository;
+    private final AuthorMapper authorMapper;
 
     /**
      * Получение топ-100 пользователей по рейтингу
@@ -217,6 +223,50 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
         user.setRights(role);
         userRepository.save(user);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void linkUserToAuthor(Long userId, Long authorId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        Author author = authorRepository.findById(authorId)
+                .orElseThrow(() -> new AuthorNotFoundException(authorId));
+        
+        // Привязываем пользователя к автору
+        author.setUser(user);
+        // Присваиваем роль AUTHOR
+        user.setRights(UserRole.AUTHOR);
+        // Верифицируем автора если пользователь привязан
+        author.setIsVerified(true);
+        
+        authorRepository.save(author);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void unlinkUserFromAuthor(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        
+        // Находим автора, привязанного к пользователю
+        Author author = authorRepository.findByUserUserId(userId).orElse(null);
+        if (author != null) {
+            // Отвязываем пользователя от автора
+            author.setUser(null);
+            author.setIsVerified(false);
+            authorRepository.save(author);
+        }
+        
+        // Меняем роль пользователя на USER
+        user.setRights(UserRole.USER);
+        userRepository.save(user);
+    }
+
+    public Optional<AuthorDTO> getLinkedAuthor(Long userId) {
+        return authorRepository.findByUserUserId(userId)
+                .map(authorMapper::toDTO);
     }
 
     public Page<ReleaseDTO> getFavoriteReleases(Long userId, Pageable pageable) {

@@ -115,6 +115,13 @@
                                                     th:data-current-role="${user.rights}">
                                                 <i class="bi bi-shield-lock"></i>
                                             </button>
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#linkAuthorModal" 
+                                                    th:data-user-id="${user.userId}"
+                                                    th:data-username="${user.username}">
+                                                <i class="bi bi-person-plus"></i>
+                                            </button>
                                             <form th:if="${!user.isBlocked}" th:action="@{/admin/users/{id}/ban(id=${user.userId})}" method="post" class="d-inline">
                                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Заблокировать пользователя?')">
@@ -180,6 +187,26 @@
                             <p><strong>Дата регистрации:</strong> <span th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy HH:mm')}"></span></p>
                         </div>
                     </div>
+                    <div th:if="${user.rights == T(ru.musicunity.backend.pojo.enums.UserRole).AUTHOR}" class="mt-3">
+                        <hr>
+                        <h6>Информация об авторе:</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span th:if="${user.linkedAuthor != null}">
+                                Привязан к автору: <strong th:text="${user.linkedAuthor.authorName}">Имя автора</strong>
+                                <span class="badge bg-success ms-2" th:if="${user.linkedAuthor.isVerified}">Верифицирован</span>
+                            </span>
+                            <span th:unless="${user.linkedAuthor != null}">
+                                <strong class="text-warning">Автор не привязан</strong>
+                            </span>
+                            <form th:action="@{/admin/users/{id}/unlink-author(id=${user.userId})}" method="post" class="d-inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                        onclick="return confirm('Отвязать пользователя от автора? Роль будет изменена на USER.')">
+                                    Отвязать от автора
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -208,6 +235,40 @@
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                             <button type="submit" class="btn btn-primary">Сохранить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно привязки к автору -->
+    <div class="modal fade" id="linkAuthorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Привязать пользователя <span id="linkAuthorUsername"></span> к автору</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="linkAuthorForm" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <div class="mb-3">
+                            <label for="authorId" class="form-label">Выберите автора</label>
+                            <select class="form-select" id="authorId" name="authorId" required>
+                                <option value="">-- Выберите автора --</option>
+                                <option th:each="author : ${allAuthors.content}" 
+                                        th:value="${author.authorId}" 
+                                        th:text="${author.authorName} + ' (ID: ' + ${author.authorId} + ')'">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="alert alert-info">
+                            <strong>Внимание:</strong> При привязке пользователю будет автоматически присвоена роль "Автор", а сам автор будет верифицирован.
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-primary">Привязать</button>
                         </div>
                     </form>
                 </div>
@@ -296,6 +357,41 @@
                     handleSort(header.dataset.sort);
                 });
             });
+            
+            // Обработчик для модального окна изменения роли
+            const changeRoleModal = document.getElementById('changeRoleModal');
+            if (changeRoleModal) {
+                changeRoleModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const userId = button.getAttribute('data-user-id');
+                    const username = button.getAttribute('data-username');
+                    const currentRole = button.getAttribute('data-current-role');
+                    
+                    const modalTitle = changeRoleModal.querySelector('#modalUsername');
+                    const form = changeRoleModal.querySelector('#changeRoleForm');
+                    const roleSelect = changeRoleModal.querySelector('#role');
+                    
+                    modalTitle.textContent = username;
+                    form.action = `/admin/users/${userId}/role`;
+                    roleSelect.value = currentRole;
+                });
+            }
+            
+            // Обработчик для модального окна привязки к автору
+            const linkAuthorModal = document.getElementById('linkAuthorModal');
+            if (linkAuthorModal) {
+                linkAuthorModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const userId = button.getAttribute('data-user-id');
+                    const username = button.getAttribute('data-username');
+                    
+                    const modalTitle = linkAuthorModal.querySelector('#linkAuthorUsername');
+                    const form = linkAuthorModal.querySelector('#linkAuthorForm');
+                    
+                    modalTitle.textContent = username;
+                    form.action = `/admin/users/${userId}/link-author`;
+                });
+            }
         });
 
         // Обработчик модального окна изменения роли

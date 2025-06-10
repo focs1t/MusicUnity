@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, Button, TextField, Box, Typography, Checkbox, FormControlLabel, Alert } from '@mui/material';
+import { Dialog, DialogContent, Button, TextField, Box, Typography, Checkbox, FormControlLabel, Alert, Radio, RadioGroup, FormControl, FormLabel } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { authModel } from '../../../entities/auth';
 import { modalStyles } from './styles';
+import httpClient from '../../../shared/api/httpClient';
 
 const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
   const dispatch = useDispatch();
@@ -15,7 +16,9 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    agreeTerms: false
+    agreeTerms: false,
+    userType: 'user', // 'user' или 'author'
+    authorName: '' // для авторов
   });
 
   const [errors, setErrors] = useState({});
@@ -48,7 +51,9 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
       email: '',
       password: '',
       confirmPassword: '',
-      agreeTerms: false
+      agreeTerms: false,
+      userType: 'user',
+      authorName: ''
     });
     setErrors({});
     setRegistrationSuccess(false);
@@ -96,6 +101,13 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
       newErrors.confirmPassword = 'Пароли не совпадают';
     }
     
+    // Валидация для авторов
+    if (registerData.userType === 'author') {
+      if (!registerData.authorName || registerData.authorName.trim().length < 2) {
+        newErrors.authorName = 'Имя автора должно быть не менее 2 символов';
+      }
+    }
+    
     if (!registerData.agreeTerms) {
       newErrors.agreeTerms = 'Необходимо согласиться с условиями';
     }
@@ -104,18 +116,39 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validate()) {
-      // Устанавливаем флаг попытки регистрации
       setRegisterAttempted(true);
       
-      dispatch(authModel.register(
-        registerData.username,
-        registerData.email,
-        registerData.password
-      ));
+      try {
+        if (registerData.userType === 'user') {
+          // Обычная регистрация пользователя
+          dispatch(authModel.register(
+            registerData.username,
+            registerData.email,
+            registerData.password
+          ));
+        } else {
+          // Отправка заявки на регистрацию автора
+          const response = await httpClient.post('/api/registration/author-request', {
+            email: registerData.email,
+            username: registerData.username,
+            password: registerData.password,
+            authorName: registerData.authorName
+          });
+          
+          // Показываем особое сообщение об успехе для заявок авторов
+          setRegistrationSuccess(true);
+          setRegisterData(prev => ({ ...prev, userType: 'author-request-sent' }));
+        }
+      } catch (error) {
+        console.error('Ошибка регистрации:', error);
+        setErrors({ 
+          general: error.response?.data?.error || 'Произошла ошибка при регистрации' 
+        });
+      }
     }
   };
   
@@ -160,10 +193,14 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
           // Сообщение об успешной регистрации
           <Box>
             <Alert severity="success" sx={modalStyles.successAlert}>
-              Вы успешно зарегистрировались!
+              {registerData.userType === 'author-request-sent' 
+                ? 'Заявка отправлена!' 
+                : 'Вы успешно зарегистрировались!'}
             </Alert>
             <Typography sx={modalStyles.normalText}>
-              Теперь вы можете использовать все возможности нашего сервиса. Добро пожаловать в MusicUnity!
+              {registerData.userType === 'author-request-sent' 
+                ? 'Ваша заявка на роль автора отправлена. Для подтверждения статуса автора напишите на musicunity@mail.ru с доказательствами ваших музыкальных работ.' 
+                : 'Теперь вы можете использовать все возможности нашего сервиса. Добро пожаловать в MusicUnity!'}
             </Typography>
             <Button
               fullWidth
@@ -171,7 +208,9 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               onClick={handleCloseAfterSuccess}
               sx={modalStyles.button}
             >
-              Начать пользоваться сервисом
+              {registerData.userType === 'author-request-sent' 
+                ? 'Понятно' 
+                : 'Начать пользоваться сервисом'}
             </Button>
           </Box>
         ) : (
@@ -260,6 +299,69 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               FormHelperTextProps={{ sx: modalStyles.helperText }}
               sx={modalStyles.textField}
             />
+
+            {/* Выбор типа регистрации */}
+            <FormControl component="fieldset" sx={{ mt: 2, mb: 1 }}>
+              <FormLabel component="legend" sx={{ color: 'white', '&.Mui-focused': { color: 'white' } }}>
+                Тип аккаунта
+              </FormLabel>
+              <RadioGroup
+                name="userType"
+                value={registerData.userType}
+                onChange={handleChange}
+                sx={{ mt: 1 }}
+              >
+                <FormControlLabel 
+                  value="user" 
+                  control={<Radio sx={{ color: 'white', '&.Mui-checked': { color: '#1976d2' } }} />} 
+                  label={<Typography sx={{ color: 'white' }}>Пользователь (слушатель)</Typography>}
+                />
+                <FormControlLabel 
+                  value="author" 
+                  control={<Radio sx={{ color: 'white', '&.Mui-checked': { color: '#1976d2' } }} />} 
+                  label={<Typography sx={{ color: 'white' }}>Автор (музыкант/артист)</Typography>}
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {/* Поле имени автора */}
+            {registerData.userType === 'author' && (
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="authorName"
+                label="Имя автора"
+                name="authorName"
+                autoComplete="name"
+                value={registerData.authorName}
+                onChange={handleChange}
+                error={!!errors.authorName}
+                helperText={errors.authorName}
+                variant="outlined"
+                InputLabelProps={{ 
+                  sx: modalStyles.inputLabel,
+                  required: true
+                }}
+                FormHelperTextProps={{ sx: modalStyles.helperText }}
+                sx={modalStyles.textField}
+              />
+            )}
+
+            {/* Информация для авторов */}
+            {registerData.userType === 'author' && (
+              <Alert severity="info" sx={{ mt: 2, bgcolor: 'rgba(33, 150, 243, 0.1)', color: '#2196f3' }}>
+                <Typography sx={{ fontWeight: 'bold', mb: 1 }}>Подтверждение статуса автора:</Typography>
+                <Typography>
+                  После регистрации напишите на email{' '}
+                  <strong style={{ color: '#1976d2' }}>musicunity@mail.ru</strong>{' '}
+                  для подтверждения, что вы являетесь автором музыки.
+                </Typography>
+                <Typography sx={{ mt: 1, fontSize: '0.9em' }}>
+                  В письме укажите ваши музыкальные работы, ссылки на треки или альбомы.
+                </Typography>
+              </Alert>
+            )}
             
             <FormControlLabel
               control={
@@ -283,9 +385,9 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               </Typography>
             )}
             
-            {error && registerAttempted && (
+            {((error && registerAttempted) || errors.general) && (
               <Typography sx={modalStyles.errorText}>
-                {error}
+                {errors.general || error}
               </Typography>
             )}
             
@@ -296,7 +398,9 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               disabled={loading}
               sx={modalStyles.button}
             >
-              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+              {loading 
+                ? (registerData.userType === 'author' ? 'Отправка заявки...' : 'Регистрация...') 
+                : (registerData.userType === 'author' ? 'Отправить заявку' : 'Зарегистрироваться')}
             </Button>
             
             <Box sx={modalStyles.flexCenter}>
