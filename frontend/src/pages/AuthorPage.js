@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { authorApi } from '../shared/api/author';
 import { releaseApi } from '../shared/api/release';
 import { userApi } from '../shared/api/user';
+import Notification from '../components/Notification';
 import './AuthorPage.css';
 
 const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -31,6 +32,7 @@ const AuthorPage = () => {
   const [error, setError] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     const fetchAuthorData = async () => {
@@ -43,7 +45,7 @@ const AuthorPage = () => {
         setAuthor(authorData);
         setFollowersCount(authorData.followingCount || 0);
 
-        // Проверяем подписку на автора
+        // Проверяем подписку на автора только для авторизованных пользователей
         const currentUserId = getCurrentUserId();
         if (currentUserId) {
           try {
@@ -51,8 +53,14 @@ const AuthorPage = () => {
             setIsFollowing(isFollowingAuthor);
           } catch (err) {
             console.error('Ошибка при проверке подписки:', err);
+            // Если ошибка 401 или 403, пользователь не авторизован
+            if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+              console.log('Пользователь не авторизован или нет прав для проверки подписки');
+            }
             setIsFollowing(false);
           }
+        } else {
+          setIsFollowing(false);
         }
 
         // Получаем релизы автора (лучшие работы)
@@ -91,6 +99,21 @@ const AuthorPage = () => {
       }
     } catch (err) {
       console.error('Ошибка при изменении подписки:', err);
+      
+      // Проверяем на ошибку автора
+      if (err.response && err.response.status === 403 && 
+          err.response.data && err.response.data.message && 
+          err.response.data.message.includes('не может добавлять релизы в предпочтения')) {
+        setNotification({
+          message: 'Автор не может подписываться на других авторов',
+          type: 'error'
+        });
+      } else {
+        setNotification({
+          message: 'Ошибка при подписке',
+          type: 'error'
+        });
+      }
     }
   };
 
@@ -145,6 +168,14 @@ const AuthorPage = () => {
 
   return (
     <div className="author-page-container">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      
       <main>
         <div className="container">
           {/* Главная секция с фоном */}

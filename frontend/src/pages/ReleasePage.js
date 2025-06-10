@@ -292,28 +292,33 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
               <span className="font-bold text-base lg:text-base">
                 {review.likesCount !== undefined ? review.likesCount : 0}
               </span>
-              
-              {/* Отображение аватарок авторов лайков */}
-              {authorLikes.length > 0 && (
-                <div className="flex items-center ml-2 gap-1">
+            </button>
+            
+            {/* Авторские лайки */}
+            {authorLikes.length > 0 && (
+              <div className="author-likes-section ml-3">
+                <div className="author-likes-avatars flex items-center gap-1">
                   {authorLikes.slice(0, 3).map((authorLike, index) => (
                     <img
-                      key={`author-like-${index}`}
+                      key={index}
                       src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
-                      alt={`Лайк от ${authorLike.author?.name || 'автора'}`}
-                      className="w-6 h-6 rounded-full border border-zinc-600"
-                      onError={(e) => handleImageError(e, DEFAULT_AVATAR_PLACEHOLDER)}
-                      title={`Лайк от автора: ${authorLike.author?.name || 'Неизвестный автор'}`}
+                      alt={authorLike.author?.username || 'Автор'}
+                      className="w-6 h-6 rounded-full border border-yellow-500"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+                      }}
+                      title={`Авторский лайк от ${authorLike.author?.username || 'Автор'}`}
                     />
                   ))}
                   {authorLikes.length > 3 && (
-                    <span className="text-xs text-zinc-400 ml-1">
+                    <span className="text-xs text-yellow-500 ml-1">
                       +{authorLikes.length - 3}
                     </span>
                   )}
                 </div>
-              )}
-            </button>
+              </div>
+            )}
             
             {/* Всплывающее сообщение */}
             {showMessage && (
@@ -625,6 +630,27 @@ function ReleasePage() {
       setAuthorLikes(authorLikesData);
     } catch (error) {
       console.error('Ошибка при загрузке авторских лайков:', error);
+    }
+  };
+  
+  // Функция для обновления авторских лайков для конкретной рецензии
+  const updateAuthorLikesForReview = async (reviewId) => {
+    try {
+      const updatedAuthorLikes = await likeApi.getAuthorLikesByReview(reviewId);
+      if (updatedAuthorLikes && updatedAuthorLikes.length > 0) {
+        setAuthorLikes(prev => ({
+          ...prev,
+          [reviewId]: updatedAuthorLikes
+        }));
+      } else {
+        setAuthorLikes(prev => {
+          const newAuthorLikes = { ...prev };
+          delete newAuthorLikes[reviewId];
+          return newAuthorLikes;
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении авторских лайков:', error);
     }
   };
 
@@ -1024,6 +1050,9 @@ function ReleasePage() {
                 : r
             )
           );
+          
+          // Обновляем авторские лайки после удаления лайка
+          await updateAuthorLikesForReview(reviewId);
         } catch (countError) {
           console.error('Ошибка при получении количества лайков:', countError);
         }
@@ -1091,6 +1120,9 @@ function ReleasePage() {
                 : r
             )
           );
+          
+          // Обновляем авторские лайки после добавления лайка
+          await updateAuthorLikesForReview(reviewId);
         } catch (countError) {
           console.error('Ошибка при получении количества лайков:', countError);
         }
