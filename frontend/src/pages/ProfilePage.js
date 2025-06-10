@@ -208,7 +208,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
               </div>
             </div>
             
-            <Link to={`/releases/${getReleaseId()}`} className="shrink-0 size-10 lg:size-10 block" data-state="closed">
+            <Link to={`/release/${getReleaseId()}`} className="shrink-0 size-10 lg:size-10 block" data-state="closed">
               <img 
                 alt={getReleaseTitle()} 
                 loading="lazy" 
@@ -1782,7 +1782,7 @@ const ProfilePage = () => {
       
       return (
         <div key={release.releaseId} className="album-item">
-          <Link className="album-link" to={`/releases/${release.releaseId}`}>
+                          <Link className="album-link" to={`/release/${release.releaseId}`}>
             <img 
               alt={release.title || altText} 
               loading="lazy" 
@@ -1791,7 +1791,7 @@ const ProfilePage = () => {
               onError={(e) => handleReleaseImageError(e)}
             />
           </Link>
-          <Link className="album-name text-white no-underline" to={`/releases/${release.releaseId}`}>
+                      <Link className="album-name text-white no-underline" to={`/release/${release.releaseId}`}>
             {release.title || altText}
           </Link>
         </div>

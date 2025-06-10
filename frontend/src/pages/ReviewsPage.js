@@ -192,7 +192,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
   const getTrackData = () => {
     const trackData = review.track || review.release || {};
     return {
-      id: trackData.id || trackData.releaseId || trackData.trackId || 0,
+      id: trackData.releaseId || trackData.id || trackData.trackId || review.releaseId || 0,
       title: trackData.title || "Трек",
       cover: trackData.cover || trackData.coverUrl || DEFAULT_COVER_PLACEHOLDER
     };
@@ -336,7 +336,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
           React.createElement(Link, {
             className: 'shrink-0 size-10 lg:size-10 block',
             'data-state': 'closed',
-            to: `/releases/${track.id}`,
+            to: `/release/${track.id}`,
             key: 'track-cover-link'
           }, 
             React.createElement('img', {

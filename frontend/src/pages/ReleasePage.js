@@ -1231,8 +1231,7 @@ function ReleasePage() {
               <div className="actions-container">
                 <div className="bookmark-button">
                   <button 
-                    data-state={inFavorites ? "open" : "closed"} 
-                    onClick={handleToggleFavorite}
+                    data-state={inFavorites ? "open" : "closed"}
                   >
                     <div className="bookmark-content">
                       <svg 
@@ -1254,11 +1253,12 @@ function ReleasePage() {
                 <button 
                   className="like-button" 
                   data-state="closed"
+                  onClick={handleToggleFavorite}
                 >
                   <svg 
-                    stroke="currentColor" 
-                    fill="currentColor" 
-                    strokeWidth="0" 
+                    stroke={inFavorites ? "none" : "currentColor"} 
+                    fill={inFavorites ? "#ef4444" : "none"} 
+                    strokeWidth={inFavorites ? "0" : "2"} 
                     viewBox="0 0 24 24" 
                     style={{ width: '1.5rem', height: '1.5rem' }} 
                     height="1em" 

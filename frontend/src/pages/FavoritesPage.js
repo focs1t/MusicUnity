@@ -156,7 +156,7 @@ const FavoritesPage = () => {
                         style={{ width: '100%', height: 200, objectFit: 'cover' }}
                       />
                       <CardContent>
-                        <Typography variant="h6" component={Link} to={`/releases/${release.releaseId}`} sx={{ color: 'white', textDecoration: 'none' }}>
+                        <Typography variant="h6" component={Link} to={`/release/${release.releaseId}`} sx={{ color: 'white', textDecoration: 'none' }}>
                           {release.title}
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
