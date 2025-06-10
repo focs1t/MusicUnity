@@ -1237,6 +1237,39 @@
   object-fit: cover;
 }
 
+/* Принудительные стили для обложек релизов в рецензиях - МАКСИМАЛЬНАЯ СПЕЦИФИЧНОСТЬ */
+a.shrink-0.size-10.lg\:size-10.block,
+a.shrink-0.size-10.block,
+.shrink-0.size-10.lg\:size-10,
+.shrink-0.size-10 {
+  width: 40px !important;
+  height: 40px !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+a.shrink-0.size-10.lg\:size-10.block img,
+a.shrink-0.size-10.block img,
+.shrink-0.size-10.lg\:size-10 img,
+.shrink-0.size-10 img,
+.size-10 img, 
+.size-10 > img,
+.lg\:size-10 img,
+.lg\:size-10 > img,
+img.rounded-md.w-full.h-full.object-cover,
+img.object-cover {
+  object-fit: cover !important;
+  object-position: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
 .h-full {
   height: 100%;
 }

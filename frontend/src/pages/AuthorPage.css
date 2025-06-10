@@ -709,7 +709,8 @@
 
 .author-page-container .release-row-cover {
   height: 50px;
-  width: auto;
+  width: 50px;
+  object-fit: cover;
   border-radius: 5px;
   transition: all 0.3s ease;
 }
@@ -717,6 +718,7 @@
 @media (min-width: 1024px) {
   .author-page-container .release-row-cover {
     height: 71px;
+    width: 71px;
   }
 }
 

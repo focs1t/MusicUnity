@@ -137,6 +137,7 @@
   z-index: 10;
   position: relative;
   cursor: pointer;
+  object-fit: cover;
 }
 
 @media (min-width: 1024px) {

@@ -342,7 +342,8 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
             className: 'shrink-0 size-10 lg:size-10 block',
             'data-state': 'closed',
             to: `/release/${track.id}`,
-            key: 'track-cover-link'
+            key: 'track-cover-link',
+            style: { width: '40px', height: '40px', overflow: 'hidden', display: 'block', flexShrink: 0 }
           }, 
             React.createElement('img', {
               alt: track.title,
@@ -352,6 +353,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
               width: '40',
               height: '40',
               decoding: 'async',
+              style: { width: '40px', height: '40px', objectFit: 'cover', objectPosition: 'center', display: 'block' },
               onError: (e) => handleImageError(e, DEFAULT_COVER_PLACEHOLDER)
             })
           )
