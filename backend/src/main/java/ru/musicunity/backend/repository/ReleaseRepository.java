@@ -180,4 +180,13 @@ public interface ReleaseRepository extends JpaRepository<Release, Long>, JpaSpec
            "AND r.type = :releaseType " +
            "ORDER BY MONTH(r.releaseDate)")
     List<Integer> findDistinctMonthsByYearAndType(@Param("year") Integer year, @Param("releaseType") ReleaseType releaseType);
+
+    /**
+     * Поиск релизов по названию
+     */
+    @Query("SELECT r FROM Release r " +
+           "WHERE r.isDeleted = false " +
+           "AND LOWER(r.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
+           "ORDER BY r.releaseDate DESC")
+    Page<Release> findByTitleContainingIgnoreCase(@Param("title") String title, Pageable pageable);
 }

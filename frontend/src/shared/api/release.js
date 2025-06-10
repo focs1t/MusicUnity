@@ -186,6 +186,24 @@ export const releaseApi = {
   },
 
   /**
+   * Поиск релизов по названию
+   * @param {string} title - Название релиза для поиска
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  searchReleases: async (title, page = 0, size = 10) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/search`, {
+        params: { title, page, size }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Получение топ релизов по рейтингу
    * @param {number} page - Номер страницы
    * @param {number} size - Размер страницы

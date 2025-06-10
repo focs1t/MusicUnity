@@ -280,4 +280,15 @@ public class ReleaseController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
+
+    @Operation(summary = "Поиск релизов по названию")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список найденных релизов")
+    })
+    @GetMapping("/search")
+    public ResponseEntity<Page<ReleaseDTO>> searchReleases(
+        @Parameter(description = "Название релиза для поиска") @RequestParam String title,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(releaseService.searchReleasesByTitle(title, pageable));
+    }
 }

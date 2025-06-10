@@ -145,6 +145,12 @@ export const Header = () => {
   const [userDetails, setUserDetails] = useState(null);
   const [cachedAvatarUrl, setCachedAvatarUrl] = useState(null);
   const [linkedAuthor, setLinkedAuthor] = useState(null);
+  
+  // Состояния для поиска
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState('content');
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  
   // Добавляем константу для заглушки аватара
   const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
   
@@ -407,6 +413,45 @@ export const Header = () => {
     e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
 
+  // Закрытие выпадающего меню при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchDropdownOpen && !event.target.closest('.search-dropdown-container')) {
+        setSearchDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [searchDropdownOpen]);
+
+  // Обработчики поиска
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=${searchType}`);
+    }
+  };
+
+  const handleSearchInputChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearchTypeChange = (type) => {
+    setSearchType(type);
+    setSearchDropdownOpen(false);
+  };
+
+  const getSearchTypeLabel = () => {
+    switch(searchType) {
+      case 'content': return 'Авторы и релизы';
+      case 'users': return 'Пользователи';
+      default: return 'Авторы и релизы';
+    }
+  };
+
   // Отображение компонентов в зависимости от статуса авторизации
   const renderAuthButtons = () => {
     if (isAuth) {
@@ -564,67 +609,101 @@ export const Header = () => {
                 src="/musicUnity.svg"
               />
             </a>
-            <div className={styles.searchContainer}>
-              <form className={styles.searchForm}>
-                <button className={styles.searchButton} type="submit">
+                        <div className={styles.searchWrapper}>
+              <form className={styles.searchFormNew} onSubmit={handleSearch}>
+                <label htmlFor="search" className={styles.srOnly}>Search</label>
+                
+                <button className={styles.searchButtonNew} type="submit">
                   <svg 
                     stroke="currentColor" 
                     fill="currentColor" 
                     strokeWidth="0" 
                     viewBox="0 0 512 512" 
-                    className={styles.searchIcon} 
-                    height="1em" 
-                    width="1em" 
+                    className={styles.searchIconNew}
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path d="M337.509 305.372h-17.501l-6.571-5.486c20.791-25.232 33.922-57.054 33.922-93.257C347.358 127.632 283.896 64 205.135 64 127.452 64 64 127.632 64 206.629s63.452 142.628 142.225 142.628c35.011 0 67.831-13.167 92.991-34.008l6.561 5.487v17.551L415.18 448 448 415.086 337.509 305.372zm-131.284 0c-54.702 0-98.463-43.887-98.463-98.743 0-54.858 43.761-98.742 98.463-98.742 54.7 0 98.462 43.884 98.462 98.742 0 54.856-43.762 98.743-98.462 98.743z"></path>
                   </svg>
-                  <span className={styles.searchText}>Поиск</span>
                 </button>
                 
                 <input 
-                  className={styles.searchInput} 
-                  placeholder="Поиск авторов и релизов..." 
-                  value=""
+                  id="search"
+                  className={styles.searchInputNew}
+                  placeholder="Поиск..." 
+                  value={searchQuery}
+                  onChange={handleSearchInputChange}
                 />
                 
-                <button 
-                  type="button" 
-                  className={styles.searchButton}
-                >
-                  <svg 
-                    stroke="currentColor" 
-                    fill="none" 
-                    strokeWidth="2" 
-                    viewBox="0 0 24 24" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className={styles.searchIcon} 
-                    height="1em" 
-                    width="1em" 
-                    xmlns="http://www.w3.org/2000/svg"
+                <div className="relative">
+                  <button 
+                    type="button" 
+                    role="combobox" 
+                    aria-expanded={searchDropdownOpen}
+                    aria-autocomplete="none" 
+                    data-state={searchDropdownOpen ? "open" : "closed"}
+                    className={styles.typeSelector}
+                    onClick={() => setSearchDropdownOpen(!searchDropdownOpen)}
                   >
-                    <path d="M2 7v10"></path>
-                    <path d="M6 5v14"></path>
-                    <rect width="12" height="18" x="10" y="3" rx="2"></rect>
-                  </svg> 
-                  <span className={styles.searchText}>Авторы и релизы</span>
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className={styles.chevronIcon} 
-                    aria-hidden="true"
-                  >
-                    <path d="m6 9 6 6 6-6"></path>
-                  </svg>
-                </button>
+                    <span className={styles.typeSelectorSpan}>
+                      <div className={styles.typeSelectorContent}>
+                        <svg 
+                          stroke="currentColor" 
+                          fill="none" 
+                          strokeWidth="2" 
+                          viewBox="0 0 24 24" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          className={styles.typeSelectorIcon}
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M2 7v10"></path>
+                          <path d="M6 5v14"></path>
+                          <rect width="12" height="18" x="10" y="3" rx="2"></rect>
+                        </svg>
+                        <span className={styles.typeSelectorText}>{getSearchTypeLabel()}</span>
+                      </div>
+                    </span>
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="24" 
+                      height="24" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      className={styles.chevronDownIcon}
+                      aria-hidden="true"
+                    >
+                      <path d="m6 9 6 6 6-6"></path>
+                    </svg>
+                  </button>
+
+                  {/* Выпадающее меню */}
+                  {searchDropdownOpen && (
+                    <div className={`search-dropdown-container ${styles.dropdownMenu}`}>
+                      <button
+                        type="button"
+                        onClick={() => handleSearchTypeChange('content')}
+                        className={`${styles.dropdownItem} ${styles.dropdownItemFirst} ${
+                          searchType === 'content' ? styles.dropdownItemActive : ''
+                        }`}
+                      >
+                        Авторы и релизы
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSearchTypeChange('users')}
+                        className={`${styles.dropdownItem} ${styles.dropdownItemLast} ${
+                          searchType === 'users' ? styles.dropdownItemActive : ''
+                        }`}
+                      >
+                        Пользователи
+                      </button>
+                    </div>
+                  )}
+                </div>
               </form>
             </div>
             <div className={styles.authContainer}>

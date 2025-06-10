@@ -1,5 +1,5 @@
 import { userApi } from '../../../shared/api/user';
-import {
+import { 
   startLoading,
   loadCurrentUserSuccess,
   loadProfileSuccess,
@@ -7,102 +7,70 @@ import {
   updateProfileSuccess
 } from './userStore';
 
-/**
- * Загрузка текущего пользователя
- * @returns {Function} Thunk функция
- */
+// Получить текущего пользователя
 export const fetchCurrentUser = () => async (dispatch) => {
+  dispatch(startLoading());
   try {
-    dispatch(startLoading());
-    const userData = await userApi.getCurrentUser();
-    dispatch(loadCurrentUserSuccess(userData));
-    return userData;
+    const user = await userApi.getCurrentUser();
+    dispatch(loadCurrentUserSuccess(user));
+    return user;
   } catch (error) {
-    dispatch(requestFailure(error.message || 'Ошибка при загрузке пользователя'));
+    dispatch(requestFailure(error.message));
     throw error;
   }
 };
 
-/**
- * Загрузка пользователя по ID
- * @param {number} userId - ID пользователя
- * @returns {Function} Thunk функция
- */
+// Получить пользователя по ID
 export const fetchUserById = (userId) => async (dispatch) => {
+  dispatch(startLoading());
   try {
-    dispatch(startLoading());
-    const userData = await userApi.getUserById(userId);
-    dispatch(loadProfileSuccess(userData));
-    return userData;
+    const user = await userApi.getUserById(userId);
+    dispatch(loadProfileSuccess(user));
+    return user;
   } catch (error) {
-    dispatch(requestFailure(error.message || 'Ошибка при загрузке пользователя'));
+    dispatch(requestFailure(error.message));
     throw error;
   }
 };
 
-/**
- * Загрузка пользователя по имени пользователя
- * @param {string} username - Имя пользователя
- * @returns {Function} Thunk функция
- */
+// Получить пользователя по имени пользователя
 export const fetchUserByUsername = (username) => async (dispatch) => {
+  dispatch(startLoading());
   try {
-    dispatch(startLoading());
-    const userData = await userApi.getUserByUsername(username);
-    dispatch(loadProfileSuccess(userData));
-    return userData;
+    const user = await userApi.getUserByUsername(username);
+    dispatch(loadProfileSuccess(user));
+    return user;
   } catch (error) {
-    dispatch(requestFailure(error.message || 'Ошибка при загрузке пользователя'));
+    dispatch(requestFailure(error.message));
     throw error;
   }
 };
 
-/**
- * Обновление профиля пользователя
- * @param {Object} userData - Данные для обновления
- * @returns {Function} Thunk функция
- */
-export const updateUserProfile = (userData) => async (dispatch) => {
+// Обновить профиль пользователя
+export const updateUserProfile = (profileData) => async (dispatch) => {
+  dispatch(startLoading());
   try {
-    dispatch(startLoading());
-    const updatedUser = await userApi.updateProfile(userData);
+    const updatedUser = await userApi.updateUserData(
+      profileData.bio,
+      profileData.avatarUrl,
+      profileData.telegramChatId
+    );
     dispatch(updateProfileSuccess(updatedUser));
     return updatedUser;
   } catch (error) {
-    dispatch(requestFailure(error.message || 'Ошибка при обновлении профиля'));
+    dispatch(requestFailure(error.message));
     throw error;
   }
 };
 
-/**
- * Изменение пароля пользователя
- * @param {string} oldPassword - Старый пароль
- * @param {string} newPassword - Новый пароль
- * @returns {Function} Thunk функция
- */
-export const changeUserPassword = (oldPassword, newPassword) => async (dispatch) => {
+// Изменить пароль пользователя
+export const changeUserPassword = (passwordData) => async (dispatch) => {
+  dispatch(startLoading());
   try {
-    dispatch(startLoading());
-    const result = await userApi.changePassword(oldPassword, newPassword);
-    return result;
+    await userApi.changePassword(passwordData.oldPassword, passwordData.newPassword);
+    return { success: true };
   } catch (error) {
-    dispatch(requestFailure(error.message || 'Ошибка при смене пароля'));
-    throw error;
-  }
-};
-
-/**
- * Поиск пользователей
- * @param {string} username - Часть имени пользователя
- * @param {number} page - Номер страницы
- * @param {number} size - Размер страницы
- * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
- */
-export const searchUsers = async (username, page = 0, size = 10) => {
-  try {
-    const response = await userApi.searchUsers(username, page, size);
-    return response;
-  } catch (error) {
+    dispatch(requestFailure(error.message));
     throw error;
   }
 }; 

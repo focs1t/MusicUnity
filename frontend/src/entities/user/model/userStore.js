@@ -6,7 +6,6 @@ const initialState = {
   users: [],
   blockedUsers: [],
   moderators: [],
-  searchResults: [],
   loading: false,
   error: null
 };
@@ -49,11 +48,7 @@ export const userSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
-    searchUsersSuccess: (state, action) => {
-      state.searchResults = action.payload;
-      state.loading = false;
-      state.error = null;
-    },
+
     updateProfileSuccess: (state, action) => {
       state.currentUser = action.payload;
       if (state.profile?.userId === action.payload.userId) {
@@ -109,7 +104,6 @@ export const {
   loadUsersSuccess,
   loadBlockedUsersSuccess,
   loadModeratorsSuccess,
-  searchUsersSuccess,
   updateProfileSuccess,
   changePasswordSuccess,
   banUserSuccess,

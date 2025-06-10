@@ -22,6 +22,8 @@ import ProfileSinglesPage from '../../../../pages/ProfileSinglesPage';
 // Страницы для модератора
 import ModeratorCreateReleasePage from '../../../../pages/ModeratorCreateReleasePage';
 import ModeratorReportsPage from '../../../../pages/ModeratorReportsPage';
+// Страница поиска
+import SearchPage from '../../../../pages/SearchPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -71,6 +73,9 @@ const AppRouter = () => {
       <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<VerifiedAuthorsPage />} />} />
       <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<ReviewsPage />} />} />
       <Route path={ROUTES.CONTACT} element={<PublicRoute element={<div>Обратная связь</div>} />} />
+      
+      {/* Поиск */}
+      <Route path="/search" element={<PublicRoute element={<SearchPage />} />} />
       
       {/* Редирект на главную при переходе на неизвестный маршрут */}
       <Route path="*" element={<Navigate to="/" replace />} />

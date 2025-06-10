@@ -438,4 +438,12 @@ public class ReleaseService {
         }
         return releaseRepository.findDistinctMonthsByYearAndType(year, type);
     }
+
+    /**
+     * Поиск релизов по названию
+     */
+    public Page<ReleaseDTO> searchReleasesByTitle(String title, Pageable pageable) {
+        return releaseRepository.findByTitleContainingIgnoreCase(title, pageable)
+                .map(releaseMapper::toDTO);
+    }
 }

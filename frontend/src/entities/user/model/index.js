@@ -12,8 +12,7 @@ import {
   fetchUserById,
   fetchUserByUsername,
   updateUserProfile,
-  changeUserPassword,
-  searchUsers
+  changeUserPassword
 } from './userOperations';
 
 import { UserRole } from './types';
@@ -36,7 +35,6 @@ export {
   fetchUserByUsername,
   updateUserProfile,
   changeUserPassword,
-  searchUsers,
   
   // Types
   UserRole
