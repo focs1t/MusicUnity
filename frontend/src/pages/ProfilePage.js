@@ -150,7 +150,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
     if (!review || !review.release) {
       return review.releaseId || 0; // Пытаемся использовать ID из самой рецензии, если есть
     }
-    return review.release.releaseId || 0;
+    return review.release.releaseId || review.release.id || 0;
   };
   
   // Безопасное получение заголовка релиза

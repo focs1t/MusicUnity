@@ -1,6 +1,6 @@
 /* Основные переменные */
 :root {
-  --user-color: #F45D48;
+  --user-color: #3a82f7;
   --ratingText-color: #ffffff;
   --ratingVibe-color: #10b981;
   --primary-color: #f45d48;
@@ -422,12 +422,14 @@
 }
 
 .release-page .bookmark-button {
-  background-color: rgb(24, 24, 27);
+  background-color: #090808;
   padding: 0.25rem 0.5rem;
   display: flex;
   border-radius: 0.75rem;
   align-items: center;
   height: 100%;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 
 @media (min-width: 1024px) {
