@@ -6,7 +6,7 @@ export const fileApi = {
   /**
    * Загрузка аватара пользователя
    * @param {File} file - Файл изображения
-   * @returns {Promise<{key: string, temporaryUrl: string}>}
+   * @returns {Promise<{key: string, temporaryUrl: string, permanentUrl: string}>}
    */
   uploadAvatar: async (file) => {
     const formData = new FormData();
@@ -23,7 +23,7 @@ export const fileApi = {
   /**
    * Загрузка обложки релиза
    * @param {File} file - Файл изображения
-   * @returns {Promise<{key: string, temporaryUrl: string}>}
+   * @returns {Promise<{key: string, temporaryUrl: string, permanentUrl: string}>}
    */
   uploadCover: async (file) => {
     const formData = new FormData();

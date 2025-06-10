@@ -187,7 +187,7 @@ const CreateReleasePage = () => {
         console.log('Загружаем обложку:', formData.coverFile.name);
         try {
           const uploadResult = await fileApi.uploadCover(formData.coverFile);
-          coverUrl = uploadResult.temporaryUrl; // Полная ссылка на файл
+          coverUrl = uploadResult.permanentUrl; // Постоянная ссылка на файл
           console.log('Обложка загружена успешно:', uploadResult);
         } catch (uploadError) {
           console.error('Ошибка при загрузке обложки:', uploadError);

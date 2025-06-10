@@ -57,8 +57,9 @@ public class FileController {
         @RequestParam("file") MultipartFile file
     ) {
         String key = s3Service.uploadFile(file, "avatars");
-        String url = s3Service.getPresignedUrl(key);
-        return ResponseEntity.ok(new FileUploadResponse(key, url));
+        String permanentUrl = s3Service.getPermanentUrl(key);
+        String temporaryUrl = s3Service.getPresignedUrl(key);
+        return ResponseEntity.ok(new FileUploadResponse(key, temporaryUrl, permanentUrl));
     }
 
     @Operation(
@@ -98,8 +99,9 @@ public class FileController {
         @RequestParam("file") MultipartFile file
     ) {
         String key = s3Service.uploadFile(file, "covers");
-        String url = s3Service.getPresignedUrl(key);
-        return ResponseEntity.ok(new FileUploadResponse(key, url));
+        String permanentUrl = s3Service.getPermanentUrl(key);
+        String temporaryUrl = s3Service.getPresignedUrl(key);
+        return ResponseEntity.ok(new FileUploadResponse(key, temporaryUrl, permanentUrl));
     }
 
     @Operation(

@@ -271,9 +271,9 @@ const SettingsPage = () => {
       console.log('Ответ после загрузки аватара:', response);
       
       // Проверяем наличие URL в ответе (может быть в разных полях)
-      if (response && (response.url || response.temporaryUrl)) {
-        // Используем любое доступное поле URL
-        const avatarUrl = response.url || response.temporaryUrl;
+      if (response && (response.permanentUrl || response.temporaryUrl || response.url)) {
+        // Используем постоянный URL как приоритетный
+        const avatarUrl = response.permanentUrl || response.temporaryUrl || response.url;
         setAvatarUrl(avatarUrl);
         
         // Сохраняем в localStorage для синхронизации между компонентами
