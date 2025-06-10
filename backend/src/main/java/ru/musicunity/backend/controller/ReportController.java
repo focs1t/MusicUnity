@@ -96,6 +96,34 @@ public class ReportController {
         return ResponseEntity.ok(reportService.deleteReview(reportId, moderatorId));
     }
 
+    @Operation(summary = "Удаление релиза по жалобе")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Релиз успешно удален"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для удаления релиза"),
+        @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
+    })
+    @PatchMapping("/{reportId}/delete-release")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<ReportDTO> deleteRelease(
+        @Parameter(description = "ID жалобы") @PathVariable Long reportId,
+        @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
+        return ResponseEntity.ok(reportService.deleteRelease(reportId, moderatorId));
+    }
+
+    @Operation(summary = "Удаление автора по жалобе")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор успешно удален"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для удаления автора"),
+        @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
+    })
+    @PatchMapping("/{reportId}/delete-author")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<ReportDTO> deleteAuthor(
+        @Parameter(description = "ID жалобы") @PathVariable Long reportId,
+        @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
+        return ResponseEntity.ok(reportService.deleteAuthor(reportId, moderatorId));
+    }
+
     @Operation(summary = "Блокировка пользователя по жалобе")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Пользователь успешно заблокирован"),

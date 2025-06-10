@@ -30,6 +30,8 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final UserService userService;
     private final ReviewService reviewService;
+    private final ReleaseService releaseService;
+    private final AuthorService authorService;
     private final ReportMapper reportMapper;
     private final UserMapper userMapper;
     private final ReviewMapper reviewMapper;
@@ -47,7 +49,7 @@ public class ReportService {
     }
 
     @Transactional
-    @PreAuthorize("hasAnyRole('USER', 'AUTHOR')")
+    @PreAuthorize("hasAnyRole('USER', 'AUTHOR', 'MODERATOR')")
     public ReportDTO createReport(Long reviewId, Long userId, String reason) {
         User user = userMapper.toEntity(userService.getUserById(userId));
         
@@ -68,7 +70,7 @@ public class ReportService {
     }
 
     @Transactional
-    @PreAuthorize("hasAnyRole('USER', 'AUTHOR')")
+    @PreAuthorize("hasAnyRole('USER', 'AUTHOR', 'MODERATOR')")
     public ReportDTO createUniversalReport(ru.musicunity.backend.pojo.enums.ReportType type, Long targetId, Long userId, String reason) {
         User user = userMapper.toEntity(userService.getUserById(userId));
         
@@ -242,5 +244,69 @@ public class ReportService {
     public Page<ReportDTO> getByUser(Long userId, Pageable pageable) {
         return reportRepository.findByUser(userId, pageable)
                 .map(reportMapper::toDTO);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ReportDTO deleteRelease(Long reportId, Long moderatorId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ReportNotFoundException(reportId));
+        if (report.getStatus() != ReportStatus.PENDING) {
+            throw new ReportIsPendingException();
+        }
+
+        User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
+        
+        // Для репортов типа RELEASE используем targetId как releaseId
+        if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.RELEASE) {
+            releaseService.softDeleteRelease(report.getTargetId());
+        }
+
+        report.setStatus(ReportStatus.RESOLVED);
+        report.setModerator(moderator);
+        report.setResolvedAt(LocalDateTime.now());
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(moderator)
+                .actionType(AuditAction.REPORT_RESOLVE_DELETE)
+                .targetId(reportId)
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
+
+        return reportMapper.toDTO(reportRepository.save(report));
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ReportDTO deleteAuthor(Long reportId, Long moderatorId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ReportNotFoundException(reportId));
+        if (report.getStatus() != ReportStatus.PENDING) {
+            throw new ReportIsPendingException();
+        }
+
+        User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
+        
+        // Для репортов типа AUTHOR используем targetId как authorId
+        if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.AUTHOR) {
+            authorService.softDeleteAuthor(report.getTargetId());
+        }
+
+        report.setStatus(ReportStatus.RESOLVED);
+        report.setModerator(moderator);
+        report.setResolvedAt(LocalDateTime.now());
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(moderator)
+                .actionType(AuditAction.REPORT_RESOLVE_DELETE)
+                .targetId(reportId)
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
+
+        return reportMapper.toDTO(reportRepository.save(report));
     }
 }

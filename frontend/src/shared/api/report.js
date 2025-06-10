@@ -106,6 +106,40 @@ export const reportApi = {
   },
 
   /**
+   * Удаление релиза по жалобе (только для модераторов)
+   * @param {number} reportId - ID жалобы
+   * @param {number} moderatorId - ID модератора
+   * @returns {Promise<Object>}
+   */
+  deleteRelease: async (reportId, moderatorId) => {
+    try {
+      const response = await httpClient.patch(`${API_URL}/${reportId}/delete-release`, null, {
+        params: { moderatorId }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Удаление автора по жалобе (только для модераторов)
+   * @param {number} reportId - ID жалобы
+   * @param {number} moderatorId - ID модератора
+   * @returns {Promise<Object>}
+   */
+  deleteAuthor: async (reportId, moderatorId) => {
+    try {
+      const response = await httpClient.patch(`${API_URL}/${reportId}/delete-author`, null, {
+        params: { moderatorId }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Отклонение жалобы (только для модераторов)
    * @param {number} reportId - ID жалобы
    * @param {number} moderatorId - ID модератора

@@ -120,25 +120,34 @@ const ModeratorReportsPage = () => {
       setError('');
       setSuccess('');
 
+      // Проверяем, что у нас есть данные пользователя
+      console.log('Данные пользователя:', userDetails);
+      if (!userDetails || !userDetails.userId) {
+        console.error('Нет данных пользователя:', { userDetails, userId: userDetails?.userId });
+        throw new Error('Не удалось получить данные пользователя');
+      }
+
+      console.log('Выполняется действие:', actionType, 'для репорта:', reportId, 'модератором:', userDetails.userId);
+
       switch (actionType) {
         case 'delete-review':
-          await reportApi.deleteReview(reportId, user.userId);
+          await reportApi.deleteReview(reportId, userDetails.userId);
           setSuccess('Рецензия успешно удалена');
           break;
         case 'delete-author':
-          // TODO: Добавить API для удаления автора
-          setSuccess('Автор помечен для удаления');
+          await reportApi.deleteAuthor(reportId, userDetails.userId);
+          setSuccess('Автор успешно удален');
           break;
         case 'delete-release':
-          // TODO: Добавить API для мягкого удаления релиза
-          setSuccess('Релиз помечен для удаления');
+          await reportApi.deleteRelease(reportId, userDetails.userId);
+          setSuccess('Релиз успешно удален');
           break;
         case 'ban-user':
-          await reportApi.banUser(reportId, user.userId);
+          await reportApi.banUser(reportId, userDetails.userId);
           setSuccess('Пользователь заблокирован');
           break;
         case 'reject':
-          await reportApi.rejectReport(reportId, user.userId);
+          await reportApi.rejectReport(reportId, userDetails.userId);
           setSuccess('Жалоба отклонена');
           break;
         default:
