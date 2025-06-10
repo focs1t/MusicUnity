@@ -72,6 +72,24 @@ public class AuthorService {
                 .map(this::toDTOWithRatings);
     }
 
+    @Transactional
+    public void updateAuthorDataByUser(String bio, String avatarUrl) {
+        User currentUser = userService.getCurrentUser();
+        
+        Author author = authorRepository.findByUserUserId(currentUser.getUserId())
+                .orElseThrow(() -> new RuntimeException("Автор не найден для текущего пользователя"));
+        
+        if (bio != null) {
+            author.setBio(bio);
+        }
+        
+        if (avatarUrl != null) {
+            author.setAvatarUrl(avatarUrl);
+        }
+        
+        authorRepository.save(author);
+    }
+
     private AuthorDTO toDTOWithRatings(Author author) {
         AuthorDTO dto = authorMapper.toDTO(author);
         

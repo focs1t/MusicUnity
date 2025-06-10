@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AuthorDTO;
+import ru.musicunity.backend.dto.AuthorUpdateDTO;
 import ru.musicunity.backend.service.AuthorService;
 import ru.musicunity.backend.service.AuthorFollowingService;
 import ru.musicunity.backend.service.ReleaseService;
@@ -78,6 +79,21 @@ public class AuthorController {
         @Parameter(description = "ID автора") @PathVariable Long id,
         @Parameter(description = "Обновляемые поля автора") @RequestBody AuthorDTO updatedAuthor) {
         return ResponseEntity.ok(authorService.updateAuthor(id, updatedAuthor));
+    }
+
+    @Operation(summary = "Обновление данных автора текущим пользователем")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Данные автора обновлены"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация"),
+        @ApiResponse(responseCode = "403", description = "Пользователь не является автором"),
+        @ApiResponse(responseCode = "404", description = "Автор не найден")
+    })
+    @PatchMapping("/data")
+    @PreAuthorize("hasRole('AUTHOR')")
+    public ResponseEntity<Void> updateAuthorData(
+        @Parameter(description = "Обновляемые данные автора") @RequestBody AuthorUpdateDTO updateDTO) {
+        authorService.updateAuthorDataByUser(updateDTO.getBio(), updateDTO.getAvatarUrl());
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Создание нового автора")

@@ -68,6 +68,24 @@ export const authorApi = {
   },
 
   /**
+   * Обновление данных автора для авторизованного пользователя
+   * @param {string} bio - Биография автора
+   * @param {string} avatarUrl - URL аватара автора
+   * @returns {Promise<Object>}
+   */
+  updateAuthorData: async (bio, avatarUrl) => {
+    try {
+      const response = await httpClient.patch(`${API_URL}/data`, {
+        bio,
+        avatarUrl
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Создание нового автора (только для модераторов)
    * @param {string} authorName - Имя автора
    * @param {boolean} isArtist - Является ли исполнителем

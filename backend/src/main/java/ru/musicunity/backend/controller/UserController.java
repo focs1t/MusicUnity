@@ -150,4 +150,17 @@ public class UserController {
     public ResponseEntity<UserDTO> getCurrentUser() {
         return ResponseEntity.ok(userMapper.toDTO(userService.getCurrentUser()));
     }
+
+    @Operation(summary = "Получение привязанного автора для пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор найден"),
+        @ApiResponse(responseCode = "404", description = "Автор не найден")
+    })
+    @GetMapping("/{userId}/linked-author")
+    public ResponseEntity<AuthorDTO> getLinkedAuthor(
+        @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        return userService.getLinkedAuthor(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 } 

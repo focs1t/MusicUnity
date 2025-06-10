@@ -65,8 +65,8 @@ public class UserService {
         List<UserRatingDTO> ratingList = new ArrayList<>();
         
         for (User user : activeUsers) {
-            // Пропускаем пользователей с ролью ADMIN
-            if (user.getRights() == UserRole.ADMIN) {
+            // Пропускаем пользователей с ролью ADMIN или AUTHOR
+            if (user.getRights() == UserRole.ADMIN || user.getRights() == UserRole.AUTHOR) {
                 continue;
             }
             

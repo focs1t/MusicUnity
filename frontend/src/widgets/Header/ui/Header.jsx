@@ -144,6 +144,7 @@ export const Header = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const [cachedAvatarUrl, setCachedAvatarUrl] = useState(null);
+  const [linkedAuthor, setLinkedAuthor] = useState(null);
   // Добавляем константу для заглушки аватара
   const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
   
@@ -184,6 +185,19 @@ export const Header = () => {
             setCachedAvatarUrl(userData.avatarUrl);
             // Сохраняем в localStorage для использования в других компонентах
             localStorage.setItem('user_avatar_url', userData.avatarUrl);
+          }
+
+          // Если пользователь - автор, загружаем информацию о привязанном авторе
+          if (userData?.rights === 'AUTHOR') {
+            try {
+              const authorData = await userApi.getLinkedAuthor(userData.userId || userData.id);
+              setLinkedAuthor(authorData);
+            } catch (error) {
+              console.error('Ошибка при получении привязанного автора:', error);
+              setLinkedAuthor(null);
+            }
+          } else {
+            setLinkedAuthor(null);
           }
         } catch (error) {
           console.error('Ошибка при получении данных пользователя:', error);
@@ -345,6 +359,15 @@ export const Header = () => {
     }, 100);
   };
 
+  const handleMyPageClick = () => {
+    handleClose();
+    if (userDetails?.rights === 'AUTHOR' && linkedAuthor) {
+      navigate(`/author/${linkedAuthor.authorId}`);
+    } else {
+      navigate('/profile');
+    }
+  };
+
   // Получаем имя пользователя для отображения в меню
   const getUserDisplayName = () => {
     if (userDetails?.username) return userDetails.username;
@@ -424,28 +447,30 @@ export const Header = () => {
             </Box>
             
             <Box sx={{ pb: 1.5 }}>
-              <MenuItem onClick={() => { handleClose(); navigate('/profile'); }}>
+              <MenuItem onClick={handleMyPageClick}>
                 Моя страница
                 <ListItemIcon>
                   <AccountCircleIcon sx={{ fontSize: 20 }} />
                 </ListItemIcon>
               </MenuItem>
               
-              <MenuItem onClick={() => { handleClose(); navigate('/profile/liked'); }}>
-                Мне понравилось
-                <ListItemIcon>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <g clipPath="url(#clip0_4127_2080)">
-                      <path d="M15.18 2.5L17.5 4.83V7.75L10 15.44L2.5 7.75V4.83L4.82 2.5H7.74L8.23 2.99L10.01 4.78L11.79 2.99L12.28 2.5H15.2M16.24 0H11.24L10.02 1.23L8.8 0H3.78L0 3.8V8.77L10 19.02L20 8.77V3.8L16.22 0H16.24Z" fill="currentColor" />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_4127_2080">
-                        <rect width="20" height="19.02" fill="white" />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </ListItemIcon>
-              </MenuItem>
+              {userDetails?.rights !== 'AUTHOR' && (
+                <MenuItem onClick={() => { handleClose(); navigate('/profile/liked'); }}>
+                  Мне понравилось
+                  <ListItemIcon>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <g clipPath="url(#clip0_4127_2080)">
+                        <path d="M15.18 2.5L17.5 4.83V7.75L10 15.44L2.5 7.75V4.83L4.82 2.5H7.74L8.23 2.99L10.01 4.78L11.79 2.99L12.28 2.5H15.2M16.24 0H11.24L10.02 1.23L8.8 0H3.78L0 3.8V8.77L10 19.02L20 8.77V3.8L16.22 0H16.24Z" fill="currentColor" />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_4127_2080">
+                          <rect width="20" height="19.02" fill="white" />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </ListItemIcon>
+                </MenuItem>
+              )}
               
               <MenuItem onClick={() => { handleClose(); navigate('/settings'); }}>
                 Настройки профиля
@@ -454,12 +479,14 @@ export const Header = () => {
                 </ListItemIcon>
               </MenuItem>
               
-              <MenuItem onClick={() => { handleClose(); navigate('/following-releases'); }}>
-                Релизы авторов
-                <ListItemIcon>
-                  <NotificationsIcon sx={{ fontSize: 20 }} />
-                </ListItemIcon>
-              </MenuItem>
+              {userDetails?.rights !== 'AUTHOR' && (
+                <MenuItem onClick={() => { handleClose(); navigate('/following-releases'); }}>
+                  Релизы авторов
+                  <ListItemIcon>
+                    <NotificationsIcon sx={{ fontSize: 20 }} />
+                  </ListItemIcon>
+                </MenuItem>
+              )}
             </Box>
             
             <Divider sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', height: '1px', width: '100%' }} />

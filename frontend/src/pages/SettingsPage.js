@@ -21,6 +21,7 @@ import { styled } from '@mui/material/styles';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
 import { fileApi } from '../shared/api/file';
+import { authorApi } from '../shared/api/author';
 import { setUser } from '../entities/auth/model';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SaveIcon from '@mui/icons-material/Save';
@@ -166,10 +167,14 @@ const SettingsPage = () => {
   const { user: authUser } = useAuth();
   const dispatch = useDispatch();
   const [userDetails, setUserDetails] = useState(null);
+  const [linkedAuthor, setLinkedAuthor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+  
+  // Проверяем, является ли пользователь автором
+  const isAuthor = userDetails?.rights === 'AUTHOR';
   
   // Константа для заглушки аватара
   const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -205,9 +210,29 @@ const SettingsPage = () => {
         }
         
         setUserDetails(userData);
-        setBio(userData.bio || '');
+        
+        // Если пользователь - автор, загружаем данные автора
+        if (userData.rights === 'AUTHOR') {
+          try {
+            const authorData = await userApi.getLinkedAuthor(userData.userId || userData.id);
+            setLinkedAuthor(authorData);
+            // Для авторов используем данные из профиля автора
+            setBio(authorData?.bio || '');
+            setAvatarUrl(authorData?.avatarUrl || '');
+          } catch (error) {
+            console.error('Ошибка при получении данных автора:', error);
+            setLinkedAuthor(null);
+            // Fallback к данным пользователя
+            setBio(userData.bio || '');
+            setAvatarUrl(userData.avatarUrl || '');
+          }
+        } else {
+          // Для обычных пользователей используем их данные
+          setBio(userData.bio || '');
+          setAvatarUrl(userData.avatarUrl || '');
+        }
+        
         setTelegramChatId(userData.telegramChatId || '');
-        setAvatarUrl(userData.avatarUrl || '');
         
         setError(null);
       } catch (err) {
@@ -290,7 +315,13 @@ const SettingsPage = () => {
       }
       
       // Отправляем только данные аватара, сохраняя текущие значения остальных полей
-      await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+      if (isAuthor) {
+        // Для авторов обновляем данные автора
+        await authorApi.updateAuthorData(bio, processedAvatarUrl);
+      } else {
+        // Для обычных пользователей обновляем данные пользователя
+        await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+      }
       
       // Сохраняем аватар в localStorage для синхронизации между компонентами
       if (processedAvatarUrl) {
@@ -341,8 +372,13 @@ const SettingsPage = () => {
         processedAvatarUrl = baseUrl;
       }
       
-      // Отправляем данные без проверки формата telegramChatId
-      await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+      if (isAuthor) {
+        // Для авторов обновляем данные автора
+        await authorApi.updateAuthorData(bio, processedAvatarUrl);
+      } else {
+        // Для обычных пользователей обновляем данные пользователя
+        await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+      }
       
       // Сохраняем аватар в localStorage для синхронизации между компонентами
       if (processedAvatarUrl) {
@@ -358,6 +394,16 @@ const SettingsPage = () => {
       // Обновляем данные пользователя
       const userData = await userApi.getCurrentUser();
       setUserDetails(userData);
+      
+      // Если автор, обновляем его данные
+      if (isAuthor) {
+        try {
+          const authorData = await userApi.getLinkedAuthor(userData.userId || userData.id);
+          setLinkedAuthor(authorData);
+        } catch (error) {
+          console.error('Ошибка при обновлении данных автора:', error);
+        }
+      }
       
       // Обновляем данные пользователя в redux для обновления хедера
       if (userData) {
@@ -477,7 +523,13 @@ const SettingsPage = () => {
             Основные
           </NavLink>
           
-          <NavLink to={`/profile/${userDetails?.id || ''}`}>
+          <NavLink 
+            to={
+              isAuthor && linkedAuthor 
+                ? `/author/${linkedAuthor.authorId}` 
+                : `/profile/${userDetails?.userId || userDetails?.id || ''}`
+            }
+          >
             <span style={{ marginRight: '8px' }}>Мой профиль</span>
             <OpenInNewIcon sx={{ fontSize: 16 }} />
           </NavLink>
@@ -701,36 +753,38 @@ const SettingsPage = () => {
                     />
                   </Box>
                   
-                  <Box>
-                    <Typography component="label" htmlFor="telegram" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
-                      Telegram
-                    </Typography>
-                    <TextField
-                      id="telegram"
-                      value={telegramChatId}
-                      onChange={(e) => setTelegramChatId(e.target.value)}
-                      fullWidth
-                      placeholder="https://t.me/"
-                      variant="outlined"
-                      InputProps={{
-                        sx: {
-                          backgroundColor: 'transparent',
-                          color: 'white',
-                          height: '40px',
-                          borderRadius: '6px',
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(161, 161, 170, 0.2)'
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(161, 161, 170, 0.3)'
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(161, 161, 170, 0.5)'
+                  {!isAuthor && (
+                    <Box>
+                      <Typography component="label" htmlFor="telegram" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
+                        Telegram
+                      </Typography>
+                      <TextField
+                        id="telegram"
+                        value={telegramChatId}
+                        onChange={(e) => setTelegramChatId(e.target.value)}
+                        fullWidth
+                        placeholder="https://t.me/"
+                        variant="outlined"
+                        InputProps={{
+                          sx: {
+                            backgroundColor: 'transparent',
+                            color: 'white',
+                            height: '40px',
+                            borderRadius: '6px',
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'rgba(161, 161, 170, 0.2)'
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'rgba(161, 161, 170, 0.3)'
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'rgba(161, 161, 170, 0.5)'
+                            }
                           }
-                        }
-                      }}
-                    />
-                  </Box>
+                        }}
+                      />
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </CardContent>

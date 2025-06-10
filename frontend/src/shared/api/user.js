@@ -229,5 +229,22 @@ export const userApi = {
     } catch (error) {
       throw error;
     }
+  },
+
+  /**
+   * Получение привязанного автора для пользователя
+   * @param {number} userId - ID пользователя
+   * @returns {Promise<Object|null>}
+   */
+  getLinkedAuthor: async (userId) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/${userId}/linked-author`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        return null; // Автор не найден
+      }
+      throw error;
+    }
   }
 }; 
