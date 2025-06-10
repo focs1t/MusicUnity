@@ -114,26 +114,29 @@ const RatingPage = () => {
       const tracksWithStats = await Promise.all(
         tracksResponse.content.map(async (release) => {
           try {
-            const [reviewsCount, extendedReviewsCount, avgRating] = await Promise.all([
+            const [allReviewsCount, extendedReviewsResponse] = await Promise.all([
               reviewApi.getReviewsCountByRelease(release.releaseId),
-              reviewApi.getExtendedReviewsByRelease(release.releaseId, 0, 1),
-              // Используем средний рейтинг релиза если есть
-              Promise.resolve(release.averageRating || release.avgRating || null)
+              reviewApi.getExtendedReviewsByRelease(release.releaseId, 0, 1)
             ]);
+            
+            const extendedReviewsCount = extendedReviewsResponse.totalElements;
+            const simpleReviewsCount = Math.max(0, allReviewsCount - extendedReviewsCount);
             
             return {
               ...release,
-              reviewsCount,
-              extendedReviewsCount: extendedReviewsCount.totalElements,
-              avgRating: avgRating || (release.averageRating || release.avgRating)
+              simpleReviewsCount,
+              extendedReviewsCount,
+              avgRating: release.simpleReviewRating || null,
+              avgExtendedRating: release.averageExtendedRating || null
             };
           } catch (error) {
             console.error(`Ошибка получения статистики для трека ${release.releaseId}:`, error);
             return {
               ...release,
-              reviewsCount: 0,
+              simpleReviewsCount: 0,
               extendedReviewsCount: 0,
-              avgRating: null
+              avgRating: null,
+              avgExtendedRating: null
             };
           }
         })
@@ -142,25 +145,29 @@ const RatingPage = () => {
       const albumsWithStats = await Promise.all(
         albumsResponse.content.map(async (release) => {
           try {
-            const [reviewsCount, extendedReviewsCount, avgRating] = await Promise.all([
+            const [allReviewsCount, extendedReviewsResponse] = await Promise.all([
               reviewApi.getReviewsCountByRelease(release.releaseId),
-              reviewApi.getExtendedReviewsByRelease(release.releaseId, 0, 1),
-              Promise.resolve(release.averageRating || release.avgRating || null)
+              reviewApi.getExtendedReviewsByRelease(release.releaseId, 0, 1)
             ]);
+            
+            const extendedReviewsCount = extendedReviewsResponse.totalElements;
+            const simpleReviewsCount = Math.max(0, allReviewsCount - extendedReviewsCount);
             
             return {
               ...release,
-              reviewsCount,
-              extendedReviewsCount: extendedReviewsCount.totalElements,
-              avgRating: avgRating || (release.averageRating || release.avgRating)
+              simpleReviewsCount,
+              extendedReviewsCount,
+              avgRating: release.simpleReviewRating || null,
+              avgExtendedRating: release.averageExtendedRating || null
             };
           } catch (error) {
             console.error(`Ошибка получения статистики для альбома ${release.releaseId}:`, error);
             return {
               ...release,
-              reviewsCount: 0,
+              simpleReviewsCount: 0,
               extendedReviewsCount: 0,
-              avgRating: null
+              avgRating: null,
+              avgExtendedRating: null
             };
           }
         })
@@ -204,14 +211,29 @@ const RatingPage = () => {
   const formatAuthors = (authors) => {
     if (!authors || authors.length === 0) return 'Неизвестный исполнитель';
     
-    return authors.map((author, index) => (
-      <span key={author.authorId || index}>
-        {index > 0 && ', '}
-        <Link to={`/author/${author.authorId}`} className="author-link">
-          {author.name}
+    const authorElements = [];
+    
+    authors.forEach((author, index) => {
+      // Добавляем ссылку на автора
+      authorElements.push(
+        <Link 
+          key={author.id || author.authorId || index} 
+          to={`/author/${author.id || author.authorId}`} 
+          className="author-link"
+        >
+          <span>{author.authorName}</span>
         </Link>
-      </span>
-    ));
+      );
+      
+      // Добавляем разделитель, если это не последний элемент
+      if (index < authors.length - 1) {
+        authorElements.push(
+          <span key={`separator-${index}`} className="author-separator">,&nbsp;</span>
+        );
+      }
+    });
+    
+    return authorElements;
   };
 
   const getSelectedMonthLabel = () => {
@@ -220,7 +242,7 @@ const RatingPage = () => {
   };
 
   const renderReleaseItem = (release, isAlbum = false) => {
-    const hasStats = release.reviewsCount > 0 || release.extendedReviewsCount > 0;
+    const hasStats = release.simpleReviewsCount > 0 || release.extendedReviewsCount > 0;
     
     return (
       <div key={release.releaseId} className="rating-item">
@@ -238,26 +260,31 @@ const RatingPage = () => {
           {hasStats && (
             <div className="rating-item-stats">
               <div className="rating-stat-item">
-                <svg className="rating-stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
-                  <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
-                </svg>
-                <span>{release.extendedReviewsCount || 0}</span>
-              </div>
-              <div className="rating-stat-item">
-                <svg className="rating-stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
-                  <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
-                </svg>
-                <span>{release.reviewsCount || 0}</span>
+                <div className="rating-stat-group">
+                  <svg className="rating-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
+                    <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                  </svg>
+                  <span>{release.extendedReviewsCount || 0}</span>
+                </div>
+                <div className="rating-stat-group">
+                  <svg className="rating-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                  </svg>
+                  <span>{release.simpleReviewsCount || 0}</span>
+                </div>
               </div>
             </div>
           )}
           
           <div className="rating-item-title">
-            <Link to={`/release/${release.releaseId}`} className="rating-title-link">
-              {release.title}
-            </Link>
+            <div className="rating-title-wrapper">
+              <div className="rating-title-inner">
+                <Link to={`/release/${release.releaseId}`} className="rating-title-link">
+                  {release.title}
+                </Link>
+              </div>
+            </div>
           </div>
           
           <div className="rating-item-authors">
@@ -270,18 +297,20 @@ const RatingPage = () => {
         </div>
         
         <div className="rating-item-scores">
-          {release.avgRating && (
-            <div className="rating-scores-group">
+          <div className="rating-scores-group">
+            {/* Расширенные рецензии - закрашенные кружки */}
+            {release.avgExtendedRating && (
               <div className="rating-score-circle filled">
+                {Math.round(release.avgExtendedRating)}
+              </div>
+            )}
+            {/* Простые рецензии - кружки с обводкой */}
+            {release.avgRating && (
+              <div className="rating-score-circle outlined">
                 {Math.round(release.avgRating)}
               </div>
-              {release.averageExtendedRating && release.averageExtendedRating !== release.avgRating && (
-                <div className="rating-score-circle outlined">
-                  {Math.round(release.averageExtendedRating)}
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     );

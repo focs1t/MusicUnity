@@ -197,39 +197,46 @@
   }
 }
 
+.rating-filter-dropdown.open .rating-filter-menu {
+  display: block;
+}
+
 /* Контент */
 .rating-content {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
 }
 
 @media (min-width: 1024px) {
   .rating-content {
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 2rem;
   }
 }
 
 @media (min-width: 1536px) {
   .rating-content {
-    gap: 4rem;
+    gap: 3rem;
   }
 }
 
 .rating-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 0.75rem;
+  padding: 1rem;
 }
 
 .rating-section-title {
+  font-size: 1.125rem;
   font-weight: bold;
-  font-size: 1rem;
+  margin-bottom: 1rem;
 }
 
 @media (min-width: 1024px) {
   .rating-section-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 }
 
@@ -241,52 +248,57 @@
 
 .rating-no-items {
   text-align: center;
-  color: rgb(161, 161, 170);
-  padding: 2rem;
+  color: rgba(255, 255, 255, 0.6);
   font-style: italic;
+  padding: 2rem 0;
 }
 
-/* Элемент рейтинга */
+/* Элемент рейтинга - ГЛАВНОЕ: НЕТ ДВИЖЕНИЯ ПРИ HOVER! */
 .rating-item {
   display: flex;
   align-items: center;
   background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.625rem;
-  padding: 0.25rem 0.625rem 0.625rem 0.25rem;
+  border-radius: 10px;
+  padding: 4px 10px 4px 4px;
   position: relative;
-  transition: all 0.3s;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  margin-bottom: 8px;
 }
 
 @media (min-width: 1024px) {
   .rating-item {
-    padding: 0.5625rem 1.375rem 1.375rem 0.5625rem;
+    padding: 9px 22px 9px 9px;
   }
 }
 
+/* ВАЖНО: Карточка НЕ ДВИЖЕТСЯ при hover - только меняется фон! */
 .rating-item:hover {
   background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  /* НИКАКИХ transform! */
 }
 
 .rating-item-image {
   flex-shrink: 0;
   align-self: flex-start;
-  margin-right: 0.5625rem;
-  display: block;
+  margin-right: 9px;
+  text-decoration: none;
 }
 
 @media (min-width: 1024px) {
   .rating-item-image {
-    margin-right: 1.125rem;
+    margin-right: 18px;
   }
 }
 
 .rating-cover {
   height: 50px;
   width: auto;
-  border-radius: 0.3125rem;
-  transition: all 0.3s;
+  border-radius: 5px;
+  transition: all 0.3s ease;
   object-fit: cover;
+  display: block;
 }
 
 @media (min-width: 1024px) {
@@ -295,68 +307,81 @@
   }
 }
 
+/* Только обложка увеличивается при наведении на карточку */
 .rating-item:hover .rating-cover {
   transform: scale(1.25);
-  border-radius: 0.5rem;
+  border-radius: 8px;
 }
 
 .rating-item-info {
-  margin-right: 0.9375rem;
+  margin-right: 15px;
   width: 100%;
   max-width: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  flex-grow: 1;
 }
 
 .rating-item-stats {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
   align-items: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 4px;
 }
 
 .rating-stat-item {
   border-radius: 9999px;
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
   align-items: center;
   font-weight: 600;
   font-size: 0.875rem;
 }
 
+.rating-stat-item .rating-stat-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 .rating-stat-icon {
-  height: 0.75rem;
-  width: 0.75rem;
+  width: 12px;
+  height: 12px;
 }
 
 @media (min-width: 1024px) {
   .rating-stat-icon {
-    height: 0.75rem;
-    width: 0.75rem;
+    width: 12px;
+    height: 12px;
   }
 }
 
 .rating-item-title {
+  margin-bottom: 4px;
+}
+
+.rating-title-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
+}
+
+.rating-title-inner {
+  max-width: 90%;
+  width: auto;
 }
 
 .rating-title-link {
   border-bottom: 1px solid transparent;
+  color: white;
+  text-decoration: none;
   font-size: 0.875rem;
+  font-weight: 400;
   text-overflow: ellipsis;
   width: auto;
   max-width: 100%;
   overflow: hidden;
   display: block;
   white-space: nowrap;
-  color: white;
-  text-decoration: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s ease;
 }
 
 .rating-title-link:hover {
@@ -366,6 +391,12 @@
 @media (min-width: 1024px) {
   .rating-title-link {
     font-size: 1rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .rating-title-link {
+    font-size: 0.875rem;
   }
 }
 
@@ -381,15 +412,25 @@
   }
 }
 
+@media (max-width: 1023px) {
+  .rating-item-authors {
+    font-size: 13px;
+  }
+}
+
 .author-link {
   border-bottom: 1px solid transparent;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s ease;
 }
 
 .author-link:hover {
   border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.author-separator {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .unknown-author {
@@ -402,19 +443,19 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 10px;
 }
 
 .rating-scores-group {
   display: flex;
   align-items: center;
-  gap: 0.3125rem;
+  gap: 5px;
 }
 
 .rating-score-circle {
-  height: 30px;
   width: 30px;
-  border-radius: 9999px;
+  height: 30px;
+  border-radius: 50%;
   display: flex;
   text-align: center;
   justify-content: center;
@@ -427,37 +468,72 @@
 
 @media (min-width: 1024px) {
   .rating-score-circle {
-    height: 45px;
     width: 45px;
+    height: 45px;
     font-size: 1.375rem;
   }
 }
 
 .rating-score-circle.filled {
-  background-color: #64CCC5; /* var(--userColor) equivalent */
+  background-color: var(--userColor, #3b82f6);
   color: white;
 }
 
 .rating-score-circle.outlined {
-  border: 2px solid #64CCC5; /* var(--userColor) equivalent */
+  border: 2px solid var(--userColor, #3b82f6);
   background-color: transparent;
   color: white;
 }
 
-/* Состояния загрузки и ошибки */
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 768px) {
+  .rating-item {
+    padding: 4px 8px 4px 4px;
+  }
+
+  .rating-item-info {
+    max-width: 60%;
+  }
+
+  .rating-score-circle {
+    width: 25px;
+    height: 25px;
+    font-size: 0.75rem;
+  }
+
+  .rating-cover {
+    height: 40px;
+  }
+
+  .rating-item-stats {
+    gap: 4px;
+  }
+
+  .rating-stat-item {
+    font-size: 0.75rem;
+  }
+
+  .rating-stat-icon {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* Загрузка и ошибки */
 .loading-container, .error-container {
   display: flex;
-  align-items: center;
   justify-content: center;
-  min-height: 400px;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
 }
 
 .loading-spinner {
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-left: 4px solid #64CCC5;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #3b82f6;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
   animation: spin 1s linear infinite;
 }
 
@@ -468,80 +544,5 @@
 
 .error-message {
   color: #ef4444;
-  font-size: 1rem;
-  text-align: center;
-  padding: 1rem;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 0.5rem;
-  background-color: rgba(239, 68, 68, 0.1);
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-  .rating-item {
-    padding: 0.25rem;
-  }
-  
-  .rating-item-info {
-    max-width: 60%;
-  }
-  
-  .rating-score-circle {
-    height: 25px;
-    width: 25px;
-    font-size: 0.75rem;
-  }
-  
-  .rating-cover {
-    height: 40px;
-  }
-}
-
-/* Закрытие дропдаунов при клике вне */
-.rating-filter-dropdown {
-  position: relative;
-}
-
-.rating-filter-dropdown.open .rating-filter-menu {
-  display: block;
-}
-
-/* Стили для пустого состояния */
-.rating-no-items {
-  padding: 3rem 1rem;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.5);
-  font-style: italic;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.02);
-}
-
-/* Анимации */
-.rating-item {
-  transition: all 0.2s ease-in-out;
-}
-
-.rating-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.rating-filter-button {
-  transition: all 0.2s ease-in-out;
-}
-
-.rating-filter-menu {
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  font-weight: 500;
 } 
