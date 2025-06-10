@@ -132,4 +132,35 @@ public class FileController {
         String url = s3Service.getPresignedUrl(key);
         return ResponseEntity.ok(url);
     }
+
+    @Operation(
+        summary = "Получить постоянный URL для файла",
+        description = "Формирует постоянный URL для доступа к файлу в S3 хранилище."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "URL успешно сформирован",
+            content = @Content(
+                mediaType = MediaType.TEXT_PLAIN_VALUE,
+                schema = @Schema(type = "string", example = "https://s3.twcstorage.ru/bucket/avatars/filename.jpg")
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Некорректный ключ файла"
+        )
+    })
+    @GetMapping("/permanent")
+    public ResponseEntity<String> getPermanentUrl(
+        @Parameter(
+            description = "Ключ файла (например, 'avatars/uuid_filename.jpg')",
+            required = true,
+            example = "avatars/123e4567-e89b-12d3-a456-426614174000_avatar.jpg"
+        )
+        @RequestParam("key") String key
+    ) {
+        String url = s3Service.getPermanentUrl(key);
+        return ResponseEntity.ok(url);
+    }
 } 

@@ -38,9 +38,22 @@ export const fileApi = {
   },
 
   /**
-   * Получение временного URL для файла
+   * Получение постоянного URL для файла (рекомендуется)
    * @param {string} key - Ключ файла
    * @returns {Promise<string>}
+   */
+  getPermanentUrl: async (key) => {
+    const response = await httpClient.get(`${API_URL}/permanent`, {
+      params: { key }
+    });
+    return response.data;
+  },
+
+  /**
+   * Получение временного URL для файла (устаревший)
+   * @param {string} key - Ключ файла
+   * @returns {Promise<string>}
+   * @deprecated Используйте getPermanentUrl
    */
   getPresignedUrl: async (key) => {
     const response = await httpClient.get(`${API_URL}/presigned`, {

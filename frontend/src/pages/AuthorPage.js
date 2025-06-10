@@ -144,9 +144,17 @@ const AuthorPage = () => {
   if (loading) {
     return (
       <div className="author-page-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Загрузка...</p>
+        <div className="min-h-screen flex items-center justify-center bg-black">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-zinc-800 border-t-zinc-400 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-500 rounded-full animate-spin animation-delay-150"></div>
+            </div>
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-white mb-2">Загрузка автора</h2>
+              <p className="text-zinc-400">Получаем данные...</p>
+            </div>
+          </div>
         </div>
       </div>
     );

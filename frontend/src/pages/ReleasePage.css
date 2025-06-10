@@ -1105,6 +1105,11 @@
   }
 }
 
+/* CSS для новой анимации загрузки */
+.animation-delay-150 {
+  animation-delay: 0.15s;
+}
+
 /* Стили для секции рецензий */
 .reviews-section {
   display: grid;

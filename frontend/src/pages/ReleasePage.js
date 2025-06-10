@@ -350,6 +350,7 @@ function ReleasePage() {
   // Проверка роли пользователя
   const [userRole, setUserRole] = useState(null);
   const [isAuthor, setIsAuthor] = useState(false);
+  const [userRoleLoading, setUserRoleLoading] = useState(true);
   
   // Состояния для рецензии
   const [tabState, setTabState] = useState('review-form'); // 'review-form' или 'score-review-form'
@@ -396,6 +397,7 @@ function ReleasePage() {
   // Проверка роли пользователя при загрузке
   useEffect(() => {
     const checkUserRole = async () => {
+      setUserRoleLoading(true);
       if (isAuth && user) {
         try {
           const userData = await userApi.getCurrentUser();
@@ -403,8 +405,12 @@ function ReleasePage() {
           setIsAuthor(userData.rights === 'AUTHOR');
         } catch (error) {
           console.error('Ошибка при получении данных пользователя:', error);
+          setIsAuthor(false);
         }
+      } else {
+        setIsAuthor(false);
       }
+      setUserRoleLoading(false);
     };
     
     checkUserRole();
@@ -1149,14 +1155,27 @@ function ReleasePage() {
     };
   }, [sortDropdownOpen]);
 
-  if (loading) {
+  if (loading || userRoleLoading) {
     return (
       <div className="release-page">
         <div className="site-content">
           <main className="main-container">
             <div className="container">
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
-                <span>Загрузка...</span>
+              <div className="min-h-screen flex items-center justify-center bg-black">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-zinc-800 border-t-zinc-400 rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-500 rounded-full animate-spin animation-delay-150"></div>
+                  </div>
+                  <div className="text-center">
+                    <h2 className="text-xl font-semibold text-white mb-2">
+                      {loading ? 'Загрузка релиза' : 'Проверка прав доступа'}
+                    </h2>
+                    <p className="text-zinc-400">
+                      {loading ? 'Получаем данные релиза...' : 'Определяем роль пользователя...'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </main>
