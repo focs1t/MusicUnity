@@ -18,6 +18,8 @@ import ChatIcon from '@mui/icons-material/Chat';
 import './ProfilePage.css';
 import './ReviewsPage.css'; // Импорт CSS с анимациями для всплывающих сообщений
 import Notification from '../components/Notification';
+import ReportButton from '../shared/ui/ReportButton/ReportButton';
+import { ReportType } from '../entities/report/model/types';
 
 // Встроенный плейсхолдер в формате data URI для аватара
 const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -630,7 +632,7 @@ const DebugInfo = ({ isVisible, data }) => {
 };
 
 const ProfilePage = () => {
-  const { user: authUser } = useAuth();
+  const { user: authUser, isAuth } = useAuth();
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1979,6 +1981,18 @@ const ProfilePage = () => {
                   </div>
                   <h1 className="profile-username">{userDetails?.username || "Пользователь"}</h1>
                   <div className="profile-date">Дата регистрации: {formatDate(userDetails?.createdAt) || "Нет данных"}</div>
+                  
+                  {/* Кнопка репорта на профиль (только если не собственный профиль) */}
+                  {userDetails && isAuth && userDetails.userId !== getCurrentUserId() && (
+                    <div style={{ marginTop: '8px' }}>
+                      <ReportButton
+                        type={ReportType.PROFILE}
+                        targetId={userDetails.userId}
+                        size="small"
+                        tooltip="Пожаловаться на профиль"
+                      />
+                    </div>
+                  )}
                   
                   <div className="social-links">
                     {userDetails?.telegramChatId && (

@@ -10,6 +10,18 @@ export const ReportStatus = {
 };
 
 /**
+ * Тип жалобы
+ * @readonly
+ * @enum {string}
+ */
+export const ReportType = {
+  REVIEW: 'REVIEW',
+  AUTHOR: 'AUTHOR',
+  RELEASE: 'RELEASE',
+  PROFILE: 'PROFILE'
+};
+
+/**
  * Модель жалобы
  * @typedef {Object} Report
  * @property {number} reportId - ID жалобы

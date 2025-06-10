@@ -56,14 +56,69 @@ public class ReportService {
             throw new UserBlockedException();
         }
 
-        Review review = reviewMapper.toEntity(reviewService.getReviewById(reviewId));
-
         Report report = Report.builder()
-                .review(review)
+                .type(ru.musicunity.backend.pojo.enums.ReportType.REVIEW)
+                .targetId(reviewId)
                 .user(user)
                 .reason(reason)
                 .status(ReportStatus.PENDING)
                 .build();
+
+        return reportMapper.toDTO(reportRepository.save(report));
+    }
+
+    @Transactional
+    @PreAuthorize("hasAnyRole('USER', 'AUTHOR')")
+    public ReportDTO createUniversalReport(ru.musicunity.backend.pojo.enums.ReportType type, Long targetId, Long userId, String reason) {
+        User user = userMapper.toEntity(userService.getUserById(userId));
+        
+        // Проверяем, что пользователь не заблокирован
+        if (user.getIsBlocked()) {
+            throw new UserBlockedException();
+        }
+
+        // Проверяем различные ограничения в зависимости от типа репорта
+        switch (type) {
+            case PROFILE:
+                // Нельзя репортить себя
+                if (targetId.equals(userId)) {
+                    throw new IllegalArgumentException("Вы не можете пожаловаться на самого себя");
+                }
+                break;
+                
+            case REVIEW:
+                // Проверяем, что пользователь не репортит свою рецензию
+                Review review = reviewMapper.toEntity(reviewService.getReviewById(targetId));
+                if (review.getUser().getUserId().equals(userId)) {
+                    throw new IllegalArgumentException("Вы не можете пожаловаться на свою рецензию");
+                }
+                break;
+                
+            case AUTHOR:
+                // Проверяем, что пользователь не репортит самого себя как автора
+                // Здесь targetId - это ID автора, а не пользователя
+                // Нужно проверить связь между автором и пользователем
+                // Пока просто проверим, что targetId != userId (если они совпадают)
+                if (targetId.equals(userId)) {
+                    throw new IllegalArgumentException("Вы не можете пожаловаться на себя");
+                }
+                break;
+                
+            case RELEASE:
+                // Для релизов пока не проверяем авторство, так как это сложная логика
+                // с множественными авторами. Просто разрешаем репорт.
+                break;
+        }
+
+        Report report = Report.builder()
+                .type(type)
+                .targetId(targetId)
+                .user(user)
+                .reason(reason)
+                .status(ReportStatus.PENDING)
+                .build();
+
+        // Поле review удалено - больше не нужно для обратной совместимости
 
         return reportMapper.toDTO(reportRepository.save(report));
     }
@@ -78,7 +133,11 @@ public class ReportService {
         }
 
         User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
-        reviewService.softDeleteReview(report.getReview().getReviewId());
+        
+        // Для репортов типа REVIEW используем targetId как reviewId
+        if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.REVIEW) {
+            reviewService.softDeleteReview(report.getTargetId());
+        }
 
         report.setStatus(ReportStatus.RESOLVED);
         report.setModerator(moderator);
@@ -106,8 +165,13 @@ public class ReportService {
         }
 
         User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
-        User userToBan = report.getReview().getUser();
-        userService.banUser(userToBan.getUserId());
+        
+        // Для репортов типа REVIEW получаем пользователя через reviewService
+        if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.REVIEW) {
+            Review review = reviewMapper.toEntity(reviewService.getReviewById(report.getTargetId()));
+            User userToBan = review.getUser();
+            userService.banUser(userToBan.getUserId());
+        }
 
         report.setStatus(ReportStatus.RESOLVED);
         report.setModerator(moderator);

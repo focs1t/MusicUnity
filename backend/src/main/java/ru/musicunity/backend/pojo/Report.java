@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import ru.musicunity.backend.pojo.enums.ReportStatus;
+import ru.musicunity.backend.pojo.enums.ReportType;
 
 import java.time.LocalDateTime;
 
@@ -21,9 +22,13 @@ public class Report {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reportId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "review_id", nullable = false)
-    private Review review;
+    @Column(nullable = false)
+    @Convert(converter = ReportType.ReportTypeConverter.class)
+    private ReportType type;
+
+    // ID объекта, на который жалуются (review_id, author_id, release_id, user_id)
+    @Column(name = "target_id", nullable = false)
+    private Long targetId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

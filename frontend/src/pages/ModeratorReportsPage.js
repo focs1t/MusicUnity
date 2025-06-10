@@ -20,12 +20,26 @@ import {
   DialogActions, 
   TextField,
   Pagination,
-  CircularProgress
+  CircularProgress,
+  IconButton,
+  Container,
+  Tooltip
 } from '@mui/material';
+import { 
+  Article as ReviewIcon,
+  Person as AuthorIcon,
+  Album as ReleaseIcon,
+  AccountCircle as ProfileIcon,
+  OpenInNew as OpenIcon,
+  Delete as DeleteIcon,
+  Block as BanIcon,
+  Cancel as RejectIcon
+} from '@mui/icons-material';
 import { useAuth } from '../app/providers/AuthProvider';
 import { reportApi } from '../shared/api/report';
 import { userApi } from '../shared/api/user';
 import { useNavigate } from 'react-router-dom';
+import { ReportType } from '../entities/report/model/types';
 
 const ModeratorReportsPage = () => {
   const navigate = useNavigate();
@@ -101,7 +115,7 @@ const ModeratorReportsPage = () => {
   }, []);
 
   // Обработка действий с репортами
-  const handleReportAction = async (actionType, reportId) => {
+  const handleReportAction = async (actionType, reportId, reportType) => {
     try {
       setError('');
       setSuccess('');
@@ -109,7 +123,15 @@ const ModeratorReportsPage = () => {
       switch (actionType) {
         case 'delete-review':
           await reportApi.deleteReview(reportId, user.userId);
-          setSuccess('Отзыв успешно удален');
+          setSuccess('Рецензия успешно удалена');
+          break;
+        case 'delete-author':
+          // TODO: Добавить API для удаления автора
+          setSuccess('Автор помечен для удаления');
+          break;
+        case 'delete-release':
+          // TODO: Добавить API для мягкого удаления релиза
+          setSuccess('Релиз помечен для удаления');
           break;
         case 'ban-user':
           await reportApi.banUser(reportId, user.userId);
@@ -153,6 +175,103 @@ const ModeratorReportsPage = () => {
     }
   };
 
+  // Функция для получения текста типа репорта
+  const getReportTypeText = (type) => {
+    switch (type) {
+      case 'REVIEW': return 'Рецензия';
+      case 'AUTHOR': return 'Автор';
+      case 'RELEASE': return 'Релиз';
+      case 'PROFILE': return 'Профиль';
+      default: return 'Неизвестно';
+    }
+  };
+
+  // Функция для получения цвета типа репорта
+  const getReportTypeColor = (type) => {
+    switch (type) {
+      case 'REVIEW': return '#2196f3';
+      case 'AUTHOR': return '#ff9800';
+      case 'RELEASE': return '#4caf50';
+      case 'PROFILE': return '#9c27b0';
+      default: return '#757575';
+    }
+  };
+
+  // Функция для получения доступных действий для типа репорта
+  const getAvailableActions = (reportType) => {
+    switch (reportType) {
+      case 'REVIEW':
+        return [
+          { type: 'reject', label: 'Отклонить', color: '#ffffff', icon: <RejectIcon /> },
+          { type: 'delete-review', label: 'Удалить рецензию', color: '#f44336', icon: <DeleteIcon /> },
+          { type: 'ban-user', label: 'Заблокировать пользователя', color: '#ff9800', icon: <BanIcon /> }
+        ];
+      case 'AUTHOR':
+        return [
+          { type: 'reject', label: 'Отклонить', color: '#ffffff', icon: <RejectIcon /> },
+          { type: 'delete-author', label: 'Удалить автора', color: '#f44336', icon: <DeleteIcon /> }
+        ];
+      case 'RELEASE':
+        return [
+          { type: 'reject', label: 'Отклонить', color: '#ffffff', icon: <RejectIcon /> },
+          { type: 'delete-release', label: 'Удалить релиз', color: '#f44336', icon: <DeleteIcon /> }
+        ];
+      case 'PROFILE':
+        return [
+          { type: 'reject', label: 'Отклонить', color: '#ffffff', icon: <RejectIcon /> },
+          { type: 'ban-user', label: 'Заблокировать пользователя', color: '#ff9800', icon: <BanIcon /> }
+        ];
+      default:
+        return [
+          { type: 'reject', label: 'Отклонить', color: '#ffffff', icon: <RejectIcon /> }
+        ];
+    }
+  };
+
+  // Функция для получения иконки типа репорта
+  const getReportTypeIcon = (type) => {
+    console.log('Получение иконки для типа:', type);
+    try {
+      switch (type) {
+        case 'REVIEW': return <ReviewIcon />;
+        case 'AUTHOR': return <AuthorIcon />;
+        case 'RELEASE': return <ReleaseIcon />;
+        case 'PROFILE': return <ProfileIcon />;
+        default: 
+          console.log('Неизвестный тип:', type);
+          return <OpenIcon />;
+      }
+    } catch (error) {
+      console.error('Ошибка в getReportTypeIcon:', error);
+      return <OpenIcon />;
+    }
+  };
+
+  // Функция для получения ссылки на объект
+  const getObjectLink = (type, targetId) => {
+    switch (type) {
+      case 'REVIEW': return `/review/${targetId}`;
+      case 'AUTHOR': return `/author/${targetId}`;
+      case 'RELEASE': return `/release/${targetId}`;
+      case 'PROFILE': return `/profile/${targetId}`;
+      default: return '/';
+    }
+  };
+
+  // Функция для перехода к объекту
+  const handleObjectNavigation = (type, targetId) => {
+    try {
+      console.log('Навигация:', type, targetId);
+      const link = getObjectLink(type, targetId);
+      console.log('Ссылка:', link);
+      
+      // Открываем в новой вкладке, чтобы избежать проблем с роутингом
+      window.open(link, '_blank');
+    } catch (error) {
+      console.error('Ошибка навигации:', error);
+    }
+  };
+
   // Форматирование даты
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('ru-RU');
@@ -193,25 +312,79 @@ const ModeratorReportsPage = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#111', color: 'white', py: 4 }}>
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Управление жалобами
-        </Typography>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: '#0a0a0a',
+      backgroundImage: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
+      color: '#e0e0e0'
+    }}>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography 
+            variant="h3" 
+            component="h1" 
+            sx={{ 
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textAlign: 'center',
+              mb: 2
+            }}
+          >
+            Управление жалобами
+          </Typography>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              textAlign: 'center',
+              color: '#888',
+              fontWeight: 400
+            }}
+          >
+            Модерация пользовательского контента
+          </Typography>
+        </Box>
         
         {error && (
-          <Alert severity="error" sx={{ mb: 3, bgcolor: '#d32f2f', color: 'white' }}>
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3, 
+              bgcolor: 'rgba(244, 67, 54, 0.1)', 
+              border: '1px solid rgba(244, 67, 54, 0.3)',
+              color: '#f44336',
+              '& .MuiAlert-icon': { color: '#f44336' }
+            }}
+          >
             {error}
           </Alert>
         )}
         
         {success && (
-          <Alert severity="success" sx={{ mb: 3, bgcolor: '#2e7d32', color: 'white' }}>
+          <Alert 
+            severity="success" 
+            sx={{ 
+              mb: 3, 
+              bgcolor: 'rgba(76, 175, 80, 0.1)', 
+              border: '1px solid rgba(76, 175, 80, 0.3)',
+              color: '#4caf50',
+              '& .MuiAlert-icon': { color: '#4caf50' }
+            }}
+          >
             {success}
           </Alert>
         )}
 
-        <Card sx={{ bgcolor: '#222', color: 'white' }}>
+        <Card sx={{ 
+          bgcolor: 'rgba(30, 30, 30, 0.8)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          color: '#e0e0e0'
+        }}>
           <CardContent>
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -223,81 +396,190 @@ const ModeratorReportsPage = () => {
               </Typography>
             ) : (
               <>
-                <TableContainer component={Paper} sx={{ bgcolor: '#333' }}>
+                <TableContainer 
+                  component={Paper} 
+                  sx={{ 
+                    bgcolor: 'rgba(20, 20, 20, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderRadius: 2
+                  }}
+                >
                   <Table>
                     <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Причина</TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Статус</TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Дата создания</TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Действия</TableCell>
+                      <TableRow sx={{ bgcolor: 'rgba(40, 40, 40, 0.8)' }}>
+                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>ID</TableCell>
+                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Тип</TableCell>
+                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Переход</TableCell>
+                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Причина</TableCell>
+                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Статус</TableCell>
+                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Дата</TableCell>
+                        <TableCell sx={{ color: '#e0e0e0', fontWeight: 600, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>Действия</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {reports.map((report) => (
-                        <TableRow key={report.reportId}>
-                          <TableCell sx={{ color: 'white' }}>{report.reportId}</TableCell>
-                          <TableCell sx={{ color: 'white', maxWidth: 200 }}>
-                            {report.reason.length > 50 
-                              ? `${report.reason.substring(0, 50)}...` 
-                              : report.reason}
-                          </TableCell>
-                          <TableCell sx={{ color: 'white' }}>
-                            <Chip 
-                              label={getStatusText(report.status)} 
-                              color={getStatusColor(report.status)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell sx={{ color: 'white' }}>
-                            {formatDate(report.createdAt)}
-                          </TableCell>
-                          <TableCell sx={{ color: 'white' }}>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                              <Button
+                      {reports.map((report) => {
+                        console.log('Обработка репорта:', report);
+                        const availableActions = getAvailableActions(report.type);
+                        return (
+                          <TableRow 
+                            key={report.reportId}
+                            sx={{ 
+                              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' },
+                              borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+                            }}
+                          >
+                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              #{report.reportId}
+                            </TableCell>
+                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <Chip 
+                                icon={report.type ? getReportTypeIcon(report.type) : <OpenIcon />}
+                                label={report.type ? getReportTypeText(report.type) : 'Неизвестно'} 
+                                clickable={false}
+                                sx={{ 
+                                  bgcolor: report.type ? getReportTypeColor(report.type) : '#757575',
+                                  color: 'white',
+                                  fontSize: '0.75rem',
+                                  '& .MuiChip-icon': { color: 'white' },
+                                  cursor: 'default',
+                                  pointerEvents: 'none',
+                                  '&:hover': { 
+                                    bgcolor: report.type ? getReportTypeColor(report.type) : '#757575',
+                                    transform: 'none'
+                                  },
+                                  '&:focus': { 
+                                    bgcolor: report.type ? getReportTypeColor(report.type) : '#757575',
+                                    transform: 'none'
+                                  },
+                                  '&:active': { 
+                                    bgcolor: report.type ? getReportTypeColor(report.type) : '#757575',
+                                    transform: 'none'
+                                  }
+                                }}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <Tooltip title="Перейти к объекту" arrow>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => {
+                                    if (typeof handleObjectNavigation === 'function') {
+                                      handleObjectNavigation(report.type, report.targetId);
+                                    }
+                                  }}
+                                  sx={{ 
+                                    color: 'white',
+                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    borderRadius: '50%',
+                                    width: 32,
+                                    height: 32,
+                                    '&:hover': { 
+                                      color: '#2196f3',
+                                      bgcolor: 'rgba(33, 150, 243, 0.1)',
+                                      borderColor: '#2196f3',
+                                      transform: 'scale(1.1)'
+                                    },
+                                    transition: 'all 0.3s ease'
+                                  }}
+                                >
+                                  <OpenIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell sx={{ color: '#e0e0e0', maxWidth: 200, borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <Typography variant="body2" sx={{ 
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {report.reason.length > 40 
+                                  ? `${report.reason.substring(0, 40)}...` 
+                                  : report.reason}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <Chip 
+                                label={getStatusText(report.status)} 
+                                color={getStatusColor(report.status)}
                                 size="small"
                                 variant="outlined"
-                                color="error"
-                                onClick={() => setActionDialog({ 
-                                  open: true, 
-                                  type: 'delete-review', 
-                                  report 
-                                })}
-                                disabled={report.status !== 'PENDING'}
-                              >
-                                Удалить отзыв
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="warning"
-                                onClick={() => setActionDialog({ 
-                                  open: true, 
-                                  type: 'ban-user', 
-                                  report 
-                                })}
-                                disabled={report.status !== 'PENDING'}
-                              >
-                                Заблокировать
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="info"
-                                onClick={() => setActionDialog({ 
-                                  open: true, 
-                                  type: 'reject', 
-                                  report 
-                                })}
-                                disabled={report.status !== 'PENDING'}
-                              >
-                                Отклонить
-                              </Button>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                                clickable={false}
+                                sx={{ 
+                                  cursor: 'default',
+                                  pointerEvents: 'none',
+                                  '&:hover': { 
+                                    transform: 'none',
+                                    backgroundColor: 'inherit'
+                                  },
+                                  '&:focus': { 
+                                    transform: 'none',
+                                    backgroundColor: 'inherit'
+                                  },
+                                  '&:active': { 
+                                    transform: 'none',
+                                    backgroundColor: 'inherit'
+                                  }
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <Typography variant="body2" sx={{ color: '#aaa' }}>
+                                {formatDate(report.createdAt)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                {availableActions.map((action) => (
+                                  <Tooltip key={action.type} title={action.label} arrow>
+                                    <span>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                          console.log('Клик по действию:', action.type, action.label);
+                                          if (typeof setActionDialog === 'function') {
+                                            setActionDialog({ 
+                                              open: true, 
+                                              type: action.type, 
+                                              report 
+                                            });
+                                          } else {
+                                            console.error('setActionDialog не является функцией');
+                                          }
+                                        }}
+                                        disabled={report.status !== 'PENDING'}
+                                        sx={{ 
+                                          color: action.color,
+                                          bgcolor: `${action.color}20`,
+                                          border: `1px solid ${action.color}40`,
+                                          borderRadius: '50%',
+                                          width: 32,
+                                          height: 32,
+                                          '&:hover': { 
+                                            bgcolor: `${action.color}30`,
+                                            borderColor: action.color,
+                                            transform: 'scale(1.1)'
+                                          },
+                                          '&:disabled': {
+                                            color: 'rgba(255, 255, 255, 0.3)',
+                                            bgcolor: 'rgba(255, 255, 255, 0.05)',
+                                            borderColor: 'rgba(255, 255, 255, 0.1)'
+                                          },
+                                          transition: 'all 0.3s ease'
+                                        }}
+                                      >
+                                        {action.icon}
+                                      </IconButton>
+                                    </span>
+                                  </Tooltip>
+                                ))}
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -327,22 +609,53 @@ const ModeratorReportsPage = () => {
           open={actionDialog.open}
           onClose={() => setActionDialog({ open: false, type: '', report: null })}
           PaperProps={{
-            sx: { bgcolor: '#333', color: 'white' }
+            sx: { 
+              bgcolor: 'rgba(20, 20, 20, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 3,
+              color: '#e0e0e0'
+            }
           }}
         >
-          <DialogTitle>
+          <DialogTitle sx={{ 
+            background: 'linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontWeight: 600
+          }}>
             Подтверждение действия
           </DialogTitle>
           <DialogContent>
-            <Typography>
-              {actionDialog.type === 'delete-review' && 'Вы уверены, что хотите удалить отзыв?'}
+            <Typography sx={{ mb: 2 }}>
+              {actionDialog.type === 'delete-review' && 'Вы уверены, что хотите удалить рецензию?'}
+              {actionDialog.type === 'delete-author' && 'Вы уверены, что хотите удалить автора?'}
+              {actionDialog.type === 'delete-release' && 'Вы уверены, что хотите удалить релиз?'}
               {actionDialog.type === 'ban-user' && 'Вы уверены, что хотите заблокировать пользователя?'}
               {actionDialog.type === 'reject' && 'Вы уверены, что хотите отклонить жалобу?'}
             </Typography>
             {actionDialog.report && (
-              <Typography variant="body2" sx={{ mt: 2, color: '#ccc' }}>
-                Причина жалобы: {actionDialog.report.reason}
-              </Typography>
+              <Box sx={{ 
+                mt: 2, 
+                p: 2, 
+                bgcolor: 'rgba(40, 40, 40, 0.5)',
+                borderRadius: 2,
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  {getReportTypeIcon(actionDialog.report.type)}
+                  <Typography variant="body2" sx={{ color: '#e0e0e0', ml: 1 }}>
+                    <strong>Тип:</strong> {getReportTypeText(actionDialog.report.type)}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ color: '#e0e0e0', mb: 1 }}>
+                  <strong>ID объекта:</strong> {actionDialog.report.targetId}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#e0e0e0' }}>
+                  <strong>Причина:</strong> {actionDialog.report.reason}
+                </Typography>
+              </Box>
             )}
           </DialogContent>
           <DialogActions>
@@ -353,7 +666,7 @@ const ModeratorReportsPage = () => {
               Отмена
             </Button>
             <Button 
-              onClick={() => handleReportAction(actionDialog.type, actionDialog.report?.reportId)}
+              onClick={() => handleReportAction(actionDialog.type, actionDialog.report?.reportId, actionDialog.report?.type)}
               color="error"
               variant="contained"
             >
@@ -361,7 +674,7 @@ const ModeratorReportsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
+      </Container>
     </Box>
   );
 };

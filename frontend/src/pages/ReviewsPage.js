@@ -6,6 +6,8 @@ import { userApi } from '../shared/api/user';
 import { useAuth } from '../app/providers/AuthProvider';
 import './ReviewsPage.css'; // Импорт CSS
 import Notification from '../components/Notification';
+import ReportButton from '../shared/ui/ReportButton/ReportButton';
+import { ReportType } from '../entities/report/model/types';
 
 // Импорт иконок
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -424,7 +426,8 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
             key: 'message'
           }, 'Нельзя лайкать свои рецензии')
         ]),
-        React.createElement('div', { className: 'relative flex items-center gap-x-0.5', key: 'link-container' }, 
+
+        React.createElement('div', { className: 'relative flex items-center gap-x-0.5', key: 'link-container' }, [
           React.createElement(Link, {
             className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground size-8 md:size-10 bg-transparent hover:bg-white/10',
             'data-state': 'closed',
@@ -433,8 +436,17 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
             React.createElement(OpenInNewIcon, { 
               className: 'size-6 text-zinc-400 stroke-white fill-zinc-400'
             })
-          )
-        )
+          ),
+          
+          // Кнопка репорта (только если не собственная рецензия)
+          !isOwnReview && React.createElement(ReportButton, {
+            type: ReportType.REVIEW,
+            targetId: review.id || review.reviewId,
+            size: 'small',
+            tooltip: 'Пожаловаться на рецензию',
+            key: 'report-button'
+          })
+        ])
       ])
     ])
   ]);

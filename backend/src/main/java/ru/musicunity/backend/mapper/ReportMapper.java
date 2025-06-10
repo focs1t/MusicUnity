@@ -3,6 +3,7 @@ package ru.musicunity.backend.mapper;
 import org.springframework.stereotype.Component;
 import ru.musicunity.backend.dto.ReportDTO;
 import ru.musicunity.backend.pojo.Report;
+import ru.musicunity.backend.pojo.enums.ReportType;
 
 @Component
 public class ReportMapper {
@@ -14,7 +15,14 @@ public class ReportMapper {
         
         ReportDTO dto = new ReportDTO();
         dto.setReportId(report.getReportId());
-        dto.setReviewId(report.getReview().getReviewId());
+        dto.setType(report.getType());
+        dto.setTargetId(report.getTargetId());
+        
+        // Поле review удалено - для REVIEW типов используем targetId
+        if (report.getType() == ReportType.REVIEW) {
+            dto.setReviewId(report.getTargetId());
+        }
+        
         dto.setUserId(report.getUser().getUserId());
         dto.setReason(report.getReason());
         dto.setStatus(report.getStatus());

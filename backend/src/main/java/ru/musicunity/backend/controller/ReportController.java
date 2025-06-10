@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.ReportDTO;
 import ru.musicunity.backend.pojo.enums.ReportStatus;
+import ru.musicunity.backend.pojo.enums.ReportType;
 import ru.musicunity.backend.service.ReportService;
 
 import java.time.LocalDateTime;
@@ -62,6 +63,23 @@ public class ReportController {
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
         @Parameter(description = "Причина жалобы") @RequestParam String reason) {
         return ResponseEntity.ok(reportService.createReport(reviewId, userId, reason));
+    }
+
+    @Operation(summary = "Создание универсальной жалобы")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Жалоба успешно создана"),
+        @ApiResponse(responseCode = "400", description = "Некорректные данные жалобы"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
+    @PostMapping("/universal")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ReportDTO> createUniversalReport(
+        @Parameter(description = "Тип жалобы") @RequestParam String type,
+        @Parameter(description = "ID объекта") @RequestParam Long targetId,
+        @Parameter(description = "ID пользователя") @RequestParam Long userId,
+        @Parameter(description = "Причина жалобы") @RequestParam String reason) {
+        ReportType reportType = ReportType.valueOf(type);
+        return ResponseEntity.ok(reportService.createUniversalReport(reportType, targetId, userId, reason));
     }
 
     @Operation(summary = "Удаление отзыва по жалобе")

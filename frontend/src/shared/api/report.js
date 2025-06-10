@@ -53,6 +53,25 @@ export const reportApi = {
   },
 
   /**
+   * Создание универсальной жалобы
+   * @param {string} type - Тип жалобы (REVIEW, AUTHOR, RELEASE, PROFILE)
+   * @param {number} targetId - ID объекта
+   * @param {number} userId - ID пользователя
+   * @param {string} reason - Причина жалобы
+   * @returns {Promise<Object>}
+   */
+  createUniversalReport: async (type, targetId, userId, reason) => {
+    try {
+      const response = await httpClient.post(`${API_URL}/universal`, null, {
+        params: { type, targetId, userId, reason }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Удаление отзыва по жалобе (только для модераторов)
    * @param {number} reportId - ID жалобы
    * @param {number} moderatorId - ID модератора
