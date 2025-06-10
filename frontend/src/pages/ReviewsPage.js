@@ -1058,7 +1058,7 @@ const ReviewsPage = () => {
 
   // Основной метод рендеринга
   return React.createElement('div', {
-    className: 'site-content min-[1024px]:max-[1500px]:px-6 mb-[30px] lg:mb-[80px] mt-[20px] lg:mt-[30px]'
+    className: 'reviews-page site-content min-[1024px]:max-[1500px]:px-6 mb-[30px] lg:mb-[80px] mt-[20px] lg:mt-[30px]'
   }, 
     React.createElement('main', {}, 
       React.createElement('div', { className: 'container' }, [

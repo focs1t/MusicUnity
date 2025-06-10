@@ -6,7 +6,6 @@ import FollowingReleasesPage from '../../../../pages/FollowingReleasesPage';
 import ProfilePage from '../../../../pages/ProfilePage';
 import SettingsPage from '../../../../pages/SettingsPage';
 import Top100Page from '../../../../pages/Top100Page';
-import AuthorLikesPage from '../../../../pages/AuthorLikesPage';
 import ReleasesPage from '../../../../pages/ReleasesPage';
 import ReleasePage from '../../../../pages/ReleasePage';
 import CreateReleasePage from '../../../../pages/CreateReleasePage';
@@ -54,7 +53,7 @@ const AppRouter = () => {
       <Route path={ROUTES.TOP_100} element={<PublicRoute element={<Top100Page />} />} />
       <Route path={ROUTES.FAQ} element={<PublicRoute element={<div>Часто задаваемые вопросы</div>} />} />
       <Route path={ROUTES.RATING} element={<PublicRoute element={<RatingPage />} />} />
-      <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<AuthorLikesPage />} />} />
+      <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<div>А лайки</div>} />} />
       <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<VerifiedAuthorsPage />} />} />
       <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<ReviewsPage />} />} />
       <Route path={ROUTES.CONTACT} element={<PublicRoute element={<div>Обратная связь</div>} />} />

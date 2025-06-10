@@ -40,11 +40,11 @@
   border-top: 5px solid #222;
 }
 
-/* Стили для обложек релизов в рецензиях - МАКСИМАЛЬНАЯ СПЕЦИФИЧНОСТЬ */
-a.shrink-0.size-10.lg\:size-10.block,
-a.shrink-0.size-10.block,
-.shrink-0.size-10.lg\:size-10,
-.shrink-0.size-10 {
+/* Стили для обложек релизов в рецензиях - ТОЛЬКО ДЛЯ СТРАНИЦЫ РЕЦЕНЗИЙ */
+.reviews-page a.shrink-0.size-10.lg\:size-10.block,
+.reviews-page a.shrink-0.size-10.block,
+.reviews-page .shrink-0.size-10.lg\:size-10,
+.reviews-page .shrink-0.size-10 {
   width: 40px !important;
   height: 40px !important;
   flex-shrink: 0 !important;
@@ -53,14 +53,14 @@ a.shrink-0.size-10.block,
   position: relative !important;
 }
 
-a.shrink-0.size-10.lg\:size-10.block img,
-a.shrink-0.size-10.block img,
-.shrink-0.size-10.lg\:size-10 img,
-.shrink-0.size-10 img,
-.size-10 img, 
-.size-10 > img,
-img.rounded-md.w-full.h-full.object-cover,
-img.object-cover {
+.reviews-page a.shrink-0.size-10.lg\:size-10.block img,
+.reviews-page a.shrink-0.size-10.block img,
+.reviews-page .shrink-0.size-10.lg\:size-10 img,
+.reviews-page .shrink-0.size-10 img,
+.reviews-page .size-10 img, 
+.reviews-page .size-10 > img,
+.reviews-page img.rounded-md.w-full.h-full.object-cover,
+.reviews-page img.object-cover {
   object-fit: cover !important;
   object-position: center !important;
   width: 40px !important;
@@ -71,21 +71,21 @@ img.object-cover {
   left: 0 !important;
 }
 
-/* Дополнительные стили для гарантированного применения */
-[class*="size-10"] img[class*="object-cover"],
-[class*="size-10"] > img,
-img[width="40"][height="40"] {
+/* Дополнительные стили для гарантированного применения - ТОЛЬКО ДЛЯ РЕЦЕНЗИЙ */
+.reviews-page [class*="size-10"] img[class*="object-cover"],
+.reviews-page [class*="size-10"] > img,
+.reviews-page img[width="40"][height="40"] {
   object-fit: cover !important;
   object-position: center center !important;
 }
 
-/* Универсальный стиль для ВСЕХ изображений в контейнерах size-10 */
-*[class*="size-10"] {
+/* Универсальный стиль для ВСЕХ изображений в контейнерах size-10 - ТОЛЬКО ДЛЯ РЕЦЕНЗИЙ */
+.reviews-page *[class*="size-10"] {
   width: 40px !important;
   height: 40px !important;
 }
 
-*[class*="size-10"] img {
+.reviews-page *[class*="size-10"] img {
   width: 40px !important;
   height: 40px !important;
   object-fit: cover !important;

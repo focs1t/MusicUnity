@@ -1237,11 +1237,11 @@
   object-fit: cover;
 }
 
-/* Принудительные стили для обложек релизов в рецензиях - МАКСИМАЛЬНАЯ СПЕЦИФИЧНОСТЬ */
-a.shrink-0.size-10.lg\:size-10.block,
-a.shrink-0.size-10.block,
-.shrink-0.size-10.lg\:size-10,
-.shrink-0.size-10 {
+/* Принудительные стили для обложек релизов в рецензиях - ТОЛЬКО ДЛЯ ПРОФИЛЯ */
+.profile-page a.shrink-0.size-10.lg\:size-10.block,
+.profile-page a.shrink-0.size-10.block,
+.profile-page .shrink-0.size-10.lg\:size-10,
+.profile-page .shrink-0.size-10 {
   width: 40px !important;
   height: 40px !important;
   flex-shrink: 0 !important;
@@ -1250,16 +1250,16 @@ a.shrink-0.size-10.block,
   position: relative !important;
 }
 
-a.shrink-0.size-10.lg\:size-10.block img,
-a.shrink-0.size-10.block img,
-.shrink-0.size-10.lg\:size-10 img,
-.shrink-0.size-10 img,
-.size-10 img, 
-.size-10 > img,
-.lg\:size-10 img,
-.lg\:size-10 > img,
-img.rounded-md.w-full.h-full.object-cover,
-img.object-cover {
+.profile-page a.shrink-0.size-10.lg\:size-10.block img,
+.profile-page a.shrink-0.size-10.block img,
+.profile-page .shrink-0.size-10.lg\:size-10 img,
+.profile-page .shrink-0.size-10 img,
+.profile-page .size-10 img, 
+.profile-page .size-10 > img,
+.profile-page .lg\:size-10 img,
+.profile-page .lg\:size-10 > img,
+.profile-page img.rounded-md.w-full.h-full.object-cover,
+.profile-page img.object-cover {
   object-fit: cover !important;
   object-position: center !important;
   width: 40px !important;
