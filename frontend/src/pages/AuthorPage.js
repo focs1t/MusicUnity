@@ -376,6 +376,178 @@ const AuthorPage = () => {
               )}
             </div>
           </section>
+
+          {/* Секция релизов по типам */}
+          <section className="releases-by-type-section">
+            <div className="releases-by-type-title">Релизы артиста</div>
+            <div className="releases-grid-container">
+              {/* Треки и синглы */}
+              <div className="releases-type-section">
+                <div className="releases-type-header">
+                  Треки
+                </div>
+                <div className="releases-list">
+                  {authorReleases.filter(release => ['SINGLE', 'EP', 'TRACK'].includes(release.type)).map((release) => (
+                    <div key={release.releaseId} className="release-row">
+                      <a className="release-cover-link" href={`/release/${release.releaseId}`}>
+                        <img 
+                          alt={release.title}
+                          loading="lazy"
+                          width="100"
+                          height="100"
+                          decoding="async"
+                          className="release-row-cover"
+                          src={release.coverUrl || '/default-release-cover.jpg'}
+                        />
+                      </a>
+                      
+                      <div className="release-row-content">
+                        <div className="release-row-stats">
+                          <div className="release-row-stat">
+                            <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
+                              <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                            </svg>
+                            <span>{release.extendedReviewsCount || 0}</span>
+                          </div>
+                          <div className="release-row-stat">
+                            <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                            </svg>
+                            <span>{release.simpleReviewsCount || 0}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="release-row-title-container">
+                          <div className="release-row-title-wrapper">
+                            <a 
+                              className="release-row-title"
+                              href={`/release/${release.releaseId}`}
+                            >
+                              {release.title}
+                            </a>
+                          </div>
+                        </div>
+                        
+                        <div className="release-row-authors">
+                          {release.authors && release.authors.map((author, index) => (
+                            <span key={author.id}>
+                              <a href={`/author/${author.id}`} className="release-row-author-link">
+                                <span>{author.authorName}</span>
+                              </a>
+                              {index < release.authors.length - 1 && <span>,&nbsp;</span>}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="release-row-ratings">
+                        <div className="release-row-rating-circles">
+                          {release.fullReviewRating ? (
+                            <div className="release-row-rating-circle filled">
+                              {formatRating(release.fullReviewRating)}
+                            </div>
+                          ) : (
+                            <div className="release-row-rating-circle dashed"></div>
+                          )}
+                          {release.simpleReviewRating ? (
+                            <div className="release-row-rating-circle outlined">
+                              {formatRating(release.simpleReviewRating)}
+                            </div>
+                          ) : (
+                            <div className="release-row-rating-circle dashed"></div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Альбомы */}
+              <div className="releases-type-section">
+                <div className="releases-type-header">
+                  Альбомы
+                </div>
+                <div className="releases-list">
+                  {authorReleases.filter(release => release.type === 'ALBUM').map((release) => (
+                    <div key={release.releaseId} className="release-row">
+                      <a className="release-cover-link" href={`/release/${release.releaseId}`}>
+                        <img 
+                          alt={release.title}
+                          loading="lazy"
+                          width="100"
+                          height="100"
+                          decoding="async"
+                          className="release-row-cover"
+                          src={release.coverUrl || '/default-release-cover.jpg'}
+                        />
+                      </a>
+                      
+                      <div className="release-row-content">
+                        <div className="release-row-stats">
+                          <div className="release-row-stat">
+                            <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
+                              <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                            </svg>
+                            <span>{release.extendedReviewsCount || 0}</span>
+                          </div>
+                          <div className="release-row-stat">
+                            <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                            </svg>
+                            <span>{release.simpleReviewsCount || 0}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="release-row-title-container">
+                          <div className="release-row-title-wrapper">
+                            <a 
+                              className="release-row-title"
+                              href={`/release/${release.releaseId}`}
+                            >
+                              {release.title}
+                            </a>
+                          </div>
+                        </div>
+                        
+                        <div className="release-row-authors">
+                          {release.authors && release.authors.map((author, index) => (
+                            <span key={author.id}>
+                              <a href={`/author/${author.id}`} className="release-row-author-link">
+                                <span>{author.authorName}</span>
+                              </a>
+                              {index < release.authors.length - 1 && <span>,&nbsp;</span>}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="release-row-ratings">
+                        <div className="release-row-rating-circles">
+                          {release.fullReviewRating ? (
+                            <div className="release-row-rating-circle filled">
+                              {formatRating(release.fullReviewRating)}
+                            </div>
+                          ) : (
+                            <div className="release-row-rating-circle dashed"></div>
+                          )}
+                          {release.simpleReviewRating ? (
+                            <div className="release-row-rating-circle outlined">
+                              {formatRating(release.simpleReviewRating)}
+                            </div>
+                          ) : (
+                            <div className="release-row-rating-circle dashed"></div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
     </div>
