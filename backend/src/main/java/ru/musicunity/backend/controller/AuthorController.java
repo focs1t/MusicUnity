@@ -134,6 +134,36 @@ public class AuthorController {
         return ResponseEntity.ok(authorService.findProducers(pageable));
     }
 
+    @Operation(summary = "Получение верифицированных авторов")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список верифицированных авторов")
+    })
+    @GetMapping("/verified")
+    public ResponseEntity<Page<AuthorDTO>> getVerifiedAuthors(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(authorService.findVerifiedAuthors(pageable));
+    }
+
+    @Operation(summary = "Получение верифицированных исполнителей")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список верифицированных исполнителей")
+    })
+    @GetMapping("/verified/artists")
+    public ResponseEntity<Page<AuthorDTO>> getVerifiedArtists(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(authorService.findVerifiedArtists(pageable));
+    }
+
+    @Operation(summary = "Получение верифицированных продюсеров")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список верифицированных продюсеров")
+    })
+    @GetMapping("/verified/producers")
+    public ResponseEntity<Page<AuthorDTO>> getVerifiedProducers(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(authorService.findVerifiedProducers(pageable));
+    }
+
     @Operation(summary = "Подписка на автора")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Успешная подписка"),

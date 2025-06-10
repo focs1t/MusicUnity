@@ -13,6 +13,7 @@ import { ROUTES } from '../../../../shared/config/routes';
 import ReviewsPage from '../../../../pages/ReviewsPage';
 import AuthorsPage from '../../../../pages/AuthorsPage';
 import AuthorPage from '../../../../pages/AuthorPage';
+import VerifiedAuthorsPage from '../../../../pages/VerifiedAuthorsPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -51,7 +52,7 @@ const AppRouter = () => {
       <Route path={ROUTES.FAQ} element={<PublicRoute element={<div>Часто задаваемые вопросы</div>} />} />
       <Route path={ROUTES.RATING} element={<PublicRoute element={<div>Рейтинг</div>} />} />
       <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<AuthorLikesPage />} />} />
-      <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<div>Зарегистрированные авторы</div>} />} />
+      <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<VerifiedAuthorsPage />} />} />
       <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<ReviewsPage />} />} />
       <Route path={ROUTES.CONTACT} element={<PublicRoute element={<div>Обратная связь</div>} />} />
       

@@ -57,6 +57,21 @@ public class AuthorService {
                 .map(this::toDTOWithRatings);
     }
 
+    public Page<AuthorDTO> findVerifiedAuthors(Pageable pageable) {
+        return authorRepository.findByIsVerifiedTrue(pageable)
+                .map(this::toDTOWithRatings);
+    }
+
+    public Page<AuthorDTO> findVerifiedArtists(Pageable pageable) {
+        return authorRepository.findByIsVerifiedTrueAndIsArtistTrue(pageable)
+                .map(this::toDTOWithRatings);
+    }
+
+    public Page<AuthorDTO> findVerifiedProducers(Pageable pageable) {
+        return authorRepository.findByIsVerifiedTrueAndIsProducerTrue(pageable)
+                .map(this::toDTOWithRatings);
+    }
+
     private AuthorDTO toDTOWithRatings(Author author) {
         AuthorDTO dto = authorMapper.toDTO(author);
         

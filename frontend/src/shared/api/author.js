@@ -138,6 +138,57 @@ export const authorApi = {
   },
 
   /**
+   * Получение верифицированных авторов
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getVerifiedAuthors: async (page = 0, size = 10) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/verified`, {
+        params: { page, size }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Получение верифицированных исполнителей
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getVerifiedArtists: async (page = 0, size = 10) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/verified/artists`, {
+        params: { page, size }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Получение верифицированных продюсеров
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getVerifiedProducers: async (page = 0, size = 10) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/verified/producers`, {
+        params: { page, size }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Подписка на автора
    * @param {number} authorId - ID автора
    * @returns {Promise<void>}
