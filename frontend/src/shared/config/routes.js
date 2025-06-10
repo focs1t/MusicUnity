@@ -17,5 +17,6 @@ export const ROUTES = {
   REVIEWS: '/reviews',
   RELEASES: '/releases',
   RELEASE: '/release/:id',
+  CREATE_RELEASE: '/create-release',
   CONTACT: '/contact'
 }; 

@@ -27,6 +27,19 @@ httpClient.interceptors.request.use(
         sessionStorage.removeItem('token');
       }
     }
+    
+    // Логирование для POST /api/releases/own
+    if (config.method === 'post' && config.url?.includes('/api/releases/own')) {
+      console.log('=== AXIOS REQUEST DEBUG ===');
+      console.log('URL:', config.url);
+      console.log('Method:', config.method);
+      console.log('Headers:', config.headers);
+      console.log('Data type:', typeof config.data);
+      console.log('Data:', config.data);
+      console.log('Data JSON:', JSON.stringify(config.data, null, 2));
+      console.log('==========================');
+    }
+    
     return config;
   },
   (error) => {

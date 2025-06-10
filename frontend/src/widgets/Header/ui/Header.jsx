@@ -370,6 +370,11 @@ export const Header = () => {
 
   // Получаем имя пользователя для отображения в меню
   const getUserDisplayName = () => {
+    // Для авторов используем имя автора
+    if (userDetails?.rights === 'AUTHOR' && linkedAuthor?.authorName) {
+      return linkedAuthor.authorName;
+    }
+    
     if (userDetails?.username) return userDetails.username;
     if (!user) return 'Пользователь';
     return user.username || user.sub || 'Пользователь';
@@ -377,6 +382,11 @@ export const Header = () => {
 
   // Получаем аватарку пользователя для отображения
   const getUserAvatar = () => {
+    // Для авторов используем аватарку из linkedAuthor
+    if (userDetails?.rights === 'AUTHOR' && linkedAuthor?.avatarUrl) {
+      return linkedAuthor.avatarUrl;
+    }
+    
     // Сначала проверяем кешированное значение
     if (cachedAvatarUrl) return cachedAvatarUrl;
     
@@ -467,6 +477,17 @@ export const Header = () => {
                           <rect width="20" height="19.02" fill="white" />
                         </clipPath>
                       </defs>
+                    </svg>
+                  </ListItemIcon>
+                </MenuItem>
+              )}
+              
+              {userDetails?.rights === 'AUTHOR' && (
+                <MenuItem onClick={() => { handleClose(); navigate('/create-release'); }}>
+                  Добавить релиз
+                  <ListItemIcon>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M10 3V17M3 10H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </ListItemIcon>
                 </MenuItem>

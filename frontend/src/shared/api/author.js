@@ -4,6 +4,21 @@ const API_URL = '/api/authors';
 
 export const authorApi = {
   /**
+   * Получение всех авторов без пагинации (для автокомплита)
+   * @returns {Promise<Array>}
+   */
+  getAllAuthorsForAutocomplete: async () => {
+    try {
+      const response = await httpClient.get(API_URL, {
+        params: { size: 1000 }
+      });
+      return response.data.content || response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Получение всех авторов
    * @param {number} page - Номер страницы
    * @param {number} size - Размер страницы

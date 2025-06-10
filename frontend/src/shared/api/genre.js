@@ -4,12 +4,28 @@ const API_URL = '/api/genres';
 
 export const genreApi = {
   /**
-   * Получение всех жанров
+   * Получение всех жанров без пагинации
+   * @returns {Promise<Array>}
+   */
+  getAllGenres: async () => {
+    try {
+      // Получаем все жанры с большим размером страницы
+      const response = await httpClient.get(API_URL, {
+        params: { size: 1000 }
+      });
+      return response.data.content || response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Получение жанров с пагинацией
    * @param {number} page - Номер страницы
    * @param {number} size - Размер страницы
-   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   * @returns {Promise<Object>}
    */
-  getAllGenres: async (page = 0, size = 10) => {
+  getGenresPaginated: async (page = 0, size = 10) => {
     try {
       const response = await httpClient.get(API_URL, {
         params: { page, size }

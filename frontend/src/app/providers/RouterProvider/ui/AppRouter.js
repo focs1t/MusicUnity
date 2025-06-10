@@ -9,6 +9,7 @@ import Top100Page from '../../../../pages/Top100Page';
 import AuthorLikesPage from '../../../../pages/AuthorLikesPage';
 import ReleasesPage from '../../../../pages/ReleasesPage';
 import ReleasePage from '../../../../pages/ReleasePage';
+import CreateReleasePage from '../../../../pages/CreateReleasePage';
 import RatingPage from '../../../../pages/RatingPage';
 import { ROUTES } from '../../../../shared/config/routes';
 import ReviewsPage from '../../../../pages/ReviewsPage';
@@ -41,6 +42,7 @@ const AppRouter = () => {
       <Route path="/profile/:userId/liked" element={<PublicRoute element={<ProfilePage />} />} />
       <Route path="/settings" element={<ProtectedRoute element={<SettingsPage />} />} />
       <Route path="/following-releases" element={<ProtectedRoute element={<FollowingReleasesPage />} />} />
+      <Route path={ROUTES.CREATE_RELEASE} element={<ProtectedRoute element={<CreateReleasePage />} />} />
       
       {/* Общедоступные страницы */}
       <Route path={ROUTES.RELEASES} element={<PublicRoute element={<ReleasesPage />} />} />
