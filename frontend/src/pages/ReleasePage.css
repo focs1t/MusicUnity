@@ -719,60 +719,70 @@
 .review-ratings-vibe {
   grid-column: 1 / -1;
   padding: 0.5rem 1.25rem 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
   gap: 2.5rem;
   border: 1px solid var(--ratingVibe-color, #10b981);
   background-image: linear-gradient(to bottom right, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
   border-radius: 0.75rem;
 }
 
-.rating-item {
+.review-form-card .rating-item {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.rating-header {
+.review-form-card .rating-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.25rem;
-  height: 2.5rem; /* Fixed height to align all sliders */
+  margin-bottom: 0;
 }
 
-.rating-label {
+.review-form-card .rating-label {
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.2;
-  max-width: 80%;
+  margin: 0;
 }
 
-.rating-value {
+.review-form-card .rating-value {
   font-weight: 700;
   color: var(--ratingText-color);
+  min-width: 2rem;
+  text-align: center;
+  margin: 0;
 }
 
-.review-ratings-vibe .rating-value {
+.review-form-card .review-ratings-vibe .rating-value {
   color: var(--ratingVibe-color);
 }
 
 @media (min-width: 1024px) {
-  .rating-value {
+  .review-form-card .rating-value {
     font-size: 1.25rem;
   }
 }
 
-.rating-slider {
+.review-form-card .rating-slider {
   height: 0.625rem;
-  background-color: rgba(128, 128, 128, 0.3); /* Unselected (gray) part */
-  flex-grow: 1;
+  background-color: rgba(128, 128, 128, 0.3);
   border-radius: 9999px;
   cursor: grab;
-  width: 100%;
   -webkit-appearance: none;
   appearance: none;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  display: block;
+  margin-top: 0;
 }
 
 /* The colored fill part of the slider */
-.rating-slider::before {
+.review-form-card .rating-slider::before {
   content: '';
   position: absolute;
   height: 100%;
@@ -785,7 +795,7 @@
 }
 
 /* Dot indicator at the end of the filled part */
-.rating-slider::after {
+.review-form-card .rating-slider::after {
   content: '';
   position: absolute;
   height: 10px;
@@ -799,15 +809,15 @@
   pointer-events: none;
 }
 
-.review-ratings-vibe .rating-slider::before {
+.review-form-card .review-ratings-vibe .rating-slider::before {
   background-color: var(--ratingVibe-color);
 }
 
-.review-ratings-vibe .rating-slider::after {
+.review-form-card .review-ratings-vibe .rating-slider::after {
   background-color: var(--ratingVibe-color);
 }
 
-.rating-slider::-webkit-slider-thumb {
+.review-form-card .rating-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
@@ -819,7 +829,7 @@
   z-index: 2;
 }
 
-.rating-slider::-moz-range-thumb {
+.review-form-card .rating-slider::-moz-range-thumb {
   width: 18px;
   height: 25px;
   background: white;
@@ -827,14 +837,20 @@
   cursor: grab;
   position: relative;
   z-index: 2;
+  border: none;
 }
 
-.review-ratings-vibe .rating-slider::-webkit-slider-thumb {
+.review-form-card .review-ratings-vibe .rating-slider::-webkit-slider-thumb {
   background: var(--ratingVibe-color);
 }
 
-.review-ratings-vibe .rating-slider::-moz-range-thumb {
+.review-form-card .review-ratings-vibe .rating-slider::-moz-range-thumb {
   background: var(--ratingVibe-color);
+}
+
+/* Remove the unused rating-slider-row */
+.review-form-card .rating-slider-row {
+  display: none;
 }
 
 .review-form-fields {
