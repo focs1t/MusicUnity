@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { releaseApi } from '../shared/api/release';
 import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
 import { userApi } from '../shared/api/user';
 import { useAuth } from '../app/providers/AuthProvider';
 import './ReleasePage.css';
+import Notification from '../components/Notification';
 
 // Получение ID текущего пользователя (как в ReviewsPage)
 const getCurrentUserId = () => {
@@ -26,17 +27,21 @@ const getCurrentUserId = () => {
 };
 
 // Константы для placeholder изображений (как в ReviewsPage)
-const DEFAULT_AVATAR_PLACEHOLDER = '/path/to/default-avatar.png';
+const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiM1NTU1NTUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjRkZGRkZGIj7QldCw0LXRgtGM0L/QvtC70YzQt9C+0LLQsNGC0LXQu9GMINC/0LDQtdGC0LU8L3RleHQ+PC9zdmc+';
 const DEFAULT_COVER_PLACEHOLDER = '/path/to/default-cover.png';
 
 // Компонент карточки рецензии (как в ReviewsPage)
-const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
+const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
   // Функция для обработки ошибок изображений
   const handleImageError = (e, placeholder) => {
     console.log('Ошибка загрузки изображения, использую placeholder');
     console.log(`Проблемный URL: ${e.target.src}`);
-    e.target.onerror = null;
-    e.target.src = placeholder;
+    
+    // Предотвращаем бесконечный цикл
+    if (e.target.src !== DEFAULT_AVATAR_PLACEHOLDER) {
+      e.target.onerror = null;
+      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+    }
   };
 
   // Безопасное получение имени пользователя
@@ -287,6 +292,27 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
               <span className="font-bold text-base lg:text-base">
                 {review.likesCount !== undefined ? review.likesCount : 0}
               </span>
+              
+              {/* Отображение аватарок авторов лайков */}
+              {authorLikes.length > 0 && (
+                <div className="flex items-center ml-2 gap-1">
+                  {authorLikes.slice(0, 3).map((authorLike, index) => (
+                    <img
+                      key={`author-like-${index}`}
+                      src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
+                      alt={`Лайк от ${authorLike.author?.name || 'автора'}`}
+                      className="w-6 h-6 rounded-full border border-zinc-600"
+                      onError={(e) => handleImageError(e, DEFAULT_AVATAR_PLACEHOLDER)}
+                      title={`Лайк от автора: ${authorLike.author?.name || 'Неизвестный автор'}`}
+                    />
+                  ))}
+                  {authorLikes.length > 3 && (
+                    <span className="text-xs text-zinc-400 ml-1">
+                      +{authorLikes.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
             </button>
             
             {/* Всплывающее сообщение */}
@@ -315,6 +341,10 @@ function ReleasePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [inFavorites, setInFavorites] = useState(false);
+  
+  // Проверка роли пользователя
+  const [userRole, setUserRole] = useState(null);
+  const [isAuthor, setIsAuthor] = useState(false);
   
   // Состояния для рецензии
   const [tabState, setTabState] = useState('review-form'); // 'review-form' или 'score-review-form'
@@ -352,9 +382,29 @@ function ReleasePage() {
   // Состояния для лайков
   const [likedReviews, setLikedReviews] = useState(new Set());
   
-  // Состояние для отображения сообщения о собственной рецензии
-
+  // Состояние для авторских лайков
+  const [authorLikes, setAuthorLikes] = useState({});
   
+  // Состояние для отображения сообщения о собственной рецензии
+  const [notification, setNotification] = useState(null);
+
+  // Проверка роли пользователя при загрузке
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (isAuth && user) {
+        try {
+          const userData = await userApi.getCurrentUser();
+          setUserRole(userData.rights);
+          setIsAuthor(userData.rights === 'AUTHOR');
+        } catch (error) {
+          console.error('Ошибка при получении данных пользователя:', error);
+        }
+      }
+    };
+    
+    checkUserRole();
+  }, [isAuth, user]);
+
   // Рассчитываем общий счет на основе формулы из бэкенда
   const calculateTotalScore = () => {
     const baseScore = rhymeImagery + structureRhythm + styleExecution + individuality;
@@ -504,6 +554,9 @@ function ReleasePage() {
         // Обновляем количество лайков для каждой рецензии
         const reviewsWithLikes = await updateReviewsLikes(reviewsResponse.content);
         
+        // Загружаем авторские лайки для всех рецензий
+        await fetchAuthorLikes(reviewsWithLikes);
+        
         setReviews(reviewsWithLikes);
         setTotalReviews(reviewsResponse.totalElements || 0);
         setTotalPages(reviewsResponse.totalPages || 0);
@@ -548,6 +601,30 @@ function ReleasePage() {
     } catch (error) {
       console.error('Ошибка при загрузке лайкнутых рецензий:', error);
       return new Set();
+    }
+  };
+
+  // Функция для загрузки авторских лайков для всех рецензий
+  const fetchAuthorLikes = async (reviewsData) => {
+    try {
+      const authorLikesData = {};
+      
+      // Получаем авторские лайки для каждой рецензии
+      await Promise.all(
+        reviewsData.map(async (review) => {
+          const reviewId = review.id || review.reviewId;
+          if (reviewId) {
+            const authorLikesForReview = await likeApi.getAuthorLikesByReview(reviewId);
+            if (authorLikesForReview && authorLikesForReview.length > 0) {
+              authorLikesData[reviewId] = authorLikesForReview;
+            }
+          }
+        })
+      );
+      
+      setAuthorLikes(authorLikesData);
+    } catch (error) {
+      console.error('Ошибка при загрузке авторских лайков:', error);
     }
   };
 
@@ -627,6 +704,21 @@ function ReleasePage() {
       }));
     } catch (err) {
       console.error('Ошибка при изменении статуса избранного:', err);
+      
+      // Проверяем на ошибку автора
+      if (err.response && err.response.status === 403 && 
+          err.response.data && err.response.data.message && 
+          err.response.data.message.includes('не может добавлять релизы в предпочтения')) {
+        setNotification({
+          message: 'Автор не может добавлять релизы в предпочтения',
+          type: 'error'
+        });
+      } else {
+        setNotification({
+          message: 'Ошибка при добавлении в избранное',
+          type: 'error'
+        });
+      }
     }
   };
 
@@ -765,6 +857,7 @@ function ReleasePage() {
               review={review}
               isLiked={isLiked}
               onLikeToggle={handleLikeToggle}
+              authorLikes={authorLikes[reviewId] || []}
             />
           );
         })}
@@ -956,6 +1049,33 @@ function ReleasePage() {
           console.log(`Лайк добавлен: reviewId=${reviewId}, userId=${userId}`);
         } catch (apiError) {
           console.error('Ошибка при добавлении лайка через API:', apiError);
+          
+          // Проверяем на ошибку автора
+          if (apiError.response && apiError.response.status === 403 && 
+              apiError.response.data && apiError.response.data.message && 
+              apiError.response.data.message.includes('может лайкать только рецензии на свои релизы')) {
+            setNotification({
+              message: 'Автор может лайкать только рецензии на свои релизы',
+              type: 'error'
+            });
+            
+            // Возвращаем локальное состояние обратно
+            setLikedReviews(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(reviewId);
+              return newSet;
+            });
+            
+            setReviews(prevReviews => 
+              prevReviews.map(r => 
+                (r.id === reviewId || r.reviewId === reviewId) 
+                  ? {...r, likesCount: Math.max(0, (r.likesCount || 0) - 1)} 
+                  : r
+              )
+            );
+            return;
+          }
+          
           console.log('Продолжаем работу с локальными данными');
         }
         
@@ -1101,6 +1221,14 @@ function ReleasePage() {
 
   return (
     <div className="release-page">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      
       <div className="site-content">
         <main className="main-container">
           <div className="container">
@@ -1272,8 +1400,8 @@ function ReleasePage() {
               </div>
             </div>
             
-            {/* Блок создания рецензии - отображается только для авторизованных пользователей */}
-            {isAuth && user ? (
+            {/* Блок создания рецензии - отображается только для авторизованных пользователей (кроме авторов) */}
+            {isAuth && user && !isAuthor ? (
               <div className="review-form-container">
                 <div className="review-form-title">Оценить работу</div>
                 <div dir="ltr" data-orientation="vertical" className="review-form-grid">
@@ -1695,7 +1823,7 @@ function ReleasePage() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : (!isAuth && (
               <div className="review-auth-container">
                 <div className="review-auth-box">
                   <div className="review-auth-message">Чтобы оставить рецензию, необходимо авторизоваться</div>
@@ -1704,7 +1832,7 @@ function ReleasePage() {
                   </a>
                 </div>
               </div>
-            )}
+            ))}
 
             {/* Секция с рецензиями пользователей */}
             <section className="reviews-section">

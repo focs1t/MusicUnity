@@ -7,20 +7,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.LikeDTO;
 import ru.musicunity.backend.dto.ReviewDTO;
+import ru.musicunity.backend.exception.AuthorCannotLikeOthersReviewsException;
 import ru.musicunity.backend.exception.LikeExistsException;
 import ru.musicunity.backend.exception.ReviewNotFoundException;
 import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.LikeMapper;
 import ru.musicunity.backend.mapper.ReviewMapper;
+import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.Like;
 import ru.musicunity.backend.pojo.Review;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.LikeType;
+import ru.musicunity.backend.repository.AuthorRepository;
 import ru.musicunity.backend.repository.LikeRepository;
 import ru.musicunity.backend.repository.ReviewRepository;
 import ru.musicunity.backend.repository.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +33,7 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final AuthorRepository authorRepository;
     private final LikeMapper likeMapper;
     private final ReviewMapper reviewMapper;
 
@@ -111,6 +116,20 @@ public class LikeService {
 
         if (likeRepository.existsByReviewAndUser(review, user)) {
             throw new LikeExistsException();
+        }
+
+        // Проверяем, является ли пользователь автором
+        Optional<Author> author = authorRepository.findByUserUserId(userId);
+        if (author.isPresent()) {
+            // Если это автор, проверяем, является ли он автором релиза, на который написана рецензия
+            boolean isAuthorOfRelease = review.getRelease().getAuthors().stream()
+                    .anyMatch(releaseAuthor -> releaseAuthor.getAuthor().getAuthorId().equals(author.get().getAuthorId()));
+            
+            if (!isAuthorOfRelease) {
+                throw new AuthorCannotLikeOthersReviewsException();
+            }
+            // Автор может лайкать только авторским лайком
+            type = LikeType.AUTHOR;
         }
 
         Like like = Like.builder()

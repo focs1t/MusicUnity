@@ -5,6 +5,7 @@ import { likeApi } from '../shared/api/like';
 import { userApi } from '../shared/api/user';
 import { useAuth } from '../app/providers/AuthProvider';
 import './ReviewsPage.css'; // Импорт CSS
+import Notification from '../components/Notification';
 
 // Импорт иконок
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -122,13 +123,17 @@ const getCurrentUserId = () => {
 };
 
 // Компонент карточки рецензии
-const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
+const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
   // Функция для обработки ошибок изображений
   const handleImageError = (e, placeholder) => {
     console.log('Ошибка загрузки изображения, использую placeholder');
     console.log(`Проблемный URL: ${e.target.src}`);
-    e.target.onerror = null;
-    e.target.src = placeholder;
+    
+    // Предотвращаем бесконечный цикл
+    if (e.target.src !== DEFAULT_AVATAR_PLACEHOLDER) {
+      e.target.onerror = null;
+      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+    }
   };
 
   // Безопасное получение имени пользователя
@@ -382,6 +387,26 @@ const ReviewCard = ({ review, isLiked, onLikeToggle }) => {
             ),
             React.createElement('span', { className: 'font-bold text-base lg:text-base', key: 'likes-count' }, 
               review.likesCount !== undefined ? review.likesCount : 0
+            ),
+            // Отображение аватарок авторов лайков
+            authorLikes.length > 0 && React.createElement('div', { 
+              className: 'flex items-center ml-2 gap-1',
+              key: 'author-likes'
+            }, 
+              authorLikes.slice(0, 3).map((authorLike, index) => 
+                React.createElement('img', {
+                  key: `author-like-${index}`,
+                  src: authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER,
+                  alt: `Лайк от ${authorLike.author?.name || 'автора'}`,
+                  className: 'w-6 h-6 rounded-full border border-zinc-600',
+                  onError: (e) => handleImageError(e, DEFAULT_AVATAR_PLACEHOLDER),
+                  title: `Лайк от автора: ${authorLike.author?.name || 'Неизвестный автор'}`
+                })
+              ),
+              authorLikes.length > 3 && React.createElement('span', {
+                className: 'text-xs text-zinc-400 ml-1',
+                key: 'more-likes'
+              }, `+${authorLikes.length - 3}`)
             )
           ]),
           
@@ -445,6 +470,10 @@ const ReviewsPage = () => {
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [likedReviews, setLikedReviews] = useState(new Set());
   const [likesLoading, setLikesLoading] = useState(false);
+  const [notification, setNotification] = useState(null);
+  
+  // Состояние для авторских лайков
+  const [authorLikes, setAuthorLikes] = useState({});
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -560,53 +589,81 @@ const ReviewsPage = () => {
     }
   };
 
-  // Загрузка данных из API
-  useEffect(() => {
-    const fetchReviews = async () => {
-      setLoading(true);
+  // Функция для загрузки авторских лайков для всех рецензий
+  const fetchAuthorLikes = async (reviewsData) => {
+    try {
+      const authorLikesData = {};
       
-      try {
-        // Сначала получаем актуальный ID пользователя
-        const userId = getCurrentUserId();
-        console.log('fetchReviews: currentUserId =', userId);
-        
-        // Параллельно загружаем рецензии и лайкнутые рецензии для повышения производительности
-        const [reviewsResponse, likedReviewsSet] = await Promise.all([
-          reviewApi.getAllReviews(currentPage - 1, REVIEWS_PER_PAGE, sortOption),
-          userId ? fetchLikedReviewsByCurrentUser() : new Set()
-        ]);
-        
-        console.log('Ответ API рецензий:', reviewsResponse);
-        console.log('totalPages из API:', reviewsResponse.totalPages);
-        console.log('totalElements из API:', reviewsResponse.totalElements);
-        setLikedReviews(likedReviewsSet);
-        
-        if (reviewsResponse && reviewsResponse.content) {
-          // Преобразуем данные API в нужный формат
-          const formattedReviews = reviewsResponse.content
-            .map(review => formatReview(review))
-            .filter(review => review !== null); // Фильтруем null значения
-          
-          // Обновляем количество лайков для каждой рецензии
-          const reviewsWithLikes = await updateReviewsLikes(formattedReviews);
-          
-          setReviews(reviewsWithLikes);
-          const totalPagesFromApi = reviewsResponse.totalPages || 1;
-          console.log('Устанавливаем totalPages:', totalPagesFromApi);
-          setTotalPages(totalPagesFromApi);
-        } else {
-          console.warn('Ответ API не содержит данных рецензий');
-          throw new Error('Некорректные данные от API');
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Ошибка загрузки рецензий:', err);
-        setError('Не удалось загрузить рецензии. Пожалуйста, попробуйте позже.');
-        setLoading(false);
-      }
-    };
+      // Получаем авторские лайки для каждой рецензии
+      await Promise.all(
+        reviewsData.map(async (review) => {
+          const reviewId = review.id || review.reviewId;
+          if (reviewId) {
+            const authorLikesForReview = await likeApi.getAuthorLikesByReview(reviewId);
+            if (authorLikesForReview && authorLikesForReview.length > 0) {
+              authorLikesData[reviewId] = authorLikesForReview;
+            }
+          }
+        })
+      );
+      
+      setAuthorLikes(authorLikesData);
+    } catch (error) {
+      console.error('Ошибка при загрузке авторских лайков:', error);
+    }
+  };
 
+  // Загрузка данных из API
+  const fetchReviews = async () => {
+    setLoading(true);
+    
+    try {
+      // Сначала получаем актуальный ID пользователя
+      const userId = getCurrentUserId();
+      console.log('fetchReviews: currentUserId =', userId);
+      
+      // Параллельно загружаем рецензии и лайкнутые рецензии для повышения производительности
+      const [reviewsResponse, likedReviewsSet] = await Promise.all([
+        reviewApi.getAllReviews(currentPage - 1, REVIEWS_PER_PAGE, sortOption),
+        userId ? fetchLikedReviewsByCurrentUser() : new Set()
+      ]);
+      
+      console.log('Ответ API рецензий:', reviewsResponse);
+      console.log('totalPages из API:', reviewsResponse.totalPages);
+      console.log('totalElements из API:', reviewsResponse.totalElements);
+      setLikedReviews(likedReviewsSet);
+      
+      if (reviewsResponse && reviewsResponse.content) {
+        // Преобразуем данные API в нужный формат
+        const formattedReviews = reviewsResponse.content
+          .map(review => formatReview(review))
+          .filter(review => review !== null); // Фильтруем null значения
+        
+        // Обновляем количество лайков для каждой рецензии
+        const reviewsWithLikes = await updateReviewsLikes(formattedReviews);
+        
+        // Загружаем авторские лайки для всех рецензий
+        await fetchAuthorLikes(reviewsWithLikes);
+        
+        setReviews(reviewsWithLikes);
+        const totalPagesFromApi = reviewsResponse.totalPages || 1;
+        console.log('Устанавливаем totalPages:', totalPagesFromApi);
+        setTotalPages(totalPagesFromApi);
+      } else {
+        console.warn('Ответ API не содержит данных рецензий');
+        throw new Error('Некорректные данные от API');
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Ошибка загрузки рецензий:', err);
+      setError('Не удалось загрузить рецензии. Пожалуйста, попробуйте позже.');
+      setLoading(false);
+    }
+  };
+
+  // Основная загрузка данных при изменении страницы или сортировки
+  useEffect(() => {
     fetchReviews();
   }, [currentPage, sortOption]);
 
@@ -706,6 +763,33 @@ const ReviewsPage = () => {
           console.log(`Лайк добавлен: reviewId=${reviewId}, userId=${userId}`);
         } catch (apiError) {
           console.error('Ошибка при добавлении лайка через API:', apiError);
+          
+          // Проверяем на ошибку автора
+          if (apiError.response && apiError.response.status === 403 && 
+              apiError.response.data && apiError.response.data.message && 
+              apiError.response.data.message.includes('может лайкать только рецензии на свои релизы')) {
+            setNotification({
+              message: 'Автор может лайкать только рецензии на свои релизы',
+              type: 'error'
+            });
+            
+            // Возвращаем локальное состояние обратно
+            setLikedReviews(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(reviewId);
+              return newSet;
+            });
+            
+            setReviews(prevReviews => 
+              prevReviews.map(r => 
+                (r.id === reviewId || r.reviewId === reviewId) 
+                  ? {...r, likesCount: Math.max(0, (r.likesCount || 0) - 1)} 
+                  : r
+              )
+            );
+            return;
+          }
+          
           console.log('Продолжаем работу с локальными данными');
         }
         
@@ -974,11 +1058,13 @@ const ReviewsPage = () => {
           key: 'reviews-grid'
         }, 
           reviews.slice(0, REVIEWS_PER_PAGE).map(review => {
+            const reviewId = review.id || review.reviewId;
             return React.createElement(ReviewCard, {
-              key: review.id || review.reviewId,
+              key: reviewId,
               review: review,
-              isLiked: isReviewLiked(review.id || review.reviewId),
-              onLikeToggle: handleLikeToggle
+              isLiked: isReviewLiked(reviewId),
+              onLikeToggle: handleLikeToggle,
+              authorLikes: authorLikes[reviewId] || []
             });
           })
         ),
@@ -999,6 +1085,13 @@ const ReviewsPage = () => {
           )
         )
       ])
+    ),
+    notification && (
+      <Notification
+        message={notification.message}
+        type={notification.type}
+        onClose={() => setNotification(null)}
+      />
     )
   );
 };

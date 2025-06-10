@@ -27,7 +27,8 @@ export const likeApi = {
       const response = await httpClient.get(`${API_URL}/review/${reviewId}/count/author`);
       return response.data;
     } catch (error) {
-      throw error;
+      console.error('Ошибка при получении авторских лайков:', error);
+      return [];
     }
   },
 

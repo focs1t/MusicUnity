@@ -17,6 +17,7 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import ChatIcon from '@mui/icons-material/Chat';
 import './ProfilePage.css';
 import './ReviewsPage.css'; // Импорт CSS с анимациями для всплывающих сообщений
+import Notification from '../components/Notification';
 
 // Встроенный плейсхолдер в формате data URI для аватара
 const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -47,7 +48,7 @@ function TabPanel(props) {
 
 // Обновляю компонент карточки рецензии
 // Упрощенный компонент для простых рецензий (без заголовка и текста)
-const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount }) => {
+const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount, authorLikes }) => {
   // Вспомогательная функция для вычисления totalScore внутри компонента
   const calculateReviewScore = (review) => {
     if (review.totalScore !== undefined && review.totalScore !== null) {
@@ -193,7 +194,7 @@ const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAv
   );
 };
 
-const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount }) => {
+const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount, authorLikes }) => {
   // Вспомогательная функция для вычисления totalScore внутри компонента
   const calculateReviewScore = (review) => {
     if (review.totalScore !== undefined && review.totalScore !== null) {
@@ -404,6 +405,32 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
             </span>
           </button>
           
+          {/* Авторские лайки */}
+          {authorLikes && authorLikes[review.reviewId] && authorLikes[review.reviewId].length > 0 && (
+            <div className="author-likes-section ml-3">
+              <div className="author-likes-avatars flex items-center gap-1">
+                {authorLikes[review.reviewId].slice(0, 3).map((authorLike, index) => (
+                  <img
+                    key={index}
+                    src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
+                    alt={authorLike.author?.username || 'Автор'}
+                    className="w-6 h-6 rounded-full border border-yellow-500"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+                    }}
+                    title={`Авторский лайк от ${authorLike.author?.username || 'Автор'}`}
+                  />
+                ))}
+                {authorLikes[review.reviewId].length > 3 && (
+                  <span className="text-xs text-yellow-500 ml-1">
+                    +{authorLikes[review.reviewId].length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
           {/* Всплывающее сообщение */}
           {showMessage && (
             <div className="tooltip-message">Нельзя лайкать свои рецензии</div>
@@ -423,7 +450,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
 };
 
 // Компонент для отображения рецензии с проверкой данных релиза
-const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount }) => {
+const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount, authorLikes }) => {
   const [enhancedReview, setEnhancedReview] = useState(review);
   const [userRank, setUserRank] = useState(null);
   
@@ -574,6 +601,7 @@ const EnhancedReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cached
       cachedAvatarUrl={cachedAvatarUrl}
       getCurrentUserIdFunc={getCurrentUserIdFunc}
       getReviewLikesCount={getReviewLikesCount}
+      authorLikes={authorLikes}
     />
   );
 };
@@ -609,6 +637,7 @@ const ProfilePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userId: profileUserId } = useParams(); // Получаем userId из URL параметров
+  const [notification, setNotification] = useState(null);
   
   // Определяем, смотрим ли мы свой профиль или чужой
   const isOwnProfile = useMemo(() => {
@@ -690,6 +719,9 @@ const ProfilePage = () => {
   
   // Добавим глобальное состояние для отслеживания лайкнутых рецензий и их счетчиков
   const [likeStates, setLikeStates] = useState({});
+  
+  // Состояние для авторских лайков рецензий
+  const [authorLikes, setAuthorLikes] = useState({});
   
   // Загрузка данных при монтировании компонента
   useEffect(() => {
@@ -1413,6 +1445,16 @@ const ProfilePage = () => {
         } catch (error) {
           console.error('Ошибка при добавлении лайка:', error);
           
+          // Проверяем на ошибку автора
+          if (error.response && error.response.status === 403 && 
+              error.response.data && error.response.data.message && 
+              error.response.data.message.includes('может лайкать только рецензии на свои релизы')) {
+            setNotification({
+              message: 'Автор может лайкать только рецензии на свои релизы',
+              type: 'error'
+            });
+          }
+          
           // Восстанавливаем состояние при ошибке
           setLikedReviewIds(prev => prev.filter(id => id !== reviewId));
           setLikeStates(prev => ({
@@ -1457,17 +1499,37 @@ const ProfilePage = () => {
         );
       } else if (filter === 'author_liked') {
         // Получаем все рецензии пользователя, потом фильтруем локально
-        userReviewsData = await reviewApi.getReviewsByUser(
+        const allReviewsData = await reviewApi.getReviewsByUser(
           userId, 
-          page - 1, 
-          10 // Увеличиваем размер для фильтрации
+          0, // начинаем с первой страницы
+          100 // получаем больше рецензий для фильтрации
         );
         
-        // Фильтруем только рецензии с авторскими лайками (проверяем наличие данных в authorLike)
-        if (userReviewsData && userReviewsData.content) {
-          userReviewsData.content = userReviewsData.content.filter(review => 
-            review.authorLike && review.authorLike.userId
-          );
+        // Фильтруем только рецензии с авторскими лайками
+        if (allReviewsData && allReviewsData.content) {
+          const reviewsWithAuthorLikes = [];
+          
+          for (const review of allReviewsData.content) {
+            try {
+              const authorLikes = await likeApi.getAuthorLikesByReview(review.reviewId);
+              if (authorLikes && authorLikes.length > 0) {
+                reviewsWithAuthorLikes.push(review);
+              }
+            } catch (error) {
+              console.error(`Ошибка при проверке авторских лайков для рецензии ${review.reviewId}:`, error);
+            }
+          }
+          
+          // Применяем пагинацию к отфильтрованным рецензиям
+          const startIndex = (page - 1) * 5;
+          const endIndex = startIndex + 5;
+          const paginatedReviews = reviewsWithAuthorLikes.slice(startIndex, endIndex);
+          
+          userReviewsData = {
+            content: paginatedReviews,
+            totalPages: Math.ceil(reviewsWithAuthorLikes.length / 5),
+            totalElements: reviewsWithAuthorLikes.length
+          };
         }
       } else {
         userReviewsData = await reviewApi.getReviewsByUser(
@@ -1522,6 +1584,9 @@ const ProfilePage = () => {
       
       setUserReviews(updatedReviews);
       setTotalPages(userReviewsData.totalPages || 1);
+      
+      // Загружаем авторские лайки для всех рецензий
+      await fetchAuthorLikes(updatedReviews);
     } catch (error) {
       console.error('Ошибка при загрузке рецензий:', error);
     }
@@ -1606,12 +1671,43 @@ const ProfilePage = () => {
         
         setLikedReviews(updatedLikedReviews);
         setTotalPages(userLikedReviews.totalPages || 0);
+        
+        // Загружаем авторские лайки для лайкнутых рецензий
+        await fetchAuthorLikes(updatedLikedReviews);
       } else {
         setLikedReviews([]);
         setTotalPages(0);
       }
     } catch (error) {
       console.error('Ошибка при загрузке лайкнутых рецензий:', error);
+    }
+  };
+  
+  // Функция для загрузки авторских лайков для рецензий
+  const fetchAuthorLikes = async (reviewsData) => {
+    try {
+      const authorLikesData = {};
+      console.log('Загрузка авторских лайков для рецензий:', reviewsData.length);
+      
+      // Получаем авторские лайки для каждой рецензии
+      await Promise.all(
+        reviewsData.map(async (review) => {
+          const reviewId = review.reviewId || review.id;
+          if (reviewId) {
+            console.log(`Запрос авторских лайков для рецензии ${reviewId}`);
+            const authorLikesForReview = await likeApi.getAuthorLikesByReview(reviewId);
+            console.log(`Получены авторские лайки для рецензии ${reviewId}:`, authorLikesForReview);
+            if (authorLikesForReview && authorLikesForReview.length > 0) {
+              authorLikesData[reviewId] = authorLikesForReview;
+            }
+          }
+        })
+      );
+      
+      console.log('Все авторские лайки загружены:', authorLikesData);
+      setAuthorLikes(authorLikesData);
+    } catch (error) {
+      console.error('Ошибка при загрузке авторских лайков:', error);
     }
   };
   
@@ -1853,347 +1949,360 @@ const ProfilePage = () => {
 
   
   return (
-    <div className="site-content">
-      <main>
-        <div className="container">
-          <div className="grid">
-            {/* Левая колонка: профиль и статистика */}
-            <div className="left-column">
-              {/* Профиль пользователя */}
-              <div className="profile-card">
-                <div className="relative">
-                  <img 
-                    alt={userDetails?.username || "Пользователь"} 
-                    loading="lazy" 
-                    width="130" 
-                    height="130" 
-                    className="profile-avatar" 
-                    src={getCachedAvatarUrl()}
-                    onError={(e) => handleProfileImageError(e, 'аватара')}
-                  />
-                </div>
-                <h1 className="profile-username">{userDetails?.username || "Пользователь"}</h1>
-                <div className="profile-date">Дата регистрации: {formatDate(userDetails?.createdAt) || "Нет данных"}</div>
-                
-                <div className="social-links">
-                  {userDetails?.telegramChatId && (
-                    <button className="social-button">
-                      <a target="_blank" href={`https://t.me/${userDetails.telegramChatId}`} rel="noopener noreferrer">
-                        <TelegramIcon />
-                      </a>
-                    </button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Статистика пользователя */}
-              <div className="stats-card">
-                <div className="relative">
-                  <div className="gold-badge">
-                    <div>
-                      <div className="points-container">
-                        <div className="points-badge">{userRank.points || 0}</div>
-                        <div className="points-text">баллов сообщества</div>
-                      </div>
-                      <div className="rank-container">
-                        {userRank.isInTop100 ? (
-                          <>
-                            <div className="rank-badge">ТОП {userRank.rank}</div>
-                            <div className="rank-link"><Link to="/top-100" style={{color: 'white', textDecoration: 'none'}}>в ТОП-100</Link></div>
-                          </>
-                        ) : (
-                          <div className="rank-link"><Link to="/top-100" style={{color: 'white', textDecoration: 'none'}}>Рейтинг пользователей</Link></div>
-                        )}
-                      </div>
-                    </div>
+    <div className="profile-page">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      
+      <div className="site-content">
+        <main>
+          <div className="container">
+            <div className="grid">
+              {/* Левая колонка: профиль и статистика */}
+              <div className="left-column">
+                {/* Профиль пользователя */}
+                <div className="profile-card">
+                  <div className="relative">
+                    <img 
+                      alt={userDetails?.username || "Пользователь"} 
+                      loading="lazy" 
+                      width="130" 
+                      height="130" 
+                      className="profile-avatar" 
+                      src={getCachedAvatarUrl()}
+                      onError={(e) => handleProfileImageError(e, 'аватара')}
+                    />
                   </div>
-                </div>
-                
-                <div className="divider"></div>
-                
-                {/* Блок рецензий */}
-                <div>
-                  <div className="stats-row">
-                    <div className="stats-label">
-                      <RateReviewIcon className="stats-icon" />
-                      <span className="font-semibold">Полных рецензий</span>
-                    </div>
-                    <div className="stats-value">{stats.extendedReviews}</div>
-                  </div>
+                  <h1 className="profile-username">{userDetails?.username || "Пользователь"}</h1>
+                  <div className="profile-date">Дата регистрации: {formatDate(userDetails?.createdAt) || "Нет данных"}</div>
                   
-                  <div className="stats-row">
-                    <div className="stats-label">
-                      <ChatIcon className="stats-icon" />
-                      <span className="font-semibold">Простых рецензий</span>
-                    </div>
-                    <div className="stats-value">{stats.simpleReviews}</div>
+                  <div className="social-links">
+                    {userDetails?.telegramChatId && (
+                      <button className="social-button">
+                        <a target="_blank" href={`https://t.me/${userDetails.telegramChatId}`} rel="noopener noreferrer">
+                          <TelegramIcon />
+                        </a>
+                      </button>
+                    )}
                   </div>
                 </div>
                 
-                <div className="divider"></div>
-                
-                {/* Блок лайков */}
-                <div>
-                  <div className="stats-row">
-                    <div className="stats-label">
-                      <FavoriteIcon className="stats-icon heart-full" />
-                      <span className="font-semibold">Получено лайков</span>
-                    </div>
-                    <div className="stats-value">{stats.receivedLikes}</div>
-                  </div>
-                  
-                  <div className="stats-row">
-                    <div className="stats-label">
-                      <FavoriteBorderIcon className="stats-icon heart-outline" />
-                      <span className="font-semibold">Поставлено лайков</span>
-                    </div>
-                    <div className="stats-value">{stats.givenLikes}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Правая колонка: вкладки с контентом */}
-            <div className="right-column">
-              <div className="tabs-container">
-                {/* Основные вкладки */}
-                <div className="main-tabs">
-                  <a 
-                    className={`tab-link ${tabValue === 0 ? 'active' : ''}`}
-                    onClick={() => handleTabChange(0)}
-                    href="#"
-                  >
-                    Предпочтения
-                  </a>
-                  <a 
-                    className={`tab-link ${tabValue === 1 ? 'active' : ''}`}
-                    onClick={() => handleTabChange(1)}
-                    href="#"
-                  >
-                    Рецензии и оценки
-                  </a>
-                  <a 
-                    className={`tab-link ${tabValue === 2 ? 'active' : ''}`}
-                    onClick={() => handleTabChange(2)}
-                    href="#"
-                  >
-                    Понравилось
-                  </a>
-                </div>
-                
-                {/* Подвкладки для фильтрации рецензий (отображаются всегда на вкладке рецензий) */}
-                {tabValue === 1 && renderReviewSubTabs()}
-                
-                {/* Предпочтения: отслеживаемые авторы и избранные релизы */}
-                <TabPanel value={tabValue} index={0}>
-                  <section className="content-section">
-                    <div className="content-grid">
-                      {/* Авторы (объединенные артисты и продюсеры) */}
-                      <div className="category-block">
-                        <div className="category-header">
-                          <Link to="/authors" className="category-title">
-                            <PersonIcon className="category-icon" />
-                            Авторы
-                          </Link>
+                {/* Статистика пользователя */}
+                <div className="stats-card">
+                  <div className="relative">
+                    <div className="gold-badge">
+                      <div>
+                        <div className="points-container">
+                          <div className="points-badge">{userRank.points || 0}</div>
+                          <div className="points-text">баллов сообщества</div>
                         </div>
-                        
-                        <div className="items-grid">
-                          {followedAuthors.length > 0 ? (
-                            followedAuthors.map((author) => {
-                              console.log('Отображение автора:', author);
-                              
-                              // Валидация URL аватарки перед отображением
-                              const processedAvatarUrl = getCachedAuthorAvatarUrl(author);
-                              console.log(`Подготовленный URL аватарки для ${author.name}:`, processedAvatarUrl);
-                              
-                              return (
-                                <div key={author.authorId} className="artist-item">
-                                  <Link className="artist-link" to={`/author/${author.authorId}`}>
-                                    <img 
-                                      alt={author.name || "Автор"} 
-                                      loading="lazy" 
-                                      className="artist-image equal-size" 
-                                      src={processedAvatarUrl} 
-                                      onError={(e) => handleAuthorImageError(e, author)}
-                                    />
-                                  </Link>
-                                  <Link className="artist-name text-white no-underline" to={`/author/${author.authorId}`}>
-                                    {author.name || "Автор"}
-                                  </Link>
-                                </div>
-                              );
-                            })
+                        <div className="rank-container">
+                          {userRank.isInTop100 ? (
+                            <>
+                              <div className="rank-badge">ТОП {userRank.rank}</div>
+                              <div className="rank-link"><Link to="/top-100" style={{color: 'white', textDecoration: 'none'}}>в ТОП-100</Link></div>
+                            </>
                           ) : (
-                            <div className="no-items">Нет отслеживаемых авторов</div>
+                            <div className="rank-link"><Link to="/top-100" style={{color: 'white', textDecoration: 'none'}}>Рейтинг пользователей</Link></div>
                           )}
                         </div>
                       </div>
-                      
-                      {/* Альбомы */}
-                      <div className="category-block">
-                        <div className="category-header">
-                          <Link to="/albums" className="category-title">
-                            <AlbumIcon className="category-icon" />
-                            Альбомы
-                          </Link>
-                        </div>
-                        
-                        <div className="items-grid">
-                          {renderReleaseCategory(albumReleases, "Нет избранных альбомов")}
-                        </div>
+                    </div>
+                  </div>
+                  
+                  <div className="divider"></div>
+                  
+                  {/* Блок рецензий */}
+                  <div>
+                    <div className="stats-row">
+                      <div className="stats-label">
+                        <RateReviewIcon className="stats-icon" />
+                        <span className="font-semibold">Полных рецензий</span>
                       </div>
-                      
-                      {/* Синглы и EP */}
-                      <div className="category-block">
-                        <div className="category-header">
-                          <Link to="/singles" className="category-title">
-                            <MusicNoteIcon className="category-icon" />
-                            Синглы и EP
-                          </Link>
-                        </div>
-                        
-                        <div className="items-grid">
-                          {renderReleaseCategory(singleReleases, "Нет избранных синглов и EP")}
-                        </div>
+                      <div className="stats-value">{stats.extendedReviews}</div>
+                    </div>
+                    
+                    <div className="stats-row">
+                      <div className="stats-label">
+                        <ChatIcon className="stats-icon" />
+                        <span className="font-semibold">Простых рецензий</span>
                       </div>
-                      
-                      {/* Неизвестные релизы (только если есть) */}
-                      {otherReleases.length > 0 && (
+                      <div className="stats-value">{stats.simpleReviews}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="divider"></div>
+                  
+                  {/* Блок лайков */}
+                  <div>
+                    <div className="stats-row">
+                      <div className="stats-label">
+                        <FavoriteIcon className="stats-icon heart-full" />
+                        <span className="font-semibold">Получено лайков</span>
+                      </div>
+                      <div className="stats-value">{stats.receivedLikes}</div>
+                    </div>
+                    
+                    <div className="stats-row">
+                      <div className="stats-label">
+                        <FavoriteBorderIcon className="stats-icon heart-outline" />
+                        <span className="font-semibold">Поставлено лайков</span>
+                      </div>
+                      <div className="stats-value">{stats.givenLikes}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Правая колонка: вкладки с контентом */}
+              <div className="right-column">
+                <div className="tabs-container">
+                  {/* Основные вкладки */}
+                  <div className="main-tabs">
+                    <a 
+                      className={`tab-link ${tabValue === 0 ? 'active' : ''}`}
+                      onClick={() => handleTabChange(0)}
+                      href="#"
+                    >
+                      Предпочтения
+                    </a>
+                    <a 
+                      className={`tab-link ${tabValue === 1 ? 'active' : ''}`}
+                      onClick={() => handleTabChange(1)}
+                      href="#"
+                    >
+                      Рецензии и оценки
+                    </a>
+                    <a 
+                      className={`tab-link ${tabValue === 2 ? 'active' : ''}`}
+                      onClick={() => handleTabChange(2)}
+                      href="#"
+                    >
+                      Понравилось
+                    </a>
+                  </div>
+                  
+                  {/* Подвкладки для фильтрации рецензий (отображаются всегда на вкладке рецензий) */}
+                  {tabValue === 1 && renderReviewSubTabs()}
+                  
+                  {/* Предпочтения: отслеживаемые авторы и избранные релизы */}
+                  <TabPanel value={tabValue} index={0}>
+                    <section className="content-section">
+                      <div className="content-grid">
+                        {/* Авторы (объединенные артисты и продюсеры) */}
                         <div className="category-block">
                           <div className="category-header">
-                            <Link to="/releases" className="category-title">
-                              <LibraryMusicIcon className="category-icon" />
-                              Другие релизы
+                            <Link to="/authors" className="category-title">
+                              <PersonIcon className="category-icon" />
+                              Авторы
                             </Link>
                           </div>
                           
                           <div className="items-grid">
-                            {renderReleaseCategory(otherReleases, "Нет других релизов")}
+                            {followedAuthors.length > 0 ? (
+                              followedAuthors.map((author) => {
+                                console.log('Отображение автора:', author);
+                                
+                                // Валидация URL аватарки перед отображением
+                                const processedAvatarUrl = getCachedAuthorAvatarUrl(author);
+                                console.log(`Подготовленный URL аватарки для ${author.name}:`, processedAvatarUrl);
+                                
+                                return (
+                                  <div key={author.authorId} className="artist-item">
+                                    <Link className="artist-link" to={`/author/${author.authorId}`}>
+                                      <img 
+                                        alt={author.name || "Автор"} 
+                                        loading="lazy" 
+                                        className="artist-image equal-size" 
+                                        src={processedAvatarUrl} 
+                                        onError={(e) => handleAuthorImageError(e, author)}
+                                      />
+                                    </Link>
+                                    <Link className="artist-name text-white no-underline" to={`/author/${author.authorId}`}>
+                                      {author.name || "Автор"}
+                                    </Link>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="no-items">Нет отслеживаемых авторов</div>
+                            )}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </section>
-                </TabPanel>
-                
-                {/* Рецензии и оценки */}
-                <TabPanel value={tabValue} index={1}>
-                  <div className="reviews-container">
-                    <div className="reviews-list">
-                      {userReviews && userReviews.length > 0 ? (
-                        userReviews.map((review) => {
-                          // Для простых рецензий используем упрощенный компонент
-                          if (reviewFilter === 'simple') {
-                            return (
-                              <SimpleReviewCard 
-                                key={review.reviewId}
-                                review={review}
-                                userDetails={userDetails}
-                                isLiked={isOwnProfile ? isReviewLiked(review.reviewId) : (review.isLikedByCurrentUser || isReviewLiked(review.reviewId))}
-                                onLikeToggle={handleLikeToggle}
-                                cachedAvatarUrl={getCachedAvatarUrl()}
-                                getCurrentUserIdFunc={getCurrentUserId}
-                                getReviewLikesCount={getReviewLikesCount}
-                              />
-                            );
-                          } else {
-                            // Для расширенных рецензий и рецензий с авторскими лайками используем полный компонент
-                            return (
-                              <EnhancedReviewCard 
-                                key={review.reviewId}
-                                review={review}
-                                userDetails={userDetails}
-                                isLiked={isOwnProfile ? isReviewLiked(review.reviewId) : (review.isLikedByCurrentUser || isReviewLiked(review.reviewId))}
-                                onLikeToggle={handleLikeToggle}
-                                cachedAvatarUrl={getCachedAvatarUrl()}
-                                getCurrentUserIdFunc={getCurrentUserId}
-                                getReviewLikesCount={getReviewLikesCount}
-                              />
-                            );
-                          }
-                        })
-                      ) : (
-                        <div className="no-reviews">
-                          {reviewFilter === 'extended' 
-                            ? (isOwnProfile ? 'У вас пока нет расширенных рецензий.' : 'У пользователя пока нет расширенных рецензий.') 
-                            : reviewFilter === 'simple'
-                            ? (isOwnProfile ? 'У вас пока нет простых рецензий.' : 'У пользователя пока нет простых рецензий.')
-                            : (isOwnProfile ? 'У вас нет рецензий с авторскими лайками.' : 'У пользователя нет рецензий с авторскими лайками.')}
+                        
+                        {/* Альбомы */}
+                        <div className="category-block">
+                          <div className="category-header">
+                            <Link to="/albums" className="category-title">
+                              <AlbumIcon className="category-icon" />
+                              Альбомы
+                            </Link>
+                          </div>
+                          
+                          <div className="items-grid">
+                            {renderReleaseCategory(albumReleases, "Нет избранных альбомов")}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    
-                    {totalPages > 1 && (
-                      <nav className="pagination">
-                        <ul className="pagination-list">
-                          {Array.from({ length: totalPages }, (_, i) => (
-                            <li key={i + 1} className="pagination-item">
-                              <a
-                                className={`pagination-link ${page === i + 1 ? 'active' : ''}`}
-                                onClick={() => handlePageChange(i + 1)}
-                                href="#"
-                              >
-                                {i + 1}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </nav>
-                    )}
-                  </div>
-                </TabPanel>
-                
-                {/* Понравилось */}
-                <TabPanel value={tabValue} index={2}>
-                  <div className="reviews-container">
-                    <div className="reviews-list">
-                      {likedReviews && likedReviews.length > 0 ? (
-                        likedReviews.map((review) => (
-                          <EnhancedReviewCard
-                            key={review.reviewId}
-                            review={review}
-                            userDetails={review.user}
-                            isLiked={isOwnProfile ? true : isReviewLiked(review.reviewId)}
-                            onLikeToggle={handleLikeToggle}
-                            cachedAvatarUrl={getCachedReviewAuthorAvatarUrl(review.user)}
-                            getCurrentUserIdFunc={getCurrentUserId}
-                            getReviewLikesCount={getReviewLikesCount}
-                          />
-                        ))
-                      ) : (
-                        <div className="no-reviews">
-                          {isOwnProfile ? 'У вас нет понравившихся рецензий.' : 'У пользователя нет понравившихся рецензий.'}
+                        
+                        {/* Синглы и EP */}
+                        <div className="category-block">
+                          <div className="category-header">
+                            <Link to="/singles" className="category-title">
+                              <MusicNoteIcon className="category-icon" />
+                              Синглы и EP
+                            </Link>
+                          </div>
+                          
+                          <div className="items-grid">
+                            {renderReleaseCategory(singleReleases, "Нет избранных синглов и EP")}
+                          </div>
                         </div>
+                        
+                        {/* Неизвестные релизы (только если есть) */}
+                        {otherReleases.length > 0 && (
+                          <div className="category-block">
+                            <div className="category-header">
+                              <Link to="/releases" className="category-title">
+                                <LibraryMusicIcon className="category-icon" />
+                                Другие релизы
+                              </Link>
+                            </div>
+                            
+                            <div className="items-grid">
+                              {renderReleaseCategory(otherReleases, "Нет других релизов")}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  </TabPanel>
+                  
+                  {/* Рецензии и оценки */}
+                  <TabPanel value={tabValue} index={1}>
+                    <div className="reviews-container">
+                      <div className="reviews-list">
+                        {userReviews && userReviews.length > 0 ? (
+                          userReviews.map((review) => {
+                            // Для простых рецензий используем упрощенный компонент
+                            if (reviewFilter === 'simple') {
+                              return (
+                                <SimpleReviewCard 
+                                  key={review.reviewId}
+                                  review={review}
+                                  userDetails={userDetails}
+                                  isLiked={isOwnProfile ? isReviewLiked(review.reviewId) : (review.isLikedByCurrentUser || isReviewLiked(review.reviewId))}
+                                  onLikeToggle={handleLikeToggle}
+                                  cachedAvatarUrl={getCachedAvatarUrl()}
+                                  getCurrentUserIdFunc={getCurrentUserId}
+                                  getReviewLikesCount={getReviewLikesCount}
+                                  authorLikes={authorLikes}
+                                />
+                              );
+                            } else {
+                              // Для расширенных рецензий и рецензий с авторскими лайками используем полный компонент
+                              return (
+                                <EnhancedReviewCard 
+                                  key={review.reviewId}
+                                  review={review}
+                                  userDetails={userDetails}
+                                  isLiked={isOwnProfile ? isReviewLiked(review.reviewId) : (review.isLikedByCurrentUser || isReviewLiked(review.reviewId))}
+                                  onLikeToggle={handleLikeToggle}
+                                  cachedAvatarUrl={getCachedAvatarUrl()}
+                                  getCurrentUserIdFunc={getCurrentUserId}
+                                  getReviewLikesCount={getReviewLikesCount}
+                                  authorLikes={authorLikes}
+                                />
+                              );
+                            }
+                          })
+                        ) : (
+                          <div className="no-reviews">
+                            {reviewFilter === 'extended' 
+                              ? (isOwnProfile ? 'У вас пока нет расширенных рецензий.' : 'У пользователя пока нет расширенных рецензий.') 
+                              : reviewFilter === 'simple'
+                              ? (isOwnProfile ? 'У вас пока нет простых рецензий.' : 'У пользователя пока нет простых рецензий.')
+                              : (isOwnProfile ? 'У вас нет рецензий с авторскими лайками.' : 'У пользователя нет рецензий с авторскими лайками.')}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {totalPages > 1 && (
+                        <nav className="pagination">
+                          <ul className="pagination-list">
+                            {Array.from({ length: totalPages }, (_, i) => (
+                              <li key={i + 1} className="pagination-item">
+                                <a
+                                  className={`pagination-link ${page === i + 1 ? 'active' : ''}`}
+                                  onClick={() => handlePageChange(i + 1)}
+                                  href="#"
+                                >
+                                  {i + 1}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        </nav>
                       )}
                     </div>
-                    
-                    {totalPages > 1 && (
-                      <nav className="pagination">
-                        <ul className="pagination-list">
-                          {Array.from({ length: totalPages }, (_, i) => (
-                            <li key={i + 1} className="pagination-item">
-                              <a
-                                className={`pagination-link ${page === i + 1 ? 'active' : ''}`}
-                                onClick={() => handlePageChange(i + 1)}
-                                href="#"
-                              >
-                                {i + 1}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </nav>
-                    )}
-                  </div>
-                </TabPanel>
+                  </TabPanel>
+                  
+                  {/* Понравилось */}
+                  <TabPanel value={tabValue} index={2}>
+                    <div className="reviews-container">
+                      <div className="reviews-list">
+                        {likedReviews && likedReviews.length > 0 ? (
+                          likedReviews.map((review) => (
+                            <EnhancedReviewCard
+                              key={review.reviewId}
+                              review={review}
+                              userDetails={review.user}
+                              isLiked={isOwnProfile ? true : isReviewLiked(review.reviewId)}
+                              onLikeToggle={handleLikeToggle}
+                              cachedAvatarUrl={getCachedReviewAuthorAvatarUrl(review.user)}
+                              getCurrentUserIdFunc={getCurrentUserId}
+                              getReviewLikesCount={getReviewLikesCount}
+                              authorLikes={authorLikes}
+                            />
+                          ))
+                        ) : (
+                          <div className="no-reviews">
+                            {isOwnProfile ? 'У вас нет понравившихся рецензий.' : 'У пользователя нет понравившихся рецензий.'}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {totalPages > 1 && (
+                        <nav className="pagination">
+                          <ul className="pagination-list">
+                            {Array.from({ length: totalPages }, (_, i) => (
+                              <li key={i + 1} className="pagination-item">
+                                <a
+                                  className={`pagination-link ${page === i + 1 ? 'active' : ''}`}
+                                  onClick={() => handlePageChange(i + 1)}
+                                  href="#"
+                                >
+                                  {i + 1}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        </nav>
+                      )}
+                    </div>
+                  </TabPanel>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </main>
-      
-      {/* Отладочная информация (Alt+D для отображения) */}
-      <DebugInfo isVisible={showDebug} data={debugData} />
+        </main>
+        
+        {/* Отладочная информация (Alt+D для отображения) */}
+        <DebugInfo isVisible={showDebug} data={debugData} />
+      </div>
     </div>
   );
 };

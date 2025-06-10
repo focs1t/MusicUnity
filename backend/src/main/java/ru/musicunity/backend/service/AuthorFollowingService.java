@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.AuthorDTO;
+import ru.musicunity.backend.exception.AuthorCannotAddToFavoritesException;
 import ru.musicunity.backend.exception.AuthorNotFoundException;
 import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.AuthorMapper;
@@ -16,6 +17,8 @@ import ru.musicunity.backend.pojo.UserFollowing;
 import ru.musicunity.backend.repository.AuthorRepository;
 import ru.musicunity.backend.repository.UserFollowingRepository;
 import ru.musicunity.backend.repository.UserRepository;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,8 +40,6 @@ public class AuthorFollowingService {
         Double singleEpExtendedRating = authorRepository.findAverageSingleEpExtendedRating(author.getAuthorId());
         Double singleEpSimpleRating = authorRepository.findAverageSingleEpSimpleRating(author.getAuthorId());
         
-
-        
         dto.setAverageAlbumExtendedRating(albumExtendedRating);
         dto.setAverageAlbumSimpleRating(albumSimpleRating);
         dto.setAverageSingleEpExtendedRating(singleEpExtendedRating);
@@ -48,6 +49,12 @@ public class AuthorFollowingService {
 
     @Transactional
     public void followAuthor(Long authorId, Long userId) {
+        // Проверяем, является ли пользователь автором
+        Optional<Author> userAuthor = authorRepository.findByUserUserId(userId);
+        if (userAuthor.isPresent()) {
+            throw new AuthorCannotAddToFavoritesException();
+        }
+        
         Author author = authorRepository.findById(authorId)
                 .orElseThrow(() -> new AuthorNotFoundException(authorId));
         User user = userRepository.findById(userId)

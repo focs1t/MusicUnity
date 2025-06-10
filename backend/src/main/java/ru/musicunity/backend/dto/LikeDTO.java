@@ -9,4 +9,15 @@ public class LikeDTO {
     private Long reviewId;
     private Long userId;
     private LikeType type;
+    
+    // Информация об авторе лайка
+    private AuthorInfo author;
+    
+    @Data
+    public static class AuthorInfo {
+        private Long userId;
+        private String name;
+        private String username;
+        private String avatar;
+    }
 } 
