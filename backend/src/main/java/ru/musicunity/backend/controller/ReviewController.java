@@ -105,7 +105,11 @@ public class ReviewController {
     @GetMapping("/user/{userId}/reviews")
     public ResponseEntity<Page<ReviewDTO>> getReviewsByUser(
             @Parameter(description = "ID пользователя") @PathVariable Long userId,
+            @Parameter(description = "Тип рецензии (EXTENDED, SIMPLE)") @RequestParam(required = false) ReviewType type,
             @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        if (type != null) {
+            return ResponseEntity.ok(reviewService.getReviewsByUserAndType(userId, type, pageable));
+        }
         return ResponseEntity.ok(reviewService.getAllByUser(userId, pageable));
     }
 

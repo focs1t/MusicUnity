@@ -22,8 +22,8 @@ function FollowingReleasesPage() {
   }, [isAuth, currentPage, releaseType]);
 
   const fetchReleases = async () => {
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
       const response = await releaseApi.getReleasesByFollowedAuthors(currentPage, 30);
       
       // Фильтрация релизов по типу
@@ -42,14 +42,14 @@ function FollowingReleasesPage() {
       
       setReleases(filteredReleases);
       setTotalPages(response.totalPages || 0);
-      setError(null);
-    } catch (err) {
-      console.error('Ошибка при загрузке релизов отслеживаемых авторов:', err);
-      setError('Не удалось загрузить релизы. Пожалуйста, попробуйте позже.');
-    } finally {
-      setLoading(false);
-    }
-  };
+        setError(null);
+      } catch (err) {
+        console.error('Ошибка при загрузке релизов отслеживаемых авторов:', err);
+        setError('Не удалось загрузить релизы. Пожалуйста, попробуйте позже.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -496,4 +496,4 @@ function FollowingReleasesPage() {
   );
 }
 
-export default FollowingReleasesPage;
+export default FollowingReleasesPage; 

@@ -152,12 +152,53 @@ export const reviewApi = {
    * @param {number} userId - ID пользователя
    * @param {number} page - Номер страницы
    * @param {number} size - Размер страницы
+   * @param {string} type - Тип рецензии (EXTENDED, SIMPLE)
    * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
    */
-  getReviewsByUser: async (userId, page = 0, size = 10) => {
+  getReviewsByUser: async (userId, page = 0, size = 10, type = null) => {
+    try {
+      const params = { page, size };
+      if (type) {
+        params.type = type;
+      }
+      const response = await httpClient.get(`${API_URL}/user/${userId}/reviews`, {
+        params
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Получение расширенных отзывов пользователя
+   * @param {number} userId - ID пользователя
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getExtendedReviewsByUser: async (userId, page = 0, size = 10) => {
     try {
       const response = await httpClient.get(`${API_URL}/user/${userId}/reviews`, {
-        params: { page, size }
+        params: { page, size, type: 'EXTENDED' }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Получение простых отзывов пользователя
+   * @param {number} userId - ID пользователя
+   * @param {number} page - Номер страницы
+   * @param {number} size - Размер страницы
+   * @returns {Promise<{content: Array, totalElements: number, totalPages: number}>}
+   */
+  getSimpleReviewsByUser: async (userId, page = 0, size = 10) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/user/${userId}/reviews`, {
+        params: { page, size, type: 'SIMPLE' }
       });
       return response.data;
     } catch (error) {

@@ -46,6 +46,153 @@ function TabPanel(props) {
 }
 
 // Обновляю компонент карточки рецензии
+// Упрощенный компонент для простых рецензий (без заголовка и текста)
+const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount }) => {
+  // Вспомогательная функция для вычисления totalScore внутри компонента
+  const calculateReviewScore = (review) => {
+    if (review.totalScore !== undefined && review.totalScore !== null) {
+      return review.totalScore;
+    }
+    
+    // Вычисляем по формуле как на бэкенде
+    const baseScore = (review.rhymeImagery || 0) + 
+                      (review.structureRhythm || 0) + 
+                      (review.styleExecution || 0) + 
+                      (review.individuality || 0);
+    const vibeMultiplier = 1 + ((review.vibe || 0) / 10) * 1.5;
+    return Math.round(baseScore * vibeMultiplier);
+  };
+
+  // Используем кешированный URL аватара или резервное значение
+  const getAvatarUrl = () => {
+    if (cachedAvatarUrl) {
+      return cachedAvatarUrl;
+    }
+    return userDetails?.avatarUrl ? userDetails.avatarUrl : DEFAULT_AVATAR_PLACEHOLDER;
+  };
+
+  // Функция для обработки ошибок изображений
+  const handleReviewImageError = (e, context = 'изображения') => {
+    console.log(`Ошибка загрузки ${context}, использую встроенный placeholder`);
+    console.log(`Проблемный URL: ${e.target.src}`);
+    
+    e.target.onerror = null;
+    e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+  };
+  
+  const handleReviewReleaseImageError = (e) => {
+    console.log('Ошибка загрузки обложки релиза в рецензии, использую встроенный placeholder');
+    console.log(`Проблемный URL: ${e.target.src}`);
+    
+    e.target.onerror = null;
+    e.target.src = DEFAULT_COVER_PLACEHOLDER;
+  };
+
+  const getUserName = () => {
+    if (!userDetails) return "Пользователь";
+    
+    if (userDetails.username) return userDetails.username;
+    if (userDetails.name) return userDetails.name;
+    if (userDetails.displayName) return userDetails.displayName;
+    
+    return "Пользователь";
+  };
+  
+  // Убираем логику лайков для простых рецензий
+
+  const getReleaseCoverUrl = () => {
+    if (!review || !review.release) {
+      return DEFAULT_COVER_PLACEHOLDER;
+    }
+    return review.release.coverUrl ? review.release.coverUrl : DEFAULT_COVER_PLACEHOLDER;
+  };
+  
+  const getReleaseId = () => {
+    if (!review || !review.release) {
+      return review.releaseId || 0;
+    }
+    return review.release.releaseId || review.release.id || 0;
+  };
+  
+  const getReleaseTitle = () => {
+    if (!review || !review.release) {
+      return "Релиз";
+    }
+    return review.release.title || "Релиз";
+  };
+
+  return (
+    <div className="review-card simple-review" data-review-id={review.reviewId}>
+      <div className="relative">
+        <div className="bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3">
+          <div className="flex items-start space-x-2 lg:space-x-3 w-full">
+            <Link to={`/profile/${review.userId}`} className="relative">
+              <img 
+                alt={getUserName()} 
+                loading="lazy" 
+                width="40" 
+                height="40" 
+                className="shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full"
+                src={getAvatarUrl()} 
+                onError={(e) => handleReviewImageError(e, 'аватара')}
+              />
+            </Link>
+            
+            <div className="flex flex-col gap-1 items-start">
+              <div className="flex items-center gap-1 md:gap-2 max-sm:flex-wrap">
+                <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
+                  {getUserName()}
+                </Link>
+              </div>
+              <div className="text-[12px] flex items-center space-x-1.5">
+                {((review.user && review.user.rank) || userDetails?.rank) && (
+                  <div className="inline-flex items-center text-center bg-red-500 rounded-full font-semibold px-1.5">
+                    ТОП-{review.user?.rank || userDetails?.rank}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-end gap-2 lg:gap-4">
+            <div className="text-right flex flex-col h-full justify-center">
+              <div className="text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right">
+                <span 
+                  className="no-callout" 
+                  style={{ color: calculateReviewScore(review) === 100 ? '#FFD700' : 'white' }}
+                >
+                  {calculateReviewScore(review)}
+                </span>
+              </div>
+              <div className="flex gap-x-1.5 font-bold text-xs lg:text-sm justify-end">
+                <div className="no-callout" style={{ color: 'white' }} data-state="closed">{review.rhymeImagery || 0}</div>
+                <div className="no-callout" style={{ color: 'white' }} data-state="closed">{review.structureRhythm || 0}</div>
+                <div className="no-callout" style={{ color: 'white' }} data-state="closed">{review.styleExecution || 0}</div>
+                <div className="no-callout" style={{ color: 'white' }} data-state="closed">{review.individuality || 0}</div>
+                <div className="no-callout" style={{ color: 'var(--ratingVibe-color)' }} data-state="closed">{review.vibe || 0}</div>
+              </div>
+            </div>
+            
+            <Link to={`/release/${getReleaseId()}`} className="shrink-0 size-10 lg:size-10 block" data-state="closed">
+              <img 
+                alt={getReleaseTitle()} 
+                loading="lazy" 
+                width="40" 
+                height="40" 
+                className="rounded-md w-full h-full object-cover"
+                src={getReleaseCoverUrl()} 
+                onError={(e) => handleReviewReleaseImageError(e)}
+              />
+            </Link>
+          </div>
+        </div>
+      </div>
+      
+      {/* Простые рецензии НЕ показывают заголовок, текст и лайки */}
+    </div>
+  );
+};
+
 const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUrl, getCurrentUserIdFunc, getReviewLikesCount }) => {
   // Вспомогательная функция для вычисления totalScore внутри компонента
   const calculateReviewScore = (review) => {
@@ -197,7 +344,12 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
           <div className="flex items-center justify-end gap-2 lg:gap-4">
             <div className="text-right flex flex-col h-full justify-center">
               <div className="text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right">
-                <span className="no-callout">{calculateReviewScore(review)}</span>
+                <span 
+                  className="no-callout" 
+                  style={{ color: calculateReviewScore(review) === 100 ? '#FFD700' : 'white' }}
+                >
+                  {calculateReviewScore(review)}
+                </span>
               </div>
               <div className="flex gap-x-1.5 font-bold text-xs lg:text-sm justify-end">
                 <div className="no-callout text-userColor" data-state="closed">{review.rhymeImagery || 0}</div>
@@ -499,7 +651,7 @@ const ProfilePage = () => {
   const [tabValue, setTabValue] = useState(getTabValueFromPath());
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [reviewFilter, setReviewFilter] = useState('all'); // all или author_liked
+  const [reviewFilter, setReviewFilter] = useState('extended'); // extended, simple или author_liked
   
   // Статистика пользователя
   const [stats, setStats] = useState({
@@ -561,7 +713,7 @@ const ProfilePage = () => {
         // Сбрасываем страницу и фильтры при смене пользователя
         setPage(1);
         setTabValue(getTabValueFromPath());
-        setReviewFilter('all');
+        setReviewFilter('extended');
         
         // Сохраняем URL аватара в кеш при первой загрузке
         if (userData?.avatarUrl) {
@@ -829,214 +981,11 @@ const ProfilePage = () => {
       
       try {
         if (tabValue === 1) {
-          // Для рецензий используем фильтр только если это собственный профиль
-          // Для чужого профиля всегда показываем все рецензии
-          const userReviewsData = await reviewApi.getReviewsByUser(
-            userDetails.userId, 
-            page - 1, 
-            5, 
-            isOwnProfile && reviewFilter === 'author_liked' ? true : null
-          );
-          console.log('Полученные рецензии пользователя:', JSON.stringify(userReviewsData.content, null, 2));
-          
-          // Проверяем наличие totalScore и likesCount
-          userReviewsData.content.forEach(review => {
-            console.log(`Рецензия ID ${review.reviewId}: totalScore=${review.totalScore}, likesCount=${review.likesCount}`);
-            // Добавляем проверку данных релиза
-            if (review.release) {
-              console.log(`Релиз для рецензии ID ${review.reviewId}:`, JSON.stringify(review.release, null, 2));
-            } else {
-              console.warn(`Релиз для рецензии ID ${review.reviewId} отсутствует!`);
-            }
-          });
-          
-          // Обновляем данные лайков для каждой рецензии и проверяем/дополняем данные релиза
-          const updatedReviews = await Promise.all(
-            userReviewsData.content.map(async (review) => {
-              try {
-                const likesCount = await likeApi.getLikesCountByReview(review.reviewId);
-                
-                // Проверяем и исправляем данные релиза, если они отсутствуют или неполные
-                let updatedRelease = review.release;
-                let releaseId = review.releaseId;
-                
-                // Если у рецензии есть поле releaseId, но нет полных данных о релизе, или данные неполные
-                if (releaseId && (!updatedRelease || !updatedRelease.coverUrl)) {
-                  console.log(`Загружаем данные релиза по ID ${releaseId} для рецензии ID ${review.reviewId}`);
-                  try {
-                    // Делаем запрос к API релизов для получения полных данных
-                    const releaseData = await releaseApi.getReleaseById(releaseId);
-                    console.log(`Полученные данные релиза для рецензии ID ${review.reviewId}:`, releaseData);
-                    
-                    if (releaseData) {
-                      updatedRelease = releaseData;
-                    }
-                  } catch (releaseError) {
-                    console.error(`Не удалось загрузить данные релиза для рецензии ID ${review.reviewId}:`, releaseError);
-                  }
-                }
-                
-                // Для чужого профиля проверяем, лайкнул ли текущий пользователь эту рецензию
-                let isLikedByCurrentUser = false;
-                if (!isOwnProfile) {
-                  isLikedByCurrentUser = likedReviewIds.includes(review.reviewId);
-                  console.log(`Рецензия ${review.reviewId} лайкнута текущим пользователем: ${isLikedByCurrentUser}`);
-                }
-                
-                return { 
-                  ...review, 
-                  likesCount,
-                  release: updatedRelease,
-                  isLikedByCurrentUser
-                };
-              } catch (error) {
-                console.error(`Ошибка при обновлении данных для рецензии ID ${review.reviewId}:`, error);
-                return review;
-              }
-            })
-          );
-          
-          setUserReviews(updatedReviews);
-          setTotalPages(userReviewsData.totalPages || 1);
+          // Используем новую функцию для получения рецензий с правильной фильтрацией
+          await fetchReviewsData(userDetails.userId, reviewFilter);
         } else if (tabValue === 2) {
-          try {
-            // Загружаем лайкнутые рецензии с бэкенда
-            // Для чужого профиля некоторые данные могут быть недоступны
-            let userLikedReviews;
-            
-            try {
-              userLikedReviews = await likeApi.getLikedReviewsByUser(userDetails.userId, page - 1, 5);
-            } catch (apiError) {
-              console.error('Ошибка при загрузке лайкнутых рецензий:', apiError);
-              // В случае ошибки, например из-за ограничений доступа, показываем пустой список
-              userLikedReviews = { content: [], totalPages: 0, totalElements: 0 };
-            }
-            
-            console.log('Полученные лайкнутые рецензии:', JSON.stringify(userLikedReviews.content, null, 2));
-            
-            // Кеширование аватаров авторов рецензий
-            let newReviewAuthorAvatarUrls = {...reviewAuthorAvatarUrls};
-            
-            // Проверяем наличие totalScore и likesCount
-            if (userLikedReviews.content && userLikedReviews.content.length > 0) {
-              userLikedReviews.content.forEach(review => {
-                console.log(`Лайкнутая рецензия ID ${review.reviewId}: totalScore=${review.totalScore}, likesCount=${review.likesCount}`);
-                
-                // Детальный вывод данных пользователя для отладки
-                console.log(`Данные пользователя для рецензии ID ${review.reviewId}:`, JSON.stringify(review.user, null, 2));
-                
-                // Кешируем аватар автора рецензии, если он есть
-                if (review.user && review.user.userId && review.user.avatarUrl) {
-                  newReviewAuthorAvatarUrls[review.user.userId] = review.user.avatarUrl;
-                }
-                
-                // Добавляем проверку данных релиза
-                if (review.release) {
-                  console.log(`Релиз для лайкнутой рецензии ID ${review.reviewId}:`, JSON.stringify(review.release, null, 2));
-                } else {
-                  console.warn(`Релиз для лайкнутой рецензии ID ${review.reviewId} отсутствует!`);
-                }
-              });
-              
-              // Обновляем кеш аватаров авторов рецензий
-              setReviewAuthorAvatarUrls(newReviewAuthorAvatarUrls);
-              
-              // Обновляем данные лайков для каждой рецензии и проверяем данные релиза
-              const updatedLikedReviews = await Promise.all(
-                userLikedReviews.content.map(async (review) => {
-                  try {
-                    const likesCount = await likeApi.getLikesCountByReview(review.reviewId);
-                    
-                    // Проверяем и исправляем данные релиза, если они отсутствуют или неполные
-                    let updatedRelease = review.release;
-                    let releaseId = review.releaseId;
-                    
-                    // Проверяем и нормализуем данные пользователя
-                    let updatedUser = review.user;
-                    
-                    // Если данные пользователя отсутствуют или неполные, используем данные из ответа API
-                    if (!updatedUser || !updatedUser.username) {
-                      console.log(`Дополняем данные пользователя для рецензии ID ${review.reviewId}`);
-                      
-                      // Попытка получить данные пользователя из API, если их нет
-                      if (review.userId) {
-                        try {
-                          const userData = await userApi.getUserById(review.userId);
-                          console.log(`Полученные данные пользователя для рецензии ID ${review.reviewId}:`, userData);
-                          
-                          if (userData) {
-                            updatedUser = userData;
-                          }
-                        } catch (userError) {
-                          console.error(`Не удалось загрузить данные пользователя для рецензии ID ${review.reviewId}:`, userError);
-                        }
-                      }
-                    }
-                    
-                    // Если у рецензии есть поле releaseId, но нет полных данных о релизе, или данные неполные
-                    if (releaseId && (!updatedRelease || !updatedRelease.coverUrl)) {
-                      console.log(`Загружаем данные релиза по ID ${releaseId} для лайкнутой рецензии ID ${review.reviewId}`);
-                      try {
-                        // Делаем запрос к API релизов для получения полных данных
-                        const releaseData = await releaseApi.getReleaseById(releaseId);
-                        console.log(`Полученные данные релиза для лайкнутой рецензии ID ${review.reviewId}:`, releaseData);
-                        
-                        if (releaseData) {
-                          updatedRelease = releaseData;
-                        }
-                      } catch (releaseError) {
-                        console.error(`Не удалось загрузить данные релиза для лайкнутой рецензии ID ${review.reviewId}:`, releaseError);
-                      }
-                    }
-                    
-                    // При просмотре своего профиля или чужого профиля с лайкнутыми рецензиями
-                    // всегда устанавливаем статус лайка как true
-                    // При просмотре своих лайкнутых рецензий, они по определению лайкнуты текущим пользователем
-                    // При просмотре чужих лайкнутых рецензий, статус лайка зависит от текущего пользователя
-                    
-                    // Сначала проверяем, чей профиль просматриваем
-                    let isCurrentUserLiked = true; // По умолчанию считаем, что лайкнуто
-                    
-                    // Если смотрим чужой профиль, проверяем, лайкнул ли текущий пользователь эту рецензию
-                    if (!isOwnProfile) {
-                      const currentUserId = getCurrentUserId();
-                      // Проверка, совпадает ли автор рецензии с текущим пользователем
-                      const isCurrentUserAuthor = review.userId === currentUserId;
-                      
-                      if (isCurrentUserAuthor) {
-                        // Если это рецензия текущего пользователя, то он не может ее лайкнуть
-                        isCurrentUserLiked = false;
-                      } else {
-                        // Проверяем, есть ли эта рецензия в списке лайкнутых текущим пользователем
-                        isCurrentUserLiked = likedReviewIds.includes(review.reviewId);
-                      }
-                    }
-                    
-                    return { 
-                      ...review, 
-                      likesCount,
-                      release: updatedRelease,
-                      user: updatedUser,
-                      isLikedByCurrentUser: isCurrentUserLiked
-                    };
-                  } catch (error) {
-                    console.error(`Ошибка при обновлении данных для лайкнутой рецензии ID ${review.reviewId}:`, error);
-                    return review;
-                  }
-                })
-              );
-              
-              setLikedReviews(updatedLikedReviews);
-            } else {
-              setLikedReviews([]);
-            }
-            
-            setTotalPages(userLikedReviews.totalPages || 0);
-          } catch (error) {
-            console.error('Ошибка при загрузке лайкнутых рецензий:', error);
-            setLikedReviews([]);
-            setTotalPages(0);
-          }
+          // Используем функцию для получения лайкнутых рецензий
+          await fetchLikedReviewsData(userDetails.userId);
         } else if (tabValue === 0) {
           // Дополнительная загрузка авторов и релизов для вкладки "Предпочтения"
           try {
@@ -1083,7 +1032,9 @@ const ProfilePage = () => {
   const handleTabChange = (newValue) => {
     setPage(1); // Сбрасываем страницу при смене вкладки
     setTabValue(newValue);
-    setReviewFilter('all'); // Сбрасываем фильтр рецензий при смене вкладки
+    setReviewFilter('extended'); // Сбрасываем фильтр рецензий при смене вкладки
+    setUserReviews([]); // Очищаем данные рецензий
+    setLikedReviews([]); // Очищаем данные лайкнутых рецензий
     
     // Обновляем URL в соответствии с выбранной вкладкой
     // Учитываем, смотрим ли мы свой профиль или чужой
@@ -1110,6 +1061,7 @@ const ProfilePage = () => {
   const handleReviewFilterChange = (filter) => {
     setPage(1); // Сбрасываем страницу при смене фильтра
     setReviewFilter(filter);
+    setUserReviews([]); // Очищаем текущие данные для предотвращения багов отображения
     
     // Принудительное обновление данных при смене фильтра
     if (userDetails) {
@@ -1479,12 +1431,41 @@ const ProfilePage = () => {
   // Вспомогательная функция для загрузки рецензий
   const fetchReviewsData = async (userId, filter) => {
     try {
-      const userReviewsData = await reviewApi.getReviewsByUser(
-        userId, 
-        page - 1, 
-        5, 
-        filter === 'author_liked' ? true : null
-      );
+      let userReviewsData;
+      
+      if (filter === 'extended') {
+        userReviewsData = await reviewApi.getExtendedReviewsByUser(
+          userId, 
+          page - 1, 
+          5
+        );
+      } else if (filter === 'simple') {
+        userReviewsData = await reviewApi.getSimpleReviewsByUser(
+          userId, 
+          page - 1, 
+          5
+        );
+      } else if (filter === 'author_liked') {
+        // Получаем все рецензии пользователя, потом фильтруем локально
+        userReviewsData = await reviewApi.getReviewsByUser(
+          userId, 
+          page - 1, 
+          10 // Увеличиваем размер для фильтрации
+        );
+        
+        // Фильтруем только рецензии с авторскими лайками (проверяем наличие данных в authorLike)
+        if (userReviewsData && userReviewsData.content) {
+          userReviewsData.content = userReviewsData.content.filter(review => 
+            review.authorLike && review.authorLike.userId
+          );
+        }
+      } else {
+        userReviewsData = await reviewApi.getReviewsByUser(
+          userId, 
+          page - 1, 
+          5
+        );
+      }
       
       // Обновляем данные лайков для каждой рецензии и проверяем/дополняем данные релиза
       const updatedReviews = await Promise.all(
@@ -1820,11 +1801,18 @@ const ProfilePage = () => {
     return (
       <div className="sub-tabs">
         <a 
-          className={`tab-link ${reviewFilter === 'all' ? 'active' : ''}`}
-          onClick={() => handleReviewFilterChange('all')}
+          className={`tab-link ${reviewFilter === 'extended' ? 'active' : ''}`}
+          onClick={() => handleReviewFilterChange('extended')}
           href="#"
         >
-          Все рецензии
+          Расширенные рецензии
+        </a>
+        <a 
+          className={`tab-link ${reviewFilter === 'simple' ? 'active' : ''}`}
+          onClick={() => handleReviewFilterChange('simple')}
+          href="#"
+        >
+          Простые рецензии
         </a>
         <a 
           className={`tab-link ${reviewFilter === 'author_liked' ? 'active' : ''}`}
@@ -2079,22 +2067,43 @@ const ProfilePage = () => {
                   <div className="reviews-container">
                     <div className="reviews-list">
                       {userReviews && userReviews.length > 0 ? (
-                        userReviews.map((review) => (
-                          <EnhancedReviewCard 
-                            key={review.reviewId}
-                            review={review}
-                            userDetails={userDetails}
-                            isLiked={isOwnProfile ? isReviewLiked(review.reviewId) : (review.isLikedByCurrentUser || isReviewLiked(review.reviewId))}
-                            onLikeToggle={handleLikeToggle}
-                            cachedAvatarUrl={getCachedAvatarUrl()}
-                            getCurrentUserIdFunc={getCurrentUserId}
-                            getReviewLikesCount={getReviewLikesCount}
-                          />
-                        ))
+                        userReviews.map((review) => {
+                          // Для простых рецензий используем упрощенный компонент
+                          if (reviewFilter === 'simple') {
+                            return (
+                              <SimpleReviewCard 
+                                key={review.reviewId}
+                                review={review}
+                                userDetails={userDetails}
+                                isLiked={isOwnProfile ? isReviewLiked(review.reviewId) : (review.isLikedByCurrentUser || isReviewLiked(review.reviewId))}
+                                onLikeToggle={handleLikeToggle}
+                                cachedAvatarUrl={getCachedAvatarUrl()}
+                                getCurrentUserIdFunc={getCurrentUserId}
+                                getReviewLikesCount={getReviewLikesCount}
+                              />
+                            );
+                          } else {
+                            // Для расширенных рецензий и рецензий с авторскими лайками используем полный компонент
+                            return (
+                              <EnhancedReviewCard 
+                                key={review.reviewId}
+                                review={review}
+                                userDetails={userDetails}
+                                isLiked={isOwnProfile ? isReviewLiked(review.reviewId) : (review.isLikedByCurrentUser || isReviewLiked(review.reviewId))}
+                                onLikeToggle={handleLikeToggle}
+                                cachedAvatarUrl={getCachedAvatarUrl()}
+                                getCurrentUserIdFunc={getCurrentUserId}
+                                getReviewLikesCount={getReviewLikesCount}
+                              />
+                            );
+                          }
+                        })
                       ) : (
                         <div className="no-reviews">
-                          {reviewFilter === 'all' 
-                            ? (isOwnProfile ? 'У вас пока нет рецензий.' : 'У пользователя пока нет рецензий.') 
+                          {reviewFilter === 'extended' 
+                            ? (isOwnProfile ? 'У вас пока нет расширенных рецензий.' : 'У пользователя пока нет расширенных рецензий.') 
+                            : reviewFilter === 'simple'
+                            ? (isOwnProfile ? 'У вас пока нет простых рецензий.' : 'У пользователя пока нет простых рецензий.')
                             : (isOwnProfile ? 'У вас нет рецензий с авторскими лайками.' : 'У пользователя нет рецензий с авторскими лайками.')}
                         </div>
                       )}
