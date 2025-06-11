@@ -2157,6 +2157,9 @@ const ProfilePage = () => {
                     />
                   </div>
                   <h1 className="profile-username">{userDetails?.username || "Пользователь"}</h1>
+                  {userDetails?.bio && (
+                    <div className="profile-bio">{userDetails.bio}</div>
+                  )}
                   <div className="profile-date">Дата регистрации: {formatDate(userDetails?.createdAt) || "Нет данных"}</div>
                   
                   {/* Кнопка репорта на профиль (только если не собственный профиль) */}
