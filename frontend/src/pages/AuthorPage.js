@@ -37,6 +37,57 @@ const AuthorPage = () => {
   const [followersCount, setFollowersCount] = useState(0);
   const [notification, setNotification] = useState(null);
 
+  // Функция для округления до десятых
+  const roundToTenth = (value) => {
+    return Math.round(value * 10) / 10;
+  };
+
+  useEffect(() => {
+    const updateHoverMenuPositions = () => {
+      const wrappers = document.querySelectorAll('.author-rating-wrapper');
+      wrappers.forEach(wrapper => {
+        const menu = wrapper.querySelector('.author-hover-menu');
+        if (menu) {
+          const rect = wrapper.getBoundingClientRect();
+          const menuRect = menu.getBoundingClientRect();
+          
+          // Вычисляем позицию по центру элемента
+          let left = rect.left + (rect.width / 2) - (menuRect.width / 2);
+          let top = rect.bottom + 8;
+          
+          // Проверяем границы экрана
+          if (left < 10) left = 10;
+          if (left + menuRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - menuRect.width - 10;
+          }
+          if (top + menuRect.height > window.innerHeight - 10) {
+            top = rect.top - menuRect.height - 8;
+          }
+          
+          menu.style.left = `${left}px`;
+          menu.style.top = `${top}px`;
+        }
+      });
+    };
+
+    // Обновляем позиции при наведении
+    const handleMouseOver = (e) => {
+      if (e.target && e.target.nodeType === 1 && e.target.closest && e.target.closest('.author-rating-wrapper')) {
+        setTimeout(updateHoverMenuPositions, 10);
+      }
+    };
+
+    document.addEventListener('mouseover', handleMouseOver, true);
+    window.addEventListener('scroll', updateHoverMenuPositions);
+    window.addEventListener('resize', updateHoverMenuPositions);
+
+    return () => {
+      document.removeEventListener('mouseover', handleMouseOver, true);
+      window.removeEventListener('scroll', updateHoverMenuPositions);
+      window.removeEventListener('resize', updateHoverMenuPositions);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchAuthorData = async () => {
       try {
@@ -187,24 +238,31 @@ const AuthorPage = () => {
           {/* Главная секция с фоном */}
           <div className="author-hero-section">
             <div className="like-button-container">
-              <button 
-                className={`like-button ${isFollowing ? 'following' : ''}`}
-                onClick={handleFollowClick}
-                title={isFollowing ? "Отписаться" : "Подписаться"}
-              >
-                <svg 
-                  viewBox="0 0 24 24" 
-                  className="heart-icon" 
-                  height="1em" 
-                  width="1em"
-                  fill={isFollowing ? "#ef4444" : "none"}
-                  stroke={isFollowing ? "none" : "currentColor"}
-                  strokeWidth={isFollowing ? "0" : "2"}
+              <div className="author-rating-wrapper">
+                <button 
+                  className={`like-button ${isFollowing ? 'following' : ''}`}
+                  onClick={handleFollowClick}
+                  title={isFollowing ? "Отписаться" : "Подписаться"}
                 >
-                  <path fill="none" d="M0 0h24v24H0z"></path>
-                  <path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
-                </svg>
-              </button>
+                  <svg 
+                    viewBox="0 0 24 24" 
+                    className="heart-icon" 
+                    height="1em" 
+                    width="1em"
+                    fill={isFollowing ? "#ef4444" : "none"}
+                    stroke={isFollowing ? "none" : "currentColor"}
+                    strokeWidth={isFollowing ? "0" : "2"}
+                  >
+                    <path fill="none" d="M0 0h24v24H0z"></path>
+                    <path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                  </svg>
+                </button>
+                <div className="author-hover-menu">
+                  <div className="author-hover-content">
+                    <div className="author-hover-title">Количество добавлений в предпочтения</div>
+                  </div>
+                </div>
+              </div>
               
               {/* Кнопка репорта на автора */}
               {author && (
@@ -229,32 +287,50 @@ const AuthorPage = () => {
                 <div className="author-name-block">
                   <h1 className="author-name">{author.authorName}</h1>
                   <div className="verification-container">
-                    <svg 
-                      className={`verification-icon ${author.isVerified ? 'verified' : 'unverified'}`}
-                      viewBox="0 0 24 24" 
-                      fill="currentColor"
-                      width="24"
-                      height="24"
-                    >
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                    </svg>
+                    <div className="author-rating-wrapper">
+                      <div className="verification-button">
+                        <svg 
+                          className={`verification-icon ${author.isVerified ? 'verified' : 'unverified'}`}
+                          viewBox="0 0 24 24" 
+                          fill="currentColor"
+                          width="24"
+                          height="24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                      </div>
+                      <div className="author-hover-menu">
+                        <div className="author-hover-content">
+                          <div className="author-hover-title">
+                            {author.isVerified ? 'Автор зарегистрирован на сайте' : 'Автор не зарегистрирован на сайте'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <div className="followers-block">
-                  <div className="followers-content">
-                    <svg 
-                      stroke="currentColor" 
-                      fill="currentColor" 
-                      strokeWidth="0" 
-                      viewBox="0 0 384 512" 
-                      className="bookmark-icon" 
-                      height="1em" 
-                      width="1em"
-                    >
-                      <path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"></path>
-                    </svg>
-                    <span>{followersCount}</span>
+                  <div className="author-rating-wrapper">
+                    <div className="followers-badge">
+                      <svg 
+                        stroke="currentColor" 
+                        fill="currentColor" 
+                        strokeWidth="0" 
+                        viewBox="0 0 384 512" 
+                        className="bookmark-icon" 
+                        height="1em" 
+                        width="1em"
+                      >
+                        <path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"></path>
+                      </svg>
+                      <span>{followersCount}</span>
+                    </div>
+                    <div className="author-hover-menu">
+                      <div className="author-hover-content">
+                        <div className="author-hover-title">Количество добавлений в предпочтения</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -283,15 +359,29 @@ const AuthorPage = () => {
                   </svg>
                   <div className="rating-circles">
                     {author.averageAlbumExtendedRating ? (
-                      <div className="rating-circle filled">
-                        {formatRating(author.averageAlbumExtendedRating)}
+                      <div className="author-rating-wrapper">
+                        <div className="rating-circle filled">
+                          {formatRating(author.averageAlbumExtendedRating)}
+                        </div>
+                        <div className="author-hover-menu">
+                          <div className="author-hover-content">
+                            <div className="author-hover-title">Средняя оценка рецензий на альбомы от пользователей</div>
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <div className="rating-circle dashed"></div>
                     )}
                     {author.averageAlbumSimpleRating ? (
-                      <div className="rating-circle outlined">
-                        {formatRating(author.averageAlbumSimpleRating)}
+                      <div className="author-rating-wrapper">
+                        <div className="rating-circle outlined">
+                          {formatRating(author.averageAlbumSimpleRating)}
+                        </div>
+                        <div className="author-hover-menu">
+                          <div className="author-hover-content">
+                            <div className="author-hover-title">Средняя оценка альбомов без рецензий от пользователей</div>
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <div className="rating-circle dashed"></div>
@@ -312,20 +402,34 @@ const AuthorPage = () => {
                     <path d="M406.3 48.2c-4.7.9-202 39.2-206.2 40-4.2.8-8.1 3.6-8.1 8v240.1c0 1.6-.1 7.2-2.4 11.7-3.1 5.9-8.5 10.2-16.1 12.7-3.3 1.1-7.8 2.1-13.1 3.3-24.1 5.4-64.4 14.6-64.4 51.8 0 31.1 22.4 45.1 41.7 47.5 2.1.3 4.5.7 7.1.7 6.7 0 36-3.3 51.2-13.2 11-7.2 24.1-21.4 24.1-47.8V190.5c0-3.8 2.7-7.1 6.4-7.8l152-30.7c5-1 9.6 2.8 9.6 7.8v130.9c0 4.1-.2 8.9-2.5 13.4-3.1 5.9-8.5 10.2-16.2 12.7-3.3 1.1-8.8 2.1-14.1 3.3-24.1 5.4-64.4 14.5-64.4 51.7 0 33.7 25.4 47.2 41.8 48.3 6.5.4 11.2.3 19.4-.9s23.5-5.5 36.5-13c17.9-10.3 27.5-26.8 27.5-48.2V55.9c-.1-4.4-3.8-8.9-9.8-7.7z"></path>
                   </svg>
                   <div className="rating-circles">
-                    {author.averageSingleEpExtendedRating ? (
-                      <div className="rating-circle filled">
-                        {formatRating(author.averageSingleEpExtendedRating)}
+                    <div className="author-rating-wrapper">
+                      {author.averageSingleEpExtendedRating ? (
+                        <div className="rating-circle filled">
+                          {formatRating(author.averageSingleEpExtendedRating)}
+                        </div>
+                      ) : (
+                        <div className="rating-circle dashed"></div>
+                      )}
+                      <div className="author-hover-menu">
+                        <div className="author-hover-content">
+                          <div className="author-hover-title">Средняя оценка рецензий на синглы и EP от пользователей</div>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="rating-circle dashed"></div>
-                    )}
-                    {author.averageSingleEpSimpleRating ? (
-                      <div className="rating-circle outlined">
-                        {formatRating(author.averageSingleEpSimpleRating)}
+                    </div>
+                    <div className="author-rating-wrapper">
+                      {author.averageSingleEpSimpleRating ? (
+                        <div className="rating-circle outlined">
+                          {formatRating(author.averageSingleEpSimpleRating)}
+                        </div>
+                      ) : (
+                        <div className="rating-circle dashed"></div>
+                      )}
+                      <div className="author-hover-menu">
+                        <div className="author-hover-content">
+                          <div className="author-hover-title">Средняя оценка синглов и EP без рецензий от пользователей</div>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="rating-circle dashed"></div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -398,20 +502,36 @@ const AuthorPage = () => {
                       </div>
 
                       <div className="release-ratings">
-                        {release.fullReviewRating ? (
-                          <div className="rating-circle filled">
-                            {formatRating(release.fullReviewRating)}
-                          </div>
-                        ) : (
-                          <div className="rating-circle dashed"></div>
-                        )}
-                        {release.simpleReviewRating ? (  
-                          <div className="rating-circle outlined">
-                            {formatRating(release.simpleReviewRating)}
-                          </div>
-                        ) : (
-                          <div className="rating-circle dashed"></div>
-                        )}
+                        <div className="release-row-rating-circles">
+                          {release.fullReviewRating ? (
+                            <div className="author-rating-wrapper">
+                              <div className="release-row-rating-circle filled">
+                                {formatRating(release.fullReviewRating)}
+                              </div>
+                              <div className="author-hover-menu">
+                                <div className="author-hover-content">
+                                  <div className="author-hover-title">Средняя оценка рецензий от пользователей</div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="release-row-rating-circle dashed"></div>
+                          )}
+                          {release.simpleReviewRating ? (
+                            <div className="author-rating-wrapper">
+                              <div className="release-row-rating-circle outlined">
+                                {formatRating(release.simpleReviewRating)}
+                              </div>
+                              <div className="author-hover-menu">
+                                <div className="author-hover-content">
+                                  <div className="author-hover-title">Средняя оценка без рецензий от пользователей</div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="release-row-rating-circle dashed"></div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -436,32 +556,53 @@ const AuthorPage = () => {
                 <div className="releases-list">
                   {authorReleases.filter(release => ['SINGLE', 'EP', 'TRACK'].includes(release.type)).map((release) => (
                     <div key={release.releaseId} className="release-row">
-                      <a className="release-cover-link" href={`/release/${release.releaseId}`}>
-                        <img 
-                          alt={release.title}
-                          loading="lazy"
-                          width="100"
-                          height="100"
-                          decoding="async"
-                          className="release-row-cover"
-                          src={release.coverUrl || '/default-release-cover.jpg'}
-                        />
-                      </a>
+                      <div className="author-rating-wrapper">
+                        <a className="release-cover-link" href={`/release/${release.releaseId}`}>
+                          <img 
+                            alt={release.title}
+                            loading="lazy"
+                            width="100"
+                            height="100"
+                            decoding="async"
+                            className="release-row-cover"
+                            src={release.coverUrl || '/default-release-cover.jpg'}
+                          />
+                        </a>
+                        <div className="author-hover-menu">
+                          <div className="author-hover-content">
+                            <div className="author-hover-title">{release.title}</div>
+                          </div>
+                        </div>
+                      </div>
                       
                       <div className="release-row-content">
                         <div className="release-row-stats">
-                          <div className="release-row-stat">
-                            <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
-                              <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
-                            </svg>
-                            <span>{release.extendedReviewsCount || 0}</span>
+                          <div className="author-rating-wrapper">
+                            <div className="release-row-stat">
+                              <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
+                                <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                              </svg>
+                              <span>{release.extendedReviewsCount || 0}</span>
+                            </div>
+                            <div className="author-hover-menu">
+                              <div className="author-hover-content">
+                                <div className="author-hover-title">Количество детальных рецензий</div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="release-row-stat">
-                            <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
-                            </svg>
-                            <span>{release.simpleReviewsCount || 0}</span>
+                          <div className="author-rating-wrapper">
+                            <div className="release-row-stat">
+                              <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                              </svg>
+                              <span>{release.simpleReviewsCount || 0}</span>
+                            </div>
+                            <div className="author-hover-menu">
+                              <div className="author-hover-content">
+                                <div className="author-hover-title">Количество простых рецензий</div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         
@@ -491,15 +632,29 @@ const AuthorPage = () => {
                       <div className="release-row-ratings">
                         <div className="release-row-rating-circles">
                           {release.fullReviewRating ? (
-                            <div className="release-row-rating-circle filled">
-                              {formatRating(release.fullReviewRating)}
+                            <div className="author-rating-wrapper">
+                              <div className="release-row-rating-circle filled">
+                                {formatRating(release.fullReviewRating)}
+                              </div>
+                              <div className="author-hover-menu">
+                                <div className="author-hover-content">
+                                  <div className="author-hover-title">Средняя оценка рецензий от пользователей</div>
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="release-row-rating-circle dashed"></div>
                           )}
                           {release.simpleReviewRating ? (
-                            <div className="release-row-rating-circle outlined">
-                              {formatRating(release.simpleReviewRating)}
+                            <div className="author-rating-wrapper">
+                              <div className="release-row-rating-circle outlined">
+                                {formatRating(release.simpleReviewRating)}
+                              </div>
+                              <div className="author-hover-menu">
+                                <div className="author-hover-content">
+                                  <div className="author-hover-title">Средняя оценка без рецензий от пользователей</div>
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="release-row-rating-circle dashed"></div>
@@ -519,32 +674,53 @@ const AuthorPage = () => {
                 <div className="releases-list">
                   {authorReleases.filter(release => release.type === 'ALBUM').map((release) => (
                     <div key={release.releaseId} className="release-row">
-                      <a className="release-cover-link" href={`/release/${release.releaseId}`}>
-                        <img 
-                          alt={release.title}
-                          loading="lazy"
-                          width="100"
-                          height="100"
-                          decoding="async"
-                          className="release-row-cover"
-                          src={release.coverUrl || '/default-release-cover.jpg'}
-                        />
-                      </a>
+                      <div className="author-rating-wrapper">
+                        <a className="release-cover-link" href={`/release/${release.releaseId}`}>
+                          <img 
+                            alt={release.title}
+                            loading="lazy"
+                            width="100"
+                            height="100"
+                            decoding="async"
+                            className="release-row-cover"
+                            src={release.coverUrl || '/default-release-cover.jpg'}
+                          />
+                        </a>
+                        <div className="author-hover-menu">
+                          <div className="author-hover-content">
+                            <div className="author-hover-title">{release.title}</div>
+                          </div>
+                        </div>
+                      </div>
                       
                       <div className="release-row-content">
                         <div className="release-row-stats">
-                          <div className="release-row-stat">
-                            <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
-                              <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
-                            </svg>
-                            <span>{release.extendedReviewsCount || 0}</span>
+                          <div className="author-rating-wrapper">
+                            <div className="release-row-stat">
+                              <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7 7h10v2H7zm0 4h7v2H7z"></path>
+                                <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                              </svg>
+                              <span>{release.extendedReviewsCount || 0}</span>
+                            </div>
+                            <div className="author-hover-menu">
+                              <div className="author-hover-content">
+                                <div className="author-hover-title">Количество детальных рецензий</div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="release-row-stat">
-                            <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
-                            </svg>
-                            <span>{release.simpleReviewsCount || 0}</span>
+                          <div className="author-rating-wrapper">
+                            <div className="release-row-stat">
+                              <svg className="release-row-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 2H4c-1.103 0-2 .897-2 2v18l5.333-4H20c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zm0 14H6.667L4 18V4h16v12z"></path>
+                              </svg>
+                              <span>{release.simpleReviewsCount || 0}</span>
+                            </div>
+                            <div className="author-hover-menu">
+                              <div className="author-hover-content">
+                                <div className="author-hover-title">Количество простых рецензий</div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         
@@ -574,15 +750,29 @@ const AuthorPage = () => {
                       <div className="release-row-ratings">
                         <div className="release-row-rating-circles">
                           {release.fullReviewRating ? (
-                            <div className="release-row-rating-circle filled">
-                              {formatRating(release.fullReviewRating)}
+                            <div className="author-rating-wrapper">
+                              <div className="release-row-rating-circle filled">
+                                {formatRating(release.fullReviewRating)}
+                              </div>
+                              <div className="author-hover-menu">
+                                <div className="author-hover-content">
+                                  <div className="author-hover-title">Средняя оценка рецензий от пользователей</div>
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="release-row-rating-circle dashed"></div>
                           )}
                           {release.simpleReviewRating ? (
-                            <div className="release-row-rating-circle outlined">
-                              {formatRating(release.simpleReviewRating)}
+                            <div className="author-rating-wrapper">
+                              <div className="release-row-rating-circle outlined">
+                                {formatRating(release.simpleReviewRating)}
+                              </div>
+                              <div className="author-hover-menu">
+                                <div className="author-hover-content">
+                                  <div className="author-hover-title">Средняя оценка без рецензий от пользователей</div>
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="release-row-rating-circle dashed"></div>
