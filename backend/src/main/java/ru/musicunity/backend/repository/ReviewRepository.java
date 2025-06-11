@@ -73,4 +73,84 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      * @return страница рецензий
      */
     Page<Review> findAllByUserUserIdAndTypeAndIsDeletedFalse(Long userId, ReviewType type, Pageable pageable);
+    
+    /**
+     * Получение средней оценки по рифме и образности для расширенных рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.rhymeImagery) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED AND r.isDeleted = false AND r.rhymeImagery IS NOT NULL")
+    Double getAverageRhymeImageryByReleaseAndTypeExtended(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по структуре и ритму для расширенных рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.structureRhythm) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED AND r.isDeleted = false AND r.structureRhythm IS NOT NULL")
+    Double getAverageStructureRhythmByReleaseAndTypeExtended(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по стилю и исполнению для расширенных рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.styleExecution) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED AND r.isDeleted = false AND r.styleExecution IS NOT NULL")
+    Double getAverageStyleExecutionByReleaseAndTypeExtended(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по индивидуальности для расширенных рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.individuality) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED AND r.isDeleted = false AND r.individuality IS NOT NULL")
+    Double getAverageIndividualityByReleaseAndTypeExtended(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по вайбу для расширенных рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.vibe) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED AND r.isDeleted = false AND r.vibe IS NOT NULL")
+    Double getAverageVibeByReleaseAndTypeExtended(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по рифме и образности для простых рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.rhymeImagery) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE AND r.isDeleted = false AND r.rhymeImagery IS NOT NULL")
+    Double getAverageRhymeImageryByReleaseAndTypeSimple(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по структуре и ритму для простых рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.structureRhythm) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE AND r.isDeleted = false AND r.structureRhythm IS NOT NULL")
+    Double getAverageStructureRhythmByReleaseAndTypeSimple(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по стилю и исполнению для простых рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.styleExecution) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE AND r.isDeleted = false AND r.styleExecution IS NOT NULL")
+    Double getAverageStyleExecutionByReleaseAndTypeSimple(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по индивидуальности для простых рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.individuality) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE AND r.isDeleted = false AND r.individuality IS NOT NULL")
+    Double getAverageIndividualityByReleaseAndTypeSimple(@Param("releaseId") Long releaseId);
+    
+    /**
+     * Получение средней оценки по вайбу для простых рецензий релиза
+     * @param releaseId ID релиза
+     * @return средняя оценка или null
+     */
+    @Query("SELECT AVG(r.vibe) FROM Review r WHERE r.release.releaseId = :releaseId AND r.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE AND r.isDeleted = false AND r.vibe IS NOT NULL")
+    Double getAverageVibeByReleaseAndTypeSimple(@Param("releaseId") Long releaseId);
 }

@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import ru.musicunity.backend.dto.AverageRatingsDTO;
 import ru.musicunity.backend.dto.ReviewDTO;
 import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.service.ReviewService;
@@ -175,5 +176,16 @@ public class ReviewController {
         @Parameter(description = "ID отзыва") @PathVariable Long id) {
         reviewService.softDeleteReview(id);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Получение средних оценок по параметрам для релиза")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Средние оценки по параметрам"),
+        @ApiResponse(responseCode = "404", description = "Релиз не найден")
+    })
+    @GetMapping("/release/{releaseId}/averages")
+    public ResponseEntity<AverageRatingsDTO> getAverageRatingsByRelease(
+        @Parameter(description = "ID релиза") @PathVariable Long releaseId) {
+        return ResponseEntity.ok(reviewService.getAverageRatingsByRelease(releaseId));
     }
 } 

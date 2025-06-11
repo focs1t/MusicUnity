@@ -6,8 +6,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.musicunity.backend.dto.AverageRatingsDTO;
 import ru.musicunity.backend.dto.ReviewDTO;
 import ru.musicunity.backend.exception.ReviewNotFoundException;
+import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.ReviewMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Review;
@@ -222,5 +224,35 @@ public class ReviewService {
         // Получаем ID рецензий, которые лайкнул пользователь
         Page<Review> likedReviews = reviewRepository.findLikedByUser(userId, pageable);
         return likedReviews.map(reviewMapper::toDTO);
+    }
+    
+    /**
+     * Получение средних оценок по параметрам для релиза
+     * @param releaseId ID релиза
+     * @return DTO со средними оценками
+     */
+    public AverageRatingsDTO getAverageRatingsByRelease(Long releaseId) {
+        // Получаем средние оценки для расширенных рецензий
+        AverageRatingsDTO.RatingDetails extendedRatings = AverageRatingsDTO.RatingDetails.builder()
+                .rhymeImagery(reviewRepository.getAverageRhymeImageryByReleaseAndTypeExtended(releaseId))
+                .structureRhythm(reviewRepository.getAverageStructureRhythmByReleaseAndTypeExtended(releaseId))
+                .styleExecution(reviewRepository.getAverageStyleExecutionByReleaseAndTypeExtended(releaseId))
+                .individuality(reviewRepository.getAverageIndividualityByReleaseAndTypeExtended(releaseId))
+                .vibe(reviewRepository.getAverageVibeByReleaseAndTypeExtended(releaseId))
+                .build();
+        
+        // Получаем средние оценки для простых рецензий
+        AverageRatingsDTO.RatingDetails simpleRatings = AverageRatingsDTO.RatingDetails.builder()
+                .rhymeImagery(reviewRepository.getAverageRhymeImageryByReleaseAndTypeSimple(releaseId))
+                .structureRhythm(reviewRepository.getAverageStructureRhythmByReleaseAndTypeSimple(releaseId))
+                .styleExecution(reviewRepository.getAverageStyleExecutionByReleaseAndTypeSimple(releaseId))
+                .individuality(reviewRepository.getAverageIndividualityByReleaseAndTypeSimple(releaseId))
+                .vibe(reviewRepository.getAverageVibeByReleaseAndTypeSimple(releaseId))
+                .build();
+        
+        return AverageRatingsDTO.builder()
+                .extended(extendedRatings)
+                .simple(simpleRatings)
+                .build();
     }
 }

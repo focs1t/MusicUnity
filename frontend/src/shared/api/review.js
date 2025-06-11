@@ -321,5 +321,19 @@ export const reviewApi = {
     } catch (error) {
       throw error;
     }
+  },
+
+  /**
+   * Получение средних оценок по параметрам для релиза
+   * @param {number} releaseId - ID релиза
+   * @returns {Promise<Object>} Объект со средними оценками по параметрам
+   */
+  getAverageRatingsByRelease: async (releaseId) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/release/${releaseId}/averages`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 }; 

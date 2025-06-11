@@ -1,3 +1,9 @@
+:root {
+  --ratingText-color: #ffffff;
+  --ratingVibe-color: #10b981;
+  --gold-color: #ffd700;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

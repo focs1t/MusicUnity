@@ -111,13 +111,14 @@ const RatingPage = () => {
         month: selectedMonth
       });
       
-      // Дополняем данные статистикой
+      // Дополняем данные статистикой и детализированными оценками
       const tracksWithStats = await Promise.all(
         tracksResponse.content.map(async (release) => {
           try {
-            const [allReviewsCount, extendedReviewsResponse] = await Promise.all([
+            const [allReviewsCount, extendedReviewsResponse, averageRatings] = await Promise.all([
               reviewApi.getReviewsCountByRelease(release.releaseId),
-              reviewApi.getExtendedReviewsByRelease(release.releaseId, 0, 1)
+              reviewApi.getExtendedReviewsByRelease(release.releaseId, 0, 1),
+              reviewApi.getAverageRatingsByRelease(release.releaseId).catch(() => null)
             ]);
             
             const extendedReviewsCount = extendedReviewsResponse.totalElements;
@@ -128,7 +129,19 @@ const RatingPage = () => {
               simpleReviewsCount,
               extendedReviewsCount,
               avgRating: release.simpleReviewRating || null,
-              avgExtendedRating: release.averageExtendedRating || null
+              avgExtendedRating: release.averageExtendedRating || null,
+              // Средние оценки по параметрам для расширенных рецензий
+              avgRhymeImageryExtended: averageRatings?.extended?.rhymeImagery || 0,
+              avgStructureRhythmExtended: averageRatings?.extended?.structureRhythm || 0,
+              avgStyleExecutionExtended: averageRatings?.extended?.styleExecution || 0,
+              avgIndividualityExtended: averageRatings?.extended?.individuality || 0,
+              avgVibeExtended: averageRatings?.extended?.vibe || 0,
+              // Средние оценки по параметрам для простых рецензий
+              avgRhymeImagerySimple: averageRatings?.simple?.rhymeImagery || 0,
+              avgStructureRhythmSimple: averageRatings?.simple?.structureRhythm || 0,
+              avgStyleExecutionSimple: averageRatings?.simple?.styleExecution || 0,
+              avgIndividualitySimple: averageRatings?.simple?.individuality || 0,
+              avgVibeSimple: averageRatings?.simple?.vibe || 0
             };
           } catch (error) {
             console.error(`Ошибка получения статистики для трека ${release.releaseId}:`, error);
@@ -137,7 +150,18 @@ const RatingPage = () => {
               simpleReviewsCount: 0,
               extendedReviewsCount: 0,
               avgRating: null,
-              avgExtendedRating: null
+              avgExtendedRating: null,
+              // Устанавливаем нулевые значения для детализированных оценок
+              avgRhymeImageryExtended: 0,
+              avgStructureRhythmExtended: 0,
+              avgStyleExecutionExtended: 0,
+              avgIndividualityExtended: 0,
+              avgVibeExtended: 0,
+              avgRhymeImagerySimple: 0,
+              avgStructureRhythmSimple: 0,
+              avgStyleExecutionSimple: 0,
+              avgIndividualitySimple: 0,
+              avgVibeSimple: 0
             };
           }
         })
@@ -146,9 +170,10 @@ const RatingPage = () => {
       const albumsWithStats = await Promise.all(
         albumsResponse.content.map(async (release) => {
           try {
-            const [allReviewsCount, extendedReviewsResponse] = await Promise.all([
+            const [allReviewsCount, extendedReviewsResponse, averageRatings] = await Promise.all([
               reviewApi.getReviewsCountByRelease(release.releaseId),
-              reviewApi.getExtendedReviewsByRelease(release.releaseId, 0, 1)
+              reviewApi.getExtendedReviewsByRelease(release.releaseId, 0, 1),
+              reviewApi.getAverageRatingsByRelease(release.releaseId).catch(() => null)
             ]);
             
             const extendedReviewsCount = extendedReviewsResponse.totalElements;
@@ -159,7 +184,19 @@ const RatingPage = () => {
               simpleReviewsCount,
               extendedReviewsCount,
               avgRating: release.simpleReviewRating || null,
-              avgExtendedRating: release.averageExtendedRating || null
+              avgExtendedRating: release.averageExtendedRating || null,
+              // Средние оценки по параметрам для расширенных рецензий
+              avgRhymeImageryExtended: averageRatings?.extended?.rhymeImagery || 0,
+              avgStructureRhythmExtended: averageRatings?.extended?.structureRhythm || 0,
+              avgStyleExecutionExtended: averageRatings?.extended?.styleExecution || 0,
+              avgIndividualityExtended: averageRatings?.extended?.individuality || 0,
+              avgVibeExtended: averageRatings?.extended?.vibe || 0,
+              // Средние оценки по параметрам для простых рецензий
+              avgRhymeImagerySimple: averageRatings?.simple?.rhymeImagery || 0,
+              avgStructureRhythmSimple: averageRatings?.simple?.structureRhythm || 0,
+              avgStyleExecutionSimple: averageRatings?.simple?.styleExecution || 0,
+              avgIndividualitySimple: averageRatings?.simple?.individuality || 0,
+              avgVibeSimple: averageRatings?.simple?.vibe || 0
             };
           } catch (error) {
             console.error(`Ошибка получения статистики для альбома ${release.releaseId}:`, error);
@@ -168,7 +205,18 @@ const RatingPage = () => {
               simpleReviewsCount: 0,
               extendedReviewsCount: 0,
               avgRating: null,
-              avgExtendedRating: null
+              avgExtendedRating: null,
+              // Устанавливаем нулевые значения для детализированных оценок
+              avgRhymeImageryExtended: 0,
+              avgStructureRhythmExtended: 0,
+              avgStyleExecutionExtended: 0,
+              avgIndividualityExtended: 0,
+              avgVibeExtended: 0,
+              avgRhymeImagerySimple: 0,
+              avgStructureRhythmSimple: 0,
+              avgStyleExecutionSimple: 0,
+              avgIndividualitySimple: 0,
+              avgVibeSimple: 0
             };
           }
         })
@@ -242,6 +290,12 @@ const RatingPage = () => {
     return month ? month.label : 'Месяц';
   };
 
+  // Функция для округления до десятых
+  const roundToTenth = (value) => {
+    if (value === null || value === undefined || value === 0) return '0.0';
+    return Number(value).toFixed(1);
+  };
+
   const renderReleaseItem = (release, isAlbum = false) => {
     const hasStats = release.simpleReviewsCount > 0 || release.extendedReviewsCount > 0;
     
@@ -301,14 +355,80 @@ const RatingPage = () => {
           <div className="rating-scores-group">
             {/* Расширенные рецензии - закрашенные кружки */}
             {release.avgExtendedRating && (
-              <div className="rating-score-circle filled">
-                {Math.round(release.avgExtendedRating)}
+              <div className="rating-score-wrapper">
+                <div 
+                  className={`rating-score-circle filled ${release.avgExtendedRating === 100 ? 'gold' : ''}`}
+                  data-release-id={release.releaseId}
+                  data-review-type="extended"
+                >
+                  {Math.round(release.avgExtendedRating)}
+                </div>
+                <div className="rating-hover-menu" data-target={`${release.releaseId}-extended`}>
+                  <div className="rating-hover-content">
+                    <div className="rating-hover-title">Средняя оценка пользователей с рецензией</div>
+                    <div className="rating-hover-stats">
+                      <div className="rating-param">
+                        <span className="param-name">Рифма и образность:</span>
+                        <span className="param-value">{roundToTenth(release.avgRhymeImageryExtended)}</span>
+                      </div>
+                      <div className="rating-param">
+                        <span className="param-name">Структура и ритм:</span>
+                        <span className="param-value">{roundToTenth(release.avgStructureRhythmExtended)}</span>
+                      </div>
+                      <div className="rating-param">
+                        <span className="param-name">Стиль и исполнение:</span>
+                        <span className="param-value">{roundToTenth(release.avgStyleExecutionExtended)}</span>
+                      </div>
+                      <div className="rating-param">
+                        <span className="param-name">Индивидуальность:</span>
+                        <span className="param-value">{roundToTenth(release.avgIndividualityExtended)}</span>
+                      </div>
+                      <div className="rating-param vibe">
+                        <span className="param-name">Вайб:</span>
+                        <span className="param-value">{roundToTenth(release.avgVibeExtended)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             {/* Простые рецензии - кружки с обводкой */}
             {release.avgRating && (
-              <div className="rating-score-circle outlined">
-                {Math.round(release.avgRating)}
+              <div className="rating-score-wrapper">
+                <div 
+                  className={`rating-score-circle outlined ${release.avgRating === 100 ? 'gold' : ''}`}
+                  data-release-id={release.releaseId}
+                  data-review-type="simple"
+                >
+                  {Math.round(release.avgRating)}
+                </div>
+                <div className="rating-hover-menu" data-target={`${release.releaseId}-simple`}>
+                  <div className="rating-hover-content">
+                    <div className="rating-hover-title">Средняя оценка пользователей без рецензии</div>
+                    <div className="rating-hover-stats">
+                      <div className="rating-param">
+                        <span className="param-name">Рифма и образность:</span>
+                        <span className="param-value">{roundToTenth(release.avgRhymeImagerySimple)}</span>
+                      </div>
+                      <div className="rating-param">
+                        <span className="param-name">Структура и ритм:</span>
+                        <span className="param-value">{roundToTenth(release.avgStructureRhythmSimple)}</span>
+                      </div>
+                      <div className="rating-param">
+                        <span className="param-name">Стиль и исполнение:</span>
+                        <span className="param-value">{roundToTenth(release.avgStyleExecutionSimple)}</span>
+                      </div>
+                      <div className="rating-param">
+                        <span className="param-name">Индивидуальность:</span>
+                        <span className="param-value">{roundToTenth(release.avgIndividualitySimple)}</span>
+                      </div>
+                      <div className="rating-param vibe">
+                        <span className="param-name">Вайб:</span>
+                        <span className="param-value">{roundToTenth(release.avgVibeSimple)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
