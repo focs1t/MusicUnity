@@ -161,33 +161,82 @@ const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAv
           <div className="flex items-center justify-end gap-2 lg:gap-4">
             <div className="text-right flex flex-col h-full justify-center">
               <div className="text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right">
-                <span 
-                  className="no-callout" 
-                  style={{ color: calculateReviewScore(review) === 100 ? '#FFD700' : 'white' }}
-                >
-                  {calculateReviewScore(review)}
-                </span>
+                <div className="author-rating-wrapper">
+                  <span 
+                    className="no-callout" 
+                    style={{ color: calculateReviewScore(review) === 100 ? '#FFD700' : 'white' }}
+                  >
+                    {calculateReviewScore(review)}
+                  </span>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Общая оценка рецензии</div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="flex gap-x-1.5 font-bold text-xs lg:text-sm justify-end">
-                <div className="no-callout" style={{ color: 'white' }} data-state="closed">{review.rhymeImagery || 0}</div>
-                <div className="no-callout" style={{ color: 'white' }} data-state="closed">{review.structureRhythm || 0}</div>
-                <div className="no-callout" style={{ color: 'white' }} data-state="closed">{review.styleExecution || 0}</div>
-                <div className="no-callout" style={{ color: 'white' }} data-state="closed">{review.individuality || 0}</div>
-                <div className="no-callout" style={{ color: 'var(--ratingVibe-color)' }} data-state="closed">{review.vibe || 0}</div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-userColor" data-state="closed">{review.rhymeImagery || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Рифма и образность</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-userColor" data-state="closed">{review.structureRhythm || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Структура и ритм</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-userColor" data-state="closed">{review.styleExecution || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Стиль и исполнение</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-userColor" data-state="closed">{review.individuality || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Индивидуальность</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-ratingVibe" data-state="closed">{review.vibe || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Вайб</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <Link to={`/release/${getReleaseId()}`} className="shrink-0 size-10 lg:size-10 block" data-state="closed">
-              <img 
-                alt={getReleaseTitle()} 
-                loading="lazy" 
-                width="40" 
-                height="40" 
-                className="rounded-md w-full h-full object-cover"
-                src={getReleaseCoverUrl()} 
-                onError={(e) => handleReviewReleaseImageError(e)}
-              />
-            </Link>
+            <div className="author-rating-wrapper">
+              <Link to={`/release/${getReleaseId()}`} className="shrink-0 size-10 lg:size-10 block" data-state="closed">
+                <img 
+                  alt={getReleaseTitle()} 
+                  loading="lazy" 
+                  width="40" 
+                  height="40" 
+                  className="rounded-md w-full h-full object-cover"
+                  src={getReleaseCoverUrl()} 
+                  onError={(e) => handleReviewReleaseImageError(e)}
+                />
+              </Link>
+              <div className="author-hover-menu">
+                <div className="author-hover-content">
+                  <div className="author-hover-title">{getReleaseTitle()}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -348,33 +397,82 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
           <div className="flex items-center justify-end gap-2 lg:gap-4">
             <div className="text-right flex flex-col h-full justify-center">
               <div className="text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right">
-                <span 
-                  className="no-callout" 
-                  style={{ color: calculateReviewScore(review) === 100 ? '#FFD700' : 'white' }}
-                >
-                  {calculateReviewScore(review)}
-                </span>
+                <div className="author-rating-wrapper">
+                  <span 
+                    className="no-callout" 
+                    style={{ color: calculateReviewScore(review) === 100 ? '#FFD700' : 'white' }}
+                  >
+                    {calculateReviewScore(review)}
+                  </span>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Общая оценка рецензии</div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="flex gap-x-1.5 font-bold text-xs lg:text-sm justify-end">
-                <div className="no-callout text-userColor" data-state="closed">{review.rhymeImagery || 0}</div>
-                <div className="no-callout text-userColor" data-state="closed">{review.structureRhythm || 0}</div>
-                <div className="no-callout text-userColor" data-state="closed">{review.styleExecution || 0}</div>
-                <div className="no-callout text-userColor" data-state="closed">{review.individuality || 0}</div>
-                <div className="no-callout text-ratingVibe" data-state="closed">{review.vibe || 0}</div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-userColor" data-state="closed">{review.rhymeImagery || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Рифма и образность</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-userColor" data-state="closed">{review.structureRhythm || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Структура и ритм</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-userColor" data-state="closed">{review.styleExecution || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Стиль и исполнение</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-userColor" data-state="closed">{review.individuality || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Индивидуальность</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="author-rating-wrapper">
+                  <div className="no-callout text-ratingVibe" data-state="closed">{review.vibe || 0}</div>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Вайб</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <Link to={`/release/${getReleaseId()}`} className="shrink-0 size-10 lg:size-10 block" data-state="closed">
-              <img 
-                alt={getReleaseTitle()} 
-                loading="lazy" 
-                width="40" 
-                height="40" 
-                className="rounded-md w-full h-full object-cover"
-                src={getReleaseCoverUrl()} 
-                onError={(e) => handleReviewReleaseImageError(e)}
-              />
-            </Link>
+            <div className="author-rating-wrapper">
+              <Link to={`/release/${getReleaseId()}`} className="shrink-0 size-10 lg:size-10 block" data-state="closed">
+                <img 
+                  alt={getReleaseTitle()} 
+                  loading="lazy" 
+                  width="40" 
+                  height="40" 
+                  className="rounded-md w-full h-full object-cover"
+                  src={getReleaseCoverUrl()} 
+                  onError={(e) => handleReviewReleaseImageError(e)}
+                />
+              </Link>
+              <div className="author-hover-menu">
+                <div className="author-hover-content">
+                  <div className="author-hover-title">{getReleaseTitle()}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -413,17 +511,24 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
             <div className="author-likes-section ml-3">
               <div className="author-likes-avatars flex items-center gap-1">
                 {authorLikes[review.reviewId].slice(0, 3).map((authorLike, index) => (
-                  <img
-                    key={index}
-                    src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
-                    alt={authorLike.author?.username || 'Автор'}
-                    className="w-6 h-6 rounded-full border border-yellow-500"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
-                    }}
-                    title={`Авторский лайк от ${authorLike.author?.username || 'Автор'}`}
-                  />
+                  <div className="author-rating-wrapper" key={`author-like-wrapper-${index}`}>
+                    <Link to={`/author/${authorLike.author?.authorId || authorLike.author?.id}`}>
+                      <img
+                        src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
+                        alt={authorLike.author?.username || 'Автор'}
+                        className="w-6 h-6 rounded-full border border-yellow-500"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+                        }}
+                      />
+                    </Link>
+                    <div className="author-hover-menu">
+                      <div className="author-hover-content">
+                        <div className="author-hover-title">{authorLike.author?.username || 'Автор'}</div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
                 {authorLikes[review.reviewId].length > 3 && (
                   <span className="text-xs text-yellow-500 ml-1">
@@ -441,11 +546,18 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
         </div>
         
         <div className="review-links">
-          <Link to={`/reviews/${review.reviewId}`} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground size-8 md:size-10 bg-transparent hover:bg-white/10">
-            <svg viewBox="0 0 15 15" className="size-6 text-zinc-400 stroke-white fill-zinc-400">
-              <path fillRule="evenodd" clipRule="evenodd" d="M12 13C12.5523 13 13 12.5523 13 12V3C13 2.44771 12.5523 2 12 2H3C2.44771 2 2 2.44771 2 3V6.5C2 6.77614 2.22386 7 2.5 7C2.77614 7 3 6.77614 3 6.5V3H12V12H8.5C8.22386 12 8 12.2239 8 12.5C8 12.7761 8.22386 13 8.5 13H12ZM9 6.5C9 6.5001 9 6.50021 9 6.50031V6.50035V9.5C9 9.77614 8.77614 10 8.5 10C8.22386 10 8 9.77614 8 9.5V7.70711L2.85355 12.8536C2.65829 13.0488 2.34171 13.0488 2.14645 12.8536C1.95118 12.6583 1.95118 12.3417 2.14645 12.1464L7.29289 7H5.5C5.22386 7 5 6.77614 5 6.5C5 6.22386 5.22386 6 5.5 6H8.5C8.56779 6 8.63244 6.01349 8.69139 6.03794C8.74949 6.06198 8.80398 6.09744 8.85143 6.14433C8.94251 6.23434 8.9992 6.35909 8.99999 6.49708L8.99999 6.49738" fill="currentColor"></path>
-            </svg>
-          </Link>
+          <div className="author-rating-wrapper">
+            <Link to={`/reviews/${review.reviewId}`} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground size-8 md:size-10 bg-transparent hover:bg-white/10">
+              <svg viewBox="0 0 15 15" className="size-6 text-zinc-400 stroke-white fill-zinc-400">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 13C12.5523 13 13 12.5523 13 12V3C13 2.44771 12.5523 2 12 2H3C2.44771 2 2 2.44771 2 3V6.5C2 6.77614 2.22386 7 2.5 7C2.77614 7 3 6.77614 3 6.5V3H12V12H8.5C8.22386 12 8 12.2239 8 12.5C8 12.7761 8.22386 13 8.5 13H12ZM9 6.5C9 6.5001 9 6.50021 9 6.50031V6.50035V9.5C9 9.77614 8.77614 10 8.5 10C8.22386 10 8 9.77614 8 9.5V7.70711L2.85355 12.8536C2.65829 13.0488 2.34171 13.0488 2.14645 12.8536C1.95118 12.6583 1.95118 12.3417 2.14645 12.1464L7.29289 7H5.5C5.22386 7 5 6.77614 5 6.5C5 6.22386 5.22386 6 5.5 6H8.5C8.56779 6 8.63244 6.01349 8.69139 6.03794C8.74949 6.06198 8.80398 6.09744 8.85143 6.14433C8.94251 6.23434 8.9992 6.35909 8.99999 6.49708L8.99999 6.49738" fill="currentColor"></path>
+              </svg>
+            </Link>
+            <div className="author-hover-menu">
+              <div className="author-hover-content">
+                <div className="author-hover-title">Перейти к рецензии</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -725,6 +837,70 @@ const ProfilePage = () => {
   
   // Состояние для авторских лайков рецензий
   const [authorLikes, setAuthorLikes] = useState({});
+  
+  // Эффект для позиционирования hover меню
+  useEffect(() => {
+    const updateHoverMenuPositions = () => {
+      const wrappers = document.querySelectorAll('.author-rating-wrapper');
+      wrappers.forEach(wrapper => {
+        const menu = wrapper.querySelector('.author-hover-menu');
+        if (menu) {
+          const rect = wrapper.getBoundingClientRect();
+          const menuRect = menu.getBoundingClientRect();
+          
+          // Вычисляем позицию по центру элемента
+          let left = rect.left + (rect.width / 2) - (menuRect.width / 2);
+          let top = rect.bottom + 8;
+          
+          // Проверяем границы экрана
+          if (left < 10) left = 10;
+          if (left + menuRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - menuRect.width - 10;
+          }
+          if (top + menuRect.height > window.innerHeight - 10) {
+            top = rect.top - menuRect.height - 8;
+          }
+          
+          menu.style.left = `${left}px`;
+          menu.style.top = `${top}px`;
+        }
+      });
+    };
+
+    // Функция для добавления обработчиков к элементам
+    const attachHoverHandlers = () => {
+      const wrappers = document.querySelectorAll('.author-rating-wrapper');
+      wrappers.forEach(wrapper => {
+        if (!wrapper.hasAttribute('data-hover-attached')) {
+          wrapper.addEventListener('mouseenter', () => {
+            setTimeout(updateHoverMenuPositions, 10);
+          });
+          wrapper.setAttribute('data-hover-attached', 'true');
+        }
+      });
+    };
+
+    // Начальное подключение обработчиков и наблюдатель за изменениями DOM
+    attachHoverHandlers();
+    
+    const observer = new MutationObserver(() => {
+      attachHoverHandlers();
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    window.addEventListener('scroll', updateHoverMenuPositions);
+    window.addEventListener('resize', updateHoverMenuPositions);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', updateHoverMenuPositions);
+      window.removeEventListener('resize', updateHoverMenuPositions);
+    };
+  }, []);
   
   // Загрузка данных при монтировании компонента
   useEffect(() => {
@@ -1946,10 +2122,9 @@ const ProfilePage = () => {
       return likeStates[reviewId].count;
     }
     
-    // В противном случае используем значение из данных рецензии
-    return review.likesCount !== undefined ? review.likesCount : 0;
-  };
-
+      // В противном случае используем значение из данных рецензии
+  return review.likesCount !== undefined ? review.likesCount : 0;
+};
 
   
   return (

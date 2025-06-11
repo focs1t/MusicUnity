@@ -274,6 +274,53 @@ const VerifiedAuthorsPage = () => {
     return buttons;
   };
 
+  // Эффект для позиционирования hover меню
+  useEffect(() => {
+    const updateHoverMenuPositions = () => {
+      const wrappers = document.querySelectorAll('.author-rating-wrapper');
+      wrappers.forEach(wrapper => {
+        const menu = wrapper.querySelector('.author-hover-menu');
+        if (menu) {
+          const rect = wrapper.getBoundingClientRect();
+          const menuRect = menu.getBoundingClientRect();
+          
+          // Вычисляем позицию по центру элемента
+          let left = rect.left + (rect.width / 2) - (menuRect.width / 2);
+          let top = rect.bottom + 8;
+          
+          // Проверяем границы экрана
+          if (left < 10) left = 10;
+          if (left + menuRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - menuRect.width - 10;
+          }
+          if (top + menuRect.height > window.innerHeight - 10) {
+            top = rect.top - menuRect.height - 8;
+          }
+          
+          menu.style.left = `${left}px`;
+          menu.style.top = `${top}px`;
+        }
+      });
+    };
+
+    // Обновляем позиции при наведении
+    const handleMouseOver = (e) => {
+      if (e.target && e.target.nodeType === 1 && e.target.closest && e.target.closest('.author-rating-wrapper')) {
+        setTimeout(updateHoverMenuPositions, 10);
+      }
+    };
+
+    document.addEventListener('mouseover', handleMouseOver, true);
+    window.addEventListener('scroll', updateHoverMenuPositions);
+    window.addEventListener('resize', updateHoverMenuPositions);
+
+    return () => {
+      document.removeEventListener('mouseover', handleMouseOver, true);
+      window.removeEventListener('scroll', updateHoverMenuPositions);
+      window.removeEventListener('resize', updateHoverMenuPositions);
+    };
+  }, []);
+
   return (
     <div className="site-content authors-page">
       <main className="">

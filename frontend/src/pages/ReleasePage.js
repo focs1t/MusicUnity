@@ -188,6 +188,53 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
     setTimeout(() => setShowMessage(false), 2000); // Скрываем сообщение через 2 секунды
   };
 
+  // Эффект для позиционирования hover меню
+  useEffect(() => {
+    const updateHoverMenuPositions = () => {
+      const wrappers = document.querySelectorAll('.author-rating-wrapper');
+      wrappers.forEach(wrapper => {
+        const menu = wrapper.querySelector('.author-hover-menu');
+        if (menu) {
+          const rect = wrapper.getBoundingClientRect();
+          const menuRect = menu.getBoundingClientRect();
+          
+          // Вычисляем позицию по центру элемента
+          let left = rect.left + (rect.width / 2) - (menuRect.width / 2);
+          let top = rect.bottom + 8;
+          
+          // Проверяем границы экрана
+          if (left < 10) left = 10;
+          if (left + menuRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - menuRect.width - 10;
+          }
+          if (top + menuRect.height > window.innerHeight - 10) {
+            top = rect.top - menuRect.height - 8;
+          }
+          
+          menu.style.left = `${left}px`;
+          menu.style.top = `${top}px`;
+        }
+      });
+    };
+
+    // Обновляем позиции при наведении
+    const handleMouseOver = (e) => {
+      if (e.target && e.target.nodeType === 1 && e.target.closest && e.target.closest('.author-rating-wrapper')) {
+        setTimeout(updateHoverMenuPositions, 10);
+      }
+    };
+
+    document.addEventListener('mouseover', handleMouseOver, true);
+    window.addEventListener('scroll', updateHoverMenuPositions);
+    window.addEventListener('resize', updateHoverMenuPositions);
+
+    return () => {
+      document.removeEventListener('mouseover', handleMouseOver, true);
+      window.removeEventListener('scroll', updateHoverMenuPositions);
+      window.removeEventListener('resize', updateHoverMenuPositions);
+    };
+  }, []);
+
   // Строим карточку рецензии точно как в ReviewsPage
   return (
     <div className="bg-zinc-900 relative overflow-hidden review-wrapper p-1.5 lg:p-[5px] flex flex-col mx-auto border border-zinc-800 rounded-[15px] lg:rounded-[20px] w-full">
@@ -231,18 +278,42 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
           <div className="flex items-center justify-end">
             <div className="text-right flex flex-col h-full justify-center">
               <div className={`text-[20px] lg:text-[24px] font-bold leading-[100%] lg:mt-1 !no-underline border-0 no-callout select-none text-right ${rating.total === 100 ? 'text-golden' : ''}`}>
-                <span className="no-callout">{rating.total}</span>
+                <div className="author-rating-wrapper">
+                  <span className="no-callout">{rating.total}</span>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">Общая оценка рецензии</div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="flex gap-x-1.5 font-bold text-xs lg:text-sm justify-end">
-                {rating.components.map((score, index) => (
-                  <div
-                    key={`rating-${index}`}
-                    className={`no-callout ${index === 4 ? 'text-ratingVibe' : 'text-userColor'}`}
-                    data-state="closed"
-                  >
-                    {score}
-                  </div>
-                ))}
+                {rating.components.map((score, index) => {
+                  const ratingTitles = [
+                    'Рифма и образность',
+                    'Структура и ритм', 
+                    'Стиль и исполнение',
+                    'Индивидуальность',
+                    'Вайб'
+                  ];
+                  
+                  return (
+                    <div className="author-rating-wrapper" key={`rating-wrapper-${index}`}>
+                      <div
+                        key={`rating-${index}`}
+                        className={`no-callout ${index === 4 ? 'text-ratingVibe' : 'text-userColor'}`}
+                        data-state="closed"
+                      >
+                        {score}
+                      </div>
+                      <div className="author-hover-menu">
+                        <div className="author-hover-content">
+                          <div className="author-hover-title">{ratingTitles[index]}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -306,17 +377,24 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
               <div className="author-likes-section ml-3">
                 <div className="author-likes-avatars flex items-center gap-1">
                   {authorLikes.slice(0, 3).map((authorLike, index) => (
-                    <img
-                      key={index}
-                      src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
-                      alt={authorLike.author?.username || 'Автор'}
-                      className="w-6 h-6 rounded-full border border-yellow-500"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
-                      }}
-                      title={`Авторский лайк от ${authorLike.author?.username || 'Автор'}`}
-                    />
+                    <div className="author-rating-wrapper" key={`author-like-wrapper-${index}`}>
+                      <a href={`/author/${authorLike.author?.authorId || authorLike.author?.id}`}>
+                        <img
+                          src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
+                          alt={authorLike.author?.username || 'Автор'}
+                          className="w-6 h-6 rounded-full border border-yellow-500"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+                          }}
+                        />
+                      </a>
+                      <div className="author-hover-menu">
+                        <div className="author-hover-content">
+                          <div className="author-hover-title">{authorLike.author?.username || 'Автор'}</div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                   {authorLikes.length > 3 && (
                     <span className="text-xs text-yellow-500 ml-1">
