@@ -1697,6 +1697,19 @@ function ReleasePage() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Жанры справа от рейтингов */}
+                  {release.genres && release.genres.length > 0 && (
+                    <div className="genres-container">
+                      <div className="genres-list">
+                        {release.genres.map((genre) => (
+                          <span key={genre.genreId} className="genre-tag">
+                            {genre.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
