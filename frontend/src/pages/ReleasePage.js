@@ -217,19 +217,36 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
       });
     };
 
-    // Обновляем позиции при наведении
-    const handleMouseOver = (e) => {
-      if (e.target && e.target.nodeType === 1 && e.target.closest && e.target.closest('.author-rating-wrapper')) {
-        setTimeout(updateHoverMenuPositions, 10);
-      }
+    // Функция для добавления обработчиков к элементам
+    const attachHoverHandlers = () => {
+      const wrappers = document.querySelectorAll('.author-rating-wrapper');
+      wrappers.forEach(wrapper => {
+        if (!wrapper.hasAttribute('data-hover-attached')) {
+          wrapper.addEventListener('mouseenter', () => {
+            setTimeout(updateHoverMenuPositions, 10);
+          });
+          wrapper.setAttribute('data-hover-attached', 'true');
+        }
+      });
     };
 
-    document.addEventListener('mouseover', handleMouseOver, true);
+    // Начальное подключение обработчиков и наблюдатель за изменениями DOM
+    attachHoverHandlers();
+    
+    const observer = new MutationObserver(() => {
+      attachHoverHandlers();
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
     window.addEventListener('scroll', updateHoverMenuPositions);
     window.addEventListener('resize', updateHoverMenuPositions);
 
     return () => {
-      document.removeEventListener('mouseover', handleMouseOver, true);
+      observer.disconnect();
       window.removeEventListener('scroll', updateHoverMenuPositions);
       window.removeEventListener('resize', updateHoverMenuPositions);
     };
@@ -499,6 +516,15 @@ function ReleasePage() {
   
   // Состояние для отображения сообщения о собственной рецензии
   const [notification, setNotification] = useState(null);
+  
+  // Состояние для детализированных рейтингов
+  const [averageRatings, setAverageRatings] = useState(null);
+  
+  // Состояние для количества рецензий
+  const [reviewCounts, setReviewCounts] = useState({
+    extended: 0,
+    simple: 0
+  });
 
   // Проверка роли пользователя при загрузке
   useEffect(() => {
@@ -619,6 +645,27 @@ function ReleasePage() {
       // Обновление данных о релизе после создания рецензии
       const updatedRelease = await releaseApi.getReleaseById(id);
       setRelease(updatedRelease);
+      
+      // Обновляем также детализированные рейтинги и количество
+      try {
+        const [updatedAverageRatings, totalReviewsCount, extendedReviewsResponse] = await Promise.all([
+          reviewApi.getAverageRatingsByRelease(id),
+          reviewApi.getReviewsCountByRelease(id),
+          reviewApi.getExtendedReviewsByRelease(id, 0, 1)
+        ]);
+        
+        setAverageRatings(updatedAverageRatings);
+        
+        const extendedCount = extendedReviewsResponse.totalElements;
+        const simpleCount = Math.max(0, totalReviewsCount - extendedCount);
+        
+        setReviewCounts({
+          extended: extendedCount,
+          simple: simpleCount
+        });
+      } catch (ratingsError) {
+        console.error('Ошибка при обновлении средних рейтингов:', ratingsError);
+      }
       
       // Обновление списка рецензий
       fetchReviews();
@@ -804,6 +851,32 @@ function ReleasePage() {
         setRelease(data);
         // Временная заглушка для статуса избранного
         setInFavorites(data.favoritesCount > 0);
+        
+        // Получаем детализированные средние рейтинги и количество рецензий
+        try {
+          const [averageRatingsData, totalReviewsCount, extendedReviewsResponse] = await Promise.all([
+            reviewApi.getAverageRatingsByRelease(id),
+            reviewApi.getReviewsCountByRelease(id),
+            reviewApi.getExtendedReviewsByRelease(id, 0, 1)
+          ]);
+          
+          console.log('Средние рейтинги:', averageRatingsData);
+          setAverageRatings(averageRatingsData);
+          
+          const extendedCount = extendedReviewsResponse.totalElements;
+          const simpleCount = Math.max(0, totalReviewsCount - extendedCount);
+          
+          setReviewCounts({
+            extended: extendedCount,
+            simple: simpleCount
+          });
+          
+          console.log('Количество рецензий:', { extended: extendedCount, simple: simpleCount });
+        } catch (ratingsError) {
+          console.error('Ошибка при получении средних рейтингов:', ratingsError);
+          setAverageRatings(null);
+          setReviewCounts({ extended: 0, simple: 0 });
+        }
       } catch (err) {
         setError('Не удалось загрузить релиз');
         console.error('Ошибка загрузки релиза:', err);
@@ -1376,6 +1449,12 @@ function ReleasePage() {
   const releaseType = translateReleaseType(release.type);
   const favoritesCount = release.favoritesCount || 0;
   
+  // Функция для округления до десятых
+  const roundToTenth = (value) => {
+    if (value === undefined || value === null || value === 0) return 0;
+    return Math.round(value * 10) / 10;
+  };
+  
   // Округляем оценки до целых чисел
   const criticRating = release.fullReviewRating !== undefined 
     ? Math.round(release.fullReviewRating) 
@@ -1535,12 +1614,88 @@ function ReleasePage() {
                 {/* Рейтинги */}
                 <div className="ratings-container">
                   <div className="ratings-group">
-                    <div className="rating-pill rating-critic" data-state="closed">
-                      <span className="rating-value">{criticRating}</span>
-                    </div>
-                    <div className="rating-pill rating-user" data-state="closed">
-                      <span className="rating-value">{userRating}</span>
-                    </div>
+                    {criticRating !== 'N/A' && (
+                      <div className="author-rating-wrapper">
+                        <div className="rating-pill rating-critic" data-state="closed">
+                          <span className="rating-value">{criticRating}</span>
+                        </div>
+                        <div className="author-hover-menu">
+                          <div className="author-hover-content">
+                            <div className="author-hover-title">Средняя оценка рецензий пользователей</div>
+                            {((averageRatings && averageRatings.extended) || reviewCounts.extended > 0) && (
+                              <div className="author-hover-stats">
+                                <div className="author-param">
+                                  <span className="param-name">Всего рецензий:</span>
+                                  <span className="param-value">{reviewCounts.extended}</span>
+                                </div>
+                                <div style={{borderBottom: '1px solid rgba(255, 255, 255, 0.1)', margin: '8px 0'}}></div>
+                                <div className="author-param">
+                                  <span className="param-name">Рифма и образность:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.extended?.rhymeImagery)}</span>
+                                </div>
+                                <div className="author-param">
+                                  <span className="param-name">Структура и ритм:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.extended?.structureRhythm)}</span>
+                                </div>
+                                <div className="author-param">
+                                  <span className="param-name">Стиль и исполнение:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.extended?.styleExecution)}</span>
+                                </div>
+                                <div className="author-param">
+                                  <span className="param-name">Индивидуальность:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.extended?.individuality)}</span>
+                                </div>
+                                <div className="author-param vibe">
+                                  <span className="param-name">Вайб:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.extended?.vibe)}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {userRating !== 'N/A' && (
+                      <div className="author-rating-wrapper">
+                        <div className="rating-pill rating-user" data-state="closed">
+                          <span className="rating-value">{userRating}</span>
+                        </div>
+                        <div className="author-hover-menu">
+                          <div className="author-hover-content">
+                            <div className="author-hover-title">Средняя оценка без рецензий от пользователей</div>
+                            {((averageRatings && averageRatings.simple) || reviewCounts.simple > 0) && (
+                              <div className="author-hover-stats">
+                                <div className="author-param">
+                                  <span className="param-name">Всего оценок:</span>
+                                  <span className="param-value">{reviewCounts.simple}</span>
+                                </div>
+                                <div style={{borderBottom: '1px solid rgba(255, 255, 255, 0.1)', margin: '8px 0'}}></div>
+                                <div className="author-param">
+                                  <span className="param-name">Рифма и образность:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.simple?.rhymeImagery)}</span>
+                                </div>
+                                <div className="author-param">
+                                  <span className="param-name">Структура и ритм:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.simple?.structureRhythm)}</span>
+                                </div>
+                                <div className="author-param">
+                                  <span className="param-name">Стиль и исполнение:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.simple?.styleExecution)}</span>
+                                </div>
+                                <div className="author-param">
+                                  <span className="param-name">Индивидуальность:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.simple?.individuality)}</span>
+                                </div>
+                                <div className="author-param vibe">
+                                  <span className="param-name">Вайб:</span>
+                                  <span className="param-value">{roundToTenth(averageRatings?.simple?.vibe)}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1568,25 +1723,34 @@ function ReleasePage() {
                     </div>
                   </button>
                 </div>
-                <button 
-                  className="like-button" 
-                  data-state="closed"
-                  onClick={handleToggleFavorite}
-                >
-                  <svg 
-                    stroke={inFavorites ? "none" : "currentColor"} 
-                    fill={inFavorites ? "#ef4444" : "none"} 
-                    strokeWidth={inFavorites ? "0" : "2"} 
-                    viewBox="0 0 24 24" 
-                    style={{ width: '1.5rem', height: '1.5rem' }} 
-                    height="1em" 
-                    width="1em" 
-                    xmlns="http://www.w3.org/2000/svg"
+                <div className="author-rating-wrapper">
+                  <button 
+                    className="like-button" 
+                    data-state="closed"
+                    onClick={handleToggleFavorite}
                   >
-                    <path fill="none" d="M0 0h24v24H0z"></path>
-                    <path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"></path>
-                  </svg>
-                </button>
+                    <svg 
+                      stroke={inFavorites ? "none" : "currentColor"} 
+                      fill={inFavorites ? "#ef4444" : "none"} 
+                      strokeWidth={inFavorites ? "0" : "2"} 
+                      viewBox="0 0 24 24" 
+                      style={{ width: '1.5rem', height: '1.5rem' }} 
+                      height="1em" 
+                      width="1em" 
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path fill="none" d="M0 0h24v24H0z"></path>
+                      <path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"></path>
+                    </svg>
+                  </button>
+                  <div className="author-hover-menu">
+                    <div className="author-hover-content">
+                      <div className="author-hover-title">
+                        {inFavorites ? 'Убрать из предпочтений' : 'Добавить в предпочтения'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Кнопка репорта на релиз */}
                 {release && isAuth && (

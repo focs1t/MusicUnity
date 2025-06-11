@@ -1215,6 +1215,10 @@ button:disabled {
   color: var(--ratingVibe-color);
 }
 
+.author-param.vibe .param-value {
+  color: var(--ratingVibe-color);
+}
+
 /* Стрелочка для hover меню */
 .author-hover-content::before {
   content: '';

@@ -240,19 +240,36 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
       });
     };
 
-    // Обновляем позиции при наведении
-    const handleMouseOver = (e) => {
-      if (e.target && e.target.nodeType === 1 && e.target.closest && e.target.closest('.author-rating-wrapper')) {
-        setTimeout(updateHoverMenuPositions, 10);
-      }
+    // Функция для добавления обработчиков к элементам
+    const attachHoverHandlers = () => {
+      const wrappers = document.querySelectorAll('.author-rating-wrapper');
+      wrappers.forEach(wrapper => {
+        if (!wrapper.hasAttribute('data-hover-attached')) {
+          wrapper.addEventListener('mouseenter', () => {
+            setTimeout(updateHoverMenuPositions, 10);
+          });
+          wrapper.setAttribute('data-hover-attached', 'true');
+        }
+      });
     };
 
-    document.addEventListener('mouseover', handleMouseOver, true);
+    // Начальное подключение обработчиков и наблюдатель за изменениями DOM
+    attachHoverHandlers();
+    
+    const observer = new MutationObserver(() => {
+      attachHoverHandlers();
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
     window.addEventListener('scroll', updateHoverMenuPositions);
     window.addEventListener('resize', updateHoverMenuPositions);
 
     return () => {
-      document.removeEventListener('mouseover', handleMouseOver, true);
+      observer.disconnect();
       window.removeEventListener('scroll', updateHoverMenuPositions);
       window.removeEventListener('resize', updateHoverMenuPositions);
     };
