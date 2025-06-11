@@ -323,6 +323,11 @@
   border: 1px solid #27272a;
 }
 
+.author-page-container .bio-card {
+  gap: 0;
+  padding: 1rem 1.25rem;
+}
+
 @media (min-width: 1024px) {
   .author-page-container .ratings-card {
     padding: 1.25rem;
@@ -338,6 +343,33 @@
   .author-page-container .ratings-title {
     font-size: 1.25rem;
   }
+}
+
+/* Стили для блока с биографией */
+.author-page-container .bio-card {
+  grid-column: 3 / -1;
+  grid-row: 1;
+}
+
+@media (max-width: 1023px) {
+  .author-page-container .bio-card {
+    grid-column: span 1;
+    grid-row: auto;
+  }
+}
+
+.author-page-container .bio-card .ratings-title {
+  margin-bottom: 0;
+}
+
+.author-page-container .author-bio {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  text-align: left;
+  direction: ltr;
 }
 
 .author-page-container .rating-row {

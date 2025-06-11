@@ -433,6 +433,16 @@ const AuthorPage = () => {
                   </div>
                 </div>
               </div>
+              
+              {/* Блок с биографией */}
+              {author?.bio && (
+                <div className="ratings-card bio-card">
+                  <div className="ratings-title">Биография</div>
+                  <div className="author-bio">
+                    {author.bio}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
