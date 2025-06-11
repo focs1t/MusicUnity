@@ -64,7 +64,7 @@ public class AuthorController {
     @GetMapping("/{id}")
     public ResponseEntity<AuthorDTO> getAuthorById(
         @Parameter(description = "ID автора") @PathVariable Long id) {
-        return ResponseEntity.ok(authorService.getAuthorById(id));
+        return ResponseEntity.ok(authorService.getAuthorByIdWithAccessControl(id));
     }
 
     @Operation(summary = "Обновление данных автора")

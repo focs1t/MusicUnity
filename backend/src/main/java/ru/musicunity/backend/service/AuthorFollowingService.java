@@ -57,6 +57,12 @@ public class AuthorFollowingService {
         
         Author author = authorRepository.findById(authorId)
                 .orElseThrow(() -> new AuthorNotFoundException(authorId));
+        
+        // Проверяем, не удален ли автор
+        if (author.getIsDeleted()) {
+            throw new AuthorNotFoundException(authorId);
+        }
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
@@ -66,7 +72,13 @@ public class AuthorFollowingService {
                     .user(user)
                     .build();
             author.getFollowings().add(following);
-            author.setFollowingCount(author.getFollowingCount() + 1);
+            
+            // Пересчитываем количество подписок, исключая удаленных авторов
+            long activeFollowingsCount = author.getFollowings().stream()
+                    .filter(f -> !f.getAuthor().getIsDeleted())
+                    .count();
+            author.setFollowingCount((int) activeFollowingsCount);
+            
             authorRepository.save(author);
         }
     }
@@ -78,9 +90,15 @@ public class AuthorFollowingService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        author.getFollowings().removeIf(following -> following.getUser().getUserId().equals(userId));
-        author.setFollowingCount(author.getFollowingCount() - 1);
-        authorRepository.save(author);
+        if (author.getFollowings().removeIf(following -> following.getUser().getUserId().equals(userId))) {
+            // Пересчитываем количество подписок, исключая удаленных авторов
+            long activeFollowingsCount = author.getFollowings().stream()
+                    .filter(f -> !f.getAuthor().getIsDeleted())
+                    .count();
+            author.setFollowingCount((int) activeFollowingsCount);
+            
+            authorRepository.save(author);
+        }
     }
 
     public boolean isFollowing(Long authorId, Long userId) {

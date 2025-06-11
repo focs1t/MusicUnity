@@ -31,7 +31,7 @@ public class ReviewController {
     @GetMapping("/{id}")
     public ResponseEntity<ReviewDTO> getReviewById(
         @Parameter(description = "ID отзыва") @PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.getReviewById(id));
+        return ResponseEntity.ok(reviewService.getReviewByIdWithAccessControl(id));
     }
 
     @Operation(summary = "Создание простой оценки")

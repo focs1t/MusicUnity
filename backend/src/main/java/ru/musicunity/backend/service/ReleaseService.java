@@ -5,7 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.ReleaseDTO;
@@ -250,6 +253,26 @@ public class ReleaseService {
                 .orElseThrow(() -> new ReleaseNotFoundException(id));
     }
 
+    public ReleaseDTO getReleaseByIdWithAccessControl(Long id) {
+        Release release = releaseRepository.findById(id)
+                .orElseThrow(() -> new ReleaseNotFoundException(id));
+        
+        // Если релиз удален, проверяем права доступа
+        if (release.getIsDeleted()) {
+            // Проверяем, является ли текущий пользователь админом
+            boolean isAdmin = SecurityContextHolder.getContext().getAuthentication()
+                    .getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .anyMatch(role -> role.equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                throw new ReleaseNotFoundException(id);
+            }
+        }
+        
+        return releaseMapper.toDTO(release);
+    }
+
     public Release getReleaseEntityById(Long id) {
         return releaseRepository.findById(id)
                 .orElseThrow(() -> new ReleaseNotFoundException(id));
@@ -265,6 +288,18 @@ public class ReleaseService {
                 .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
         release.setIsDeleted(true);
         releaseRepository.save(release);
+        
+        // Пересчитываем favoritesCount для всех релизов, исключая удаленные
+        List<Release> allReleases = releaseRepository.findAll();
+        for (Release r : allReleases) {
+            if (!r.getIsDeleted()) {
+                long activeFavoritesCount = r.getFavorites().stream()
+                        .filter(f -> !f.getRelease().getIsDeleted())
+                        .count();
+                r.setFavoritesCount((int) activeFavoritesCount);
+            }
+        }
+        releaseRepository.saveAll(allReleases);
         
         // Создаем запись аудита
         Audit audit = Audit.builder()

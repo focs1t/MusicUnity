@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.AverageRatingsDTO;
@@ -18,7 +20,6 @@ import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.repository.ReviewRepository;
 import ru.musicunity.backend.repository.UserRepository;
-import ru.musicunity.backend.exception.UserNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +35,26 @@ public class ReviewService {
         return reviewRepository.findById(id)
                 .map(reviewMapper::toDTO)
                 .orElseThrow(() -> new ReviewNotFoundException(id));
+    }
+
+    public ReviewDTO getReviewByIdWithAccessControl(Long id) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new ReviewNotFoundException(id));
+        
+        // Если рецензия удалена, проверяем права доступа
+        if (review.getIsDeleted()) {
+            // Проверяем, является ли текущий пользователь админом
+            boolean isAdmin = SecurityContextHolder.getContext().getAuthentication()
+                    .getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .anyMatch(role -> role.equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                throw new ReviewNotFoundException(id);
+            }
+        }
+        
+        return reviewMapper.toDTO(review);
     }
 
     /**

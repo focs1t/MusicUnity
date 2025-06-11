@@ -60,7 +60,13 @@ public class FavoriteService {
                     .user(user)
                     .build();
             release.getFavorites().add(favorite);
-            release.setFavoritesCount(release.getFavoritesCount() + 1);
+            
+            // Пересчитываем количество избранных, исключая удаленные релизы
+            long activeFavoritesCount = release.getFavorites().stream()
+                    .filter(f -> !f.getRelease().getIsDeleted())
+                    .count();
+            release.setFavoritesCount((int) activeFavoritesCount);
+            
             releaseRepository.save(release);
         }
     }
@@ -73,7 +79,12 @@ public class FavoriteService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         if (release.getFavorites().removeIf(f -> f.getUser().getUserId().equals(userId))) {
-            release.setFavoritesCount(release.getFavoritesCount() - 1);
+            // Пересчитываем количество избранных, исключая удаленные релизы
+            long activeFavoritesCount = release.getFavorites().stream()
+                    .filter(f -> !f.getRelease().getIsDeleted())
+                    .count();
+            release.setFavoritesCount((int) activeFavoritesCount);
+            
             releaseRepository.save(release);
         }
     }

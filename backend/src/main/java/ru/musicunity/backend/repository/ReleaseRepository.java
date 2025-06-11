@@ -34,7 +34,7 @@ public interface ReleaseRepository extends JpaRepository<Release, Long>, JpaSpec
 
     @Query("SELECT DISTINCT r FROM Release r " +
            "JOIN r.authors ra " +
-           "WHERE ra.author IN :authors AND r.isDeleted = false")
+           "WHERE ra.author IN :authors AND r.isDeleted = false AND ra.author.isDeleted = false")
     Page<Release> findByAuthors(@Param("authors") List<Author> authors, Pageable pageable);
 
     /**

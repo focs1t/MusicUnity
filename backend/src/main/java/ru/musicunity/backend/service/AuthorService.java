@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.AuthorDTO;
@@ -12,7 +14,9 @@ import ru.musicunity.backend.exception.AuthorNotFoundException;
 import ru.musicunity.backend.mapper.AuthorMapper;
 import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.User;
+import ru.musicunity.backend.pojo.UserFollowing;
 import ru.musicunity.backend.repository.AuthorRepository;
+import ru.musicunity.backend.repository.UserFollowingRepository;
 import ru.musicunity.backend.service.UserService;
 
 import java.util.List;
@@ -23,6 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AuthorService {
     private final AuthorRepository authorRepository;
+    private final UserFollowingRepository userFollowingRepository;
     private final UserService userService;
     private final AuthorMapper authorMapper;
 
@@ -159,6 +164,18 @@ public class AuthorService {
                 .orElseThrow(() -> new AuthorNotFoundException(authorId));
         author.setIsDeleted(true);
         authorRepository.save(author);
+        
+        // Пересчитываем followingCount для всех авторов, исключая удаленных
+        List<Author> allAuthors = authorRepository.findAll();
+        for (Author a : allAuthors) {
+            if (!a.getIsDeleted()) {
+                long activeFollowingsCount = a.getFollowings().stream()
+                        .filter(f -> !f.getAuthor().getIsDeleted())
+                        .count();
+                a.setFollowingCount((int) activeFollowingsCount);
+            }
+        }
+        authorRepository.saveAll(allAuthors);
     }
 
     @Transactional
@@ -210,5 +227,25 @@ public class AuthorService {
                 .orElseThrow(() -> new AuthorNotFoundException(authorId));
         author.setIsVerified(false);
         return authorMapper.toDTO(authorRepository.save(author));
+    }
+
+    public AuthorDTO getAuthorByIdWithAccessControl(Long id) {
+        Author author = authorRepository.findById(id)
+                .orElseThrow(() -> new AuthorNotFoundException(id));
+        
+        // Если автор удален, проверяем права доступа
+        if (author.getIsDeleted()) {
+            // Проверяем, является ли текущий пользователь админом
+            boolean isAdmin = SecurityContextHolder.getContext().getAuthentication()
+                    .getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .anyMatch(role -> role.equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                throw new AuthorNotFoundException(id);
+            }
+        }
+        
+        return toDTOWithRatings(author);
     }
 }

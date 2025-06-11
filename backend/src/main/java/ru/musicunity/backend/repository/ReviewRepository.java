@@ -35,7 +35,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      * @param pageable параметры пагинации
      * @return страница рецензий
      */
-    @Query("SELECT r FROM Review r JOIN Like l ON l.review.reviewId = r.reviewId WHERE l.user.userId = :userId")
+    @Query("SELECT r FROM Review r JOIN Like l ON l.review.reviewId = r.reviewId WHERE l.user.userId = :userId AND r.isDeleted = false")
     Page<Review> findLikedByUser(@Param("userId") Long userId, Pageable pageable);
     
     /**
