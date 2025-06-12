@@ -88,4 +88,24 @@ public class FavoriteService {
             releaseRepository.save(release);
         }
     }
+
+    public boolean isFavorite(Long releaseId, Long userId) {
+        System.out.println("Проверяем статус избранного для релиза " + releaseId + " и пользователя " + userId);
+        
+        Release release = releaseRepository.findById(releaseId)
+                .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
+        
+        // Проверяем, не удален ли релиз
+        if (release.getIsDeleted()) {
+            throw new ReleaseNotFoundException(releaseId);
+        }
+
+        boolean isFavorite = release.getFavorites().stream()
+                .anyMatch(f -> f.getUser().getUserId().equals(userId));
+        
+        System.out.println("Количество избранных для релиза: " + release.getFavorites().size());
+        System.out.println("Результат проверки избранного: " + isFavorite);
+        
+        return isFavorite;
+    }
 } 

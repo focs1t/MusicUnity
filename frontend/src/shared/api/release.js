@@ -124,6 +124,20 @@ export const releaseApi = {
   },
 
   /**
+   * Проверка, добавлен ли релиз в избранное текущим пользователем
+   * @param {number} id - ID релиза
+   * @returns {Promise<boolean>}
+   */
+  isFavorite: async (id) => {
+    try {
+      const response = await httpClient.get(`${API_URL}/${id}/favorite/status`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Получение релизов от отслеживаемых авторов
    * @param {number} page - Номер страницы
    * @param {number} size - Размер страницы
@@ -251,4 +265,4 @@ export const releaseApi = {
       throw error;
     }
   }
-}; 
+};

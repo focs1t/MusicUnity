@@ -497,28 +497,33 @@
   gap: 0.25rem;
 }
 
-.release-page .like-button {
-  display: inline-flex;
+/* Стили для круглой кнопки лайка релиза */
+.release-like-button {
+  display: flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background-color: transparent;
-  padding: 0;
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 9999px;
-  transition: colors;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
 }
 
-.release-page .like-button:hover {
+.release-like-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.release-like-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 2px;
 }
 
 @media (min-width: 1024px) {
-  .release-page .like-button {
+  .release-like-button {
     width: 3rem;
     height: 3rem;
   }

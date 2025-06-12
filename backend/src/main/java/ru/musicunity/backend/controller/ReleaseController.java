@@ -142,6 +142,23 @@ public class ReleaseController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Проверка, добавлен ли релиз в избранное текущим пользователем")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Статус избранного"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация"),
+        @ApiResponse(responseCode = "404", description = "Релиз не найден")
+    })
+    @GetMapping("/{id}/favorite/status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> isFavorite(
+        @Parameter(description = "ID релиза") @PathVariable Long id) {
+        Long userId = userService.getCurrentUser().getUserId();
+        System.out.println("API вызов проверки избранного для релиза " + id + " и пользователя " + userId);
+        boolean isFavorite = favoriteService.isFavorite(id, userId);
+        System.out.println("API возвращает результат: " + isFavorite);
+        return ResponseEntity.ok(isFavorite);
+    }
+
     @Operation(summary = "Получение релизов от отслеживаемых авторов")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список релизов"),
