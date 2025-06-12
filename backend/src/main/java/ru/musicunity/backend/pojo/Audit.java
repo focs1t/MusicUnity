@@ -35,4 +35,11 @@ public class Audit {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime performedAt;
+    
+    @Column
+    @Builder.Default
+    private Boolean isRolledBack = false;
+    
+    @Column
+    private LocalDateTime rollbackAt;
 }

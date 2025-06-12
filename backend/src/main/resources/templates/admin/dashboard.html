@@ -1,82 +1,148 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments/header :: head">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - MusicUnity</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <div th:replace="fragments/header :: nav"></div>
+<body class="bg-light">
+    <!-- Простая навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/admin">
+                <i class="fas fa-music me-2"></i>MusicUnity Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="/admin">Главная</a>
+                <a class="nav-link" href="/admin/genres">Жанры</a>
+                <a class="nav-link" href="/admin/authors">Авторы</a>
+                <a class="nav-link" href="/admin/releases">Релизы</a>
+                <a class="nav-link" href="/admin/users">Пользователи</a>
+                <a class="nav-link" href="/admin/reviews">Рецензии</a>
+                <a class="nav-link" href="/admin/registration-requests">Заявки</a>
+                <a class="nav-link" href="/admin/audit">Аудит</a>
+                <a class="nav-link" href="/logout">Выход</a>
+            </div>
+        </div>
+    </nav>
 
+    <!-- Основной контент -->
     <div class="container mt-4">
-        <h1 class="mb-4" th:text="${title}">Админ-панель</h1>
-        
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-4">
+                    <i class="fas fa-tachometer-alt me-3"></i>Админ-панель MusicUnity
+                </h1>
+                <p class="lead text-muted">Добро пожаловать в панель управления</p>
+            </div>
+        </div>
+
+        <!-- Простые карточки -->
+        <div class="row mb-5">
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                        <h3>Пользователи</h3>
+                        <p class="card-text">Управление пользователями системы</p>
+                        <a href="/admin/users" class="btn btn-primary">Открыть</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-compact-disc fa-3x text-success mb-3"></i>
+                        <h3>Релизы</h3>
+                        <p class="card-text">Модерация музыкальных релизов</p>
+                        <a href="/admin/releases" class="btn btn-success">Открыть</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-user-music fa-3x text-info mb-3"></i>
+                        <h3>Авторы</h3>
+                        <p class="card-text">Верификация и управление авторами</p>
+                        <a href="/admin/authors" class="btn btn-info text-white">Открыть</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-tags fa-3x text-warning mb-3"></i>
+                        <h3>Жанры</h3>
+                        <p class="card-text">Управление музыкальными жанрами</p>
+                        <a href="/admin/genres" class="btn btn-warning text-dark">Открыть</a>
+                    </div>
+                    </div>
+                </div>
+            </div>
+            
+        <!-- Дополнительные функции -->
         <div class="row">
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-people-fill fs-1 text-primary mb-3"></i>
-                        <h5 class="card-title">Пользователи</h5>
-                        <p class="card-text">Управление пользователями, изменение ролей и блокировка</p>
-                        <a href="/admin/users" class="btn btn-primary">Перейти</a>
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-plus me-2"></i>Заявки на регистрацию
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Обработка заявок на регистрацию авторов</p>
+                        <div class="d-grid">
+                            <a href="/admin/registration-requests" class="btn btn-primary">
+                                <i class="fas fa-inbox me-2"></i>Просмотреть заявки
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-            
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-music-note-list fs-1 text-success mb-3"></i>
-                        <h5 class="card-title">Релизы</h5>
-                        <p class="card-text">Управление музыкальными релизами, модерация и удаление</p>
-                        <a href="/admin/releases" class="btn btn-success">Перейти</a>
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-comment-alt me-2"></i>Рецензии
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Модерация удаленных рецензий</p>
+                        <div class="d-grid">
+                            <a href="/admin/reviews" class="btn btn-warning">
+                                <i class="fas fa-eye me-2"></i>Управление рецензиями
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-            
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-person-badge fs-1 text-info mb-3"></i>
-                        <h5 class="card-title">Авторы</h5>
-                        <p class="card-text">Управление авторами, модерация и подтверждение</p>
-                        <a href="/admin/authors" class="btn btn-info text-white">Перейти</a>
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>Журнал аудита
+                        </h5>
                     </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-tags-fill fs-1 text-warning mb-3"></i>
-                        <h5 class="card-title">Жанры</h5>
-                        <p class="card-text">Управление музыкальными жанрами</p>
-                        <a href="/admin/genres" class="btn btn-warning text-white">Перейти</a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-chat-square-text fs-1 text-danger mb-3"></i>
-                        <h5 class="card-title">Рецензии</h5>
-                        <p class="card-text">Управление рецензиями пользователей, модерация</p>
-                        <a href="/admin/reviews" class="btn btn-danger">Перейти</a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-journal-text fs-1 text-secondary mb-3"></i>
-                        <h5 class="card-title">Аудит</h5>
-                        <p class="card-text">Просмотр журнала действий модераторов и администраторов</p>
-                        <a href="/admin/audit" class="btn btn-secondary">Перейти</a>
+                    <div class="card-body">
+                        <p class="card-text">Просмотр истории административных действий</p>
+                        <div class="d-grid">
+                            <a href="/admin/audit" class="btn btn-info">
+                                <i class="fas fa-history me-2"></i>Открыть журнал
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 

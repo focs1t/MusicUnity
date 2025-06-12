@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/genres/**").permitAll()
                 .requestMatchers("/api/reviews/**").permitAll()
                 .requestMatchers("/admin/login", "/css/**", "/js/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/admin/**").hasAnyRole("ADMIN")
                 .requestMatchers("/api/audit/**").hasRole("ADMIN")
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
             )
@@ -99,7 +99,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/admin/logout"))
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                 .logoutSuccessUrl("/admin/login?logout")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)

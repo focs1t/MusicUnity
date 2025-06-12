@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Детали записи аудита - MusicUnity Admin</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/admin">
+                <i class="fas fa-music me-2"></i>MusicUnity Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin">Главная</a>
+                <a class="nav-link" href="/admin/genres">Жанры</a>
+                <a class="nav-link" href="/admin/authors">Авторы</a>
+                <a class="nav-link" href="/admin/releases">Релизы</a>
+                <a class="nav-link" href="/admin/users">Пользователи</a>
+                <a class="nav-link" href="/admin/reviews">Рецензии</a>
+                <a class="nav-link" href="/admin/registration-requests">Заявки</a>
+                <a class="nav-link active" href="/admin/audit">Аудит</a>
+                <a class="nav-link" href="/logout">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2><i class="fas fa-clipboard-list me-2"></i>Детали записи аудита</h2>
+                <p class="text-muted">Подробная информация о действии</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/admin/audit" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Назад к списку
+                </a>
+            </div>
+        </div>
+
+        <!-- Детали записи аудита -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Информация о действии
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Основная информация</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>ID записи:</strong></td>
+                                <td th:text="${auditLog.id}">1</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Тип действия:</strong></td>
+                                <td>
+                                    <span class="badge bg-primary" th:text="${auditLog.actionDisplayName}">ACTION</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Модератор:</strong></td>
+                                <td th:text="${auditLog.moderatorUsername ?: 'Неизвестно'}">123</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ID цели:</strong></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span th:text="${auditLog.targetId}" class="me-2">456</span>
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" 
+                                                    th:id="'targetDropdown' + ${auditLog.id}"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </button>
+                                                                                         <ul class="dropdown-menu" th:aria-labelledby="'targetDropdown' + ${auditLog.id}">
+                                                 <!-- Опции зависят от типа действия -->
+                                                 <li th:if="${auditLog.actionType.name() == 'USER_BLOCK' or auditLog.actionType.name() == 'USER_UNBLOCK' or auditLog.actionType.name() == 'USER_DELETE' or auditLog.actionType.name() == 'USER_RESTORE'}">
+                                                     <a class="dropdown-item" th:href="@{'/users/' + ${auditLog.targetId}}" target="_blank">
+                                                         <i class="fas fa-user me-2"></i>Профиль пользователя
+                                                     </a>
+                                                 </li>
+                                                 <li th:if="${auditLog.actionType.name() == 'REVIEW_DELETE' or auditLog.actionType.name() == 'REVIEW_RESTORE'}">
+                                                     <a class="dropdown-item" th:href="@{'/reviews/' + ${auditLog.targetId}}" target="_blank">
+                                                         <i class="fas fa-star me-2"></i>Страница рецензии
+                                                     </a>
+                                                 </li>
+                                                 <li th:if="${auditLog.actionType.name() == 'RELEASE_DELETE' or auditLog.actionType.name() == 'RELEASE_ADD' or auditLog.actionType.name() == 'RELEASE_CREATE_OWN' or auditLog.actionType.name() == 'RELEASE_RESTORE'}">
+                                                     <a class="dropdown-item" th:href="@{'/releases/' + ${auditLog.targetId}}" target="_blank">
+                                                         <i class="fas fa-compact-disc me-2"></i>Страница релиза
+                                                     </a>
+                                                 </li>
+                                                 <li th:if="${auditLog.actionType.name() == 'AUTHOR_ADD' or auditLog.actionType.name() == 'AUTHOR_DELETE'}">
+                                                     <a class="dropdown-item" th:href="@{'/authors/' + ${auditLog.targetId}}" target="_blank">
+                                                         <i class="fas fa-microphone me-2"></i>Профиль автора
+                                                     </a>
+                                                 </li>
+                                                 <li>
+                                                     <button class="dropdown-item show-target-details-btn" type="button" 
+                                                             th:data-target-id="${auditLog.targetId}"
+                                                             th:data-action-type="${auditLog.actionType.name()}">
+                                                         <i class="fas fa-info-circle me-2"></i>Показать детали в админке
+                                                     </button>
+                                                 </li>
+                                             </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Дата выполнения:</strong></td>
+                                <td th:text="${auditLog.performedAt}">2024-01-01 12:00:00</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Описание</h6>
+                        <div class="bg-light p-3 rounded">
+                            <p th:text="${auditLog.description ?: 'Описание отсутствует'}" class="mb-0">
+                                Описание действия
+                            </p>
+                        </div>
+                        
+                        <!-- Кнопка отката -->
+                        <div class="mt-3" th:if="${canRollback}">
+                            <button type="button" class="btn btn-warning" id="rollbackBtn" 
+                                    th:data-audit-id="${auditLog.id}">
+                                <i class="fas fa-undo me-2"></i>Отменить действие
+                            </button>
+                            <small class="d-block text-muted mt-1">
+                                Отменяет выполненное действие (где это возможно)
+                            </small>
+                        </div>
+                        
+                        <div class="mt-3" th:unless="${canRollback}">
+                            <button type="button" class="btn btn-secondary" disabled>
+                                <i class="fas fa-ban me-2"></i>Откат недоступен
+                            </button>
+                            <small class="d-block text-muted mt-1">
+                                Для этого типа действий откат не поддерживается
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rollbackBtn = document.getElementById('rollbackBtn');
+            
+            if (rollbackBtn) {
+                rollbackBtn.addEventListener('click', function() {
+                    const auditId = this.dataset.auditId;
+                    
+                    if (confirm('Вы уверены, что хотите отменить это действие? Это может повлиять на данные в системе.')) {
+                        rollbackAction(auditId);
+                    }
+                });
+            }
+            
+            // Обработчики для кнопок "Показать детали"
+            document.querySelectorAll('.show-target-details-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.dataset.targetId;
+                    const actionType = this.dataset.actionType;
+                    showTargetDetails(targetId, actionType);
+                });
+            });
+        });
+        
+        function rollbackAction(auditId) {
+            // Получаем CSRF токен если есть
+            const csrfToken = document.querySelector('meta[name="_csrf"]');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+            
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // Добавляем CSRF токен если есть
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader.getAttribute('content')] = csrfToken.getAttribute('content');
+            }
+            
+            fetch('/admin/audit/' + auditId + '/rollback', {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    return response.text().then(text => Promise.reject(text));
+                }
+            })
+            .then(message => {
+                alert(message);
+                if (message.includes('успешно')) {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                alert('Ошибка при выполнении отката: ' + error);
+                console.error('Rollback error:', error);
+            });
+        }
+        
+        function showTargetDetails(targetId, actionType) {
+            // Открываем модальное окно с деталями объекта
+            let detailsModal = document.getElementById('targetDetailsModal');
+            if (!detailsModal) {
+                // Создаем модальное окно если его нет
+                createTargetDetailsModal();
+                detailsModal = document.getElementById('targetDetailsModal');
+            }
+            
+            const modalTitle = document.getElementById('targetDetailsModalTitle');
+            const modalBody = document.getElementById('targetDetailsModalBody');
+            
+            // Определяем тип объекта и заголовок
+            let title = 'Детали объекта';
+            let apiUrl = '';
+            
+            switch(actionType) {
+                case 'USER_BLOCK':
+                    title = 'Детали пользователя';
+                    apiUrl = '/api/users/' + targetId;
+                    break;
+                case 'REVIEW_DELETE':
+                    title = 'Детали рецензии';
+                    apiUrl = '/api/reviews/' + targetId;
+                    break;
+                case 'RELEASE_DELETE':
+                case 'RELEASE_ADD':
+                case 'RELEASE_CREATE_OWN':
+                    title = 'Детали релиза';
+                    apiUrl = '/api/releases/' + targetId;
+                    break;
+                case 'AUTHOR_ADD':
+                    title = 'Детали автора';
+                    apiUrl = '/api/authors/' + targetId;
+                    break;
+                default:
+                    title = 'Объект с ID: ' + targetId;
+            }
+            
+            modalTitle.textContent = title;
+            modalBody.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Загрузка...</span></div></div>';
+            
+            const modal = new bootstrap.Modal(detailsModal);
+            modal.show();
+            
+            // Загружаем данные если есть API
+            if (apiUrl) {
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        modalBody.innerHTML = generateDetailsHTML(data, actionType);
+                    })
+                    .catch(error => {
+                        modalBody.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Не удалось загрузить детали объекта (ID: ${targetId})
+                                <br><small>Возможно, объект был удален или недоступен</small>
+                            </div>
+                        `;
+                    });
+            } else {
+                modalBody.innerHTML = `<p>ID объекта: <strong>${targetId}</strong></p>`;
+            }
+        }
+        
+        function createTargetDetailsModal() {
+            const modalHTML = `
+                <div class="modal fade" id="targetDetailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="targetDetailsModalTitle">Детали</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="targetDetailsModalBody">
+                                Загрузка...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        function generateDetailsHTML(data, actionType) {
+            switch(actionType) {
+                case 'USER_BLOCK':
+                    return `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID:</strong> ${data.userId || 'N/A'}</p>
+                                <p><strong>Username:</strong> ${data.username || 'N/A'}</p>
+                                <p><strong>Email:</strong> ${data.email || 'N/A'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Роль:</strong> ${data.rights || 'N/A'}</p>
+                                <p><strong>Заблокирован:</strong> ${data.isBlocked ? 'Да' : 'Нет'}</p>
+                                <p><strong>Дата регистрации:</strong> ${data.createdAt || 'N/A'}</p>
+                            </div>
+                        </div>
+                    `;
+                case 'REVIEW_DELETE':
+                    return `
+                        <p><strong>ID:</strong> ${data.id || 'N/A'}</p>
+                        <p><strong>Оценка:</strong> ${data.score || 'N/A'}</p>
+                        <p><strong>Текст:</strong></p>
+                        <div class="bg-light p-3 rounded">${data.text || 'Текст недоступен'}</div>
+                    `;
+                case 'RELEASE_DELETE':
+                case 'RELEASE_ADD':
+                case 'RELEASE_CREATE_OWN':
+                    return `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID:</strong> ${data.releaseId || 'N/A'}</p>
+                                <p><strong>Название:</strong> ${data.title || 'N/A'}</p>
+                                <p><strong>Тип:</strong> ${data.type || 'N/A'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Дата релиза:</strong> ${data.releaseDate || 'N/A'}</p>
+                                <p><strong>Удален:</strong> ${data.isDeleted ? 'Да' : 'Нет'}</p>
+                            </div>
+                        </div>
+                    `;
+                case 'AUTHOR_ADD':
+                    return `
+                        <p><strong>ID:</strong> ${data.authorId || 'N/A'}</p>
+                        <p><strong>Имя:</strong> ${data.authorName || 'N/A'}</p>
+                        <p><strong>Верифицирован:</strong> ${data.isVerified ? 'Да' : 'Нет'}</p>
+                    `;
+                default:
+                    return `<p>Детали недоступны для данного типа объекта</p>`;
+            }
+        }
+    </script>
+</body>
+</html> 

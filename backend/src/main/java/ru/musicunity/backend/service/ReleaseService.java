@@ -481,4 +481,9 @@ public class ReleaseService {
         return releaseRepository.findByTitleContainingIgnoreCase(title, pageable)
                 .map(releaseMapper::toDTO);
     }
+
+    public Page<ReleaseDTO> searchReleases(String search, Pageable pageable) {
+        return releaseRepository.findByTitleContainingIgnoreCase(search, pageable)
+                .map(releaseMapper::toDTO);
+    }
 }

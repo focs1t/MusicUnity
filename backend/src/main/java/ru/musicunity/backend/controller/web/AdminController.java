@@ -1,6 +1,7 @@
 package ru.musicunity.backend.controller.web;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
@@ -31,8 +32,22 @@ public class AdminController {
         return "admin/login";
     }
     
+    @GetMapping
+    public String index() {
+        return "redirect:/admin/dashboard";
+    }
+    
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
+    public String dashboard(Model model, Authentication authentication) {
+        System.out.println("=== DASHBOARD DEBUG ===");
+        System.out.println("Authentication: " + authentication);
+        if (authentication != null) {
+            System.out.println("Principal: " + authentication.getPrincipal());
+            System.out.println("Authorities: " + authentication.getAuthorities());
+            System.out.println("Name: " + authentication.getName());
+        }
+        System.out.println("========================");
+        
         model.addAttribute("title", "Админ-панель");
         model.addAttribute("activePage", "dashboard");
         return "admin/dashboard";

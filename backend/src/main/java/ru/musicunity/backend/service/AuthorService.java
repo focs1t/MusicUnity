@@ -67,6 +67,11 @@ public class AuthorService {
                 .map(this::toDTOWithRatings);
     }
 
+    public Page<AuthorDTO> findNotVerifiedAuthors(Pageable pageable) {
+        return authorRepository.findByIsVerifiedFalse(pageable)
+                .map(this::toDTOWithRatings);
+    }
+
     public Page<AuthorDTO> findVerifiedArtists(Pageable pageable) {
         return authorRepository.findByIsVerifiedTrueAndIsArtistTrue(pageable)
                 .map(this::toDTOWithRatings);
@@ -206,8 +211,8 @@ public class AuthorService {
                 .map(authorMapper::toDTO);
     }
 
-    public Page<AuthorDTO> searchAuthors(String query, Pageable pageable) {
-        return authorRepository.findByAuthorNameContainingIgnoreCase(query, pageable)
+    public Page<AuthorDTO> searchAuthors(String search, Pageable pageable) {
+        return authorRepository.findByAuthorNameContainingIgnoreCase(search, pageable)
                 .map(authorMapper::toDTO);
     }
 

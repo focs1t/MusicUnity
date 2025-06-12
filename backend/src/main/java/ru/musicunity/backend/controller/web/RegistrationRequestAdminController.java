@@ -22,7 +22,6 @@ import ru.musicunity.backend.service.RegistrationRequestService;
 @RequestMapping("/admin/registration-requests")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('ADMIN')")
 public class RegistrationRequestAdminController {
 
     private final RegistrationRequestService registrationRequestService;

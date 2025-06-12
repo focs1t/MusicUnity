@@ -148,8 +148,8 @@ public class ReportService {
         // Создаем запись аудита
         Audit audit = Audit.builder()
                 .moderator(moderator)
-                .actionType(AuditAction.REPORT_RESOLVE_DELETE)
-                .targetId(reportId)
+                .actionType(AuditAction.REVIEW_DELETE)
+                .targetId(report.getTargetId()) // ID самой рецензии, а не репорта
                 .performedAt(LocalDateTime.now())
                 .build();
         auditRepository.save(audit);
@@ -179,11 +179,17 @@ public class ReportService {
         report.setModerator(moderator);
         report.setResolvedAt(LocalDateTime.now());
         
-        // Создаем запись аудита
+        // Создаем запись аудита - получаем пользователя которого заблокировали
+        Long userIdToBan = null;
+        if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.REVIEW) {
+            Review review = reviewService.getReviewEntityById(report.getTargetId());
+            userIdToBan = review.getUser().getUserId();
+        }
+        
         Audit audit = Audit.builder()
                 .moderator(moderator)
-                .actionType(AuditAction.REPORT_RESOLVE_BAN)
-                .targetId(reportId)
+                .actionType(AuditAction.USER_BLOCK)
+                .targetId(userIdToBan != null ? userIdToBan : report.getTargetId())
                 .performedAt(LocalDateTime.now())
                 .build();
         auditRepository.save(audit);
@@ -206,14 +212,9 @@ public class ReportService {
         report.setModerator(moderator);
         report.setResolvedAt(LocalDateTime.now());
         
-        // Создаем запись аудита
-        Audit audit = Audit.builder()
-                .moderator(moderator)
-                .actionType(AuditAction.REPORT_REJECT)
-                .targetId(reportId)
-                .performedAt(LocalDateTime.now())
-                .build();
-        auditRepository.save(audit);
+        // Создаем запись аудита - отклонение репорта больше не записывается в аудит
+        // Или заменяем на общее действие
+        // Пока убираем аудит для отклонения репортов
 
         return reportMapper.toDTO(reportRepository.save(report));
     }
@@ -269,8 +270,8 @@ public class ReportService {
         // Создаем запись аудита
         Audit audit = Audit.builder()
                 .moderator(moderator)
-                .actionType(AuditAction.REPORT_RESOLVE_DELETE)
-                .targetId(reportId)
+                .actionType(AuditAction.RELEASE_DELETE)
+                .targetId(report.getTargetId()) // ID самого релиза, а не репорта
                 .performedAt(LocalDateTime.now())
                 .build();
         auditRepository.save(audit);
@@ -301,8 +302,8 @@ public class ReportService {
         // Создаем запись аудита
         Audit audit = Audit.builder()
                 .moderator(moderator)
-                .actionType(AuditAction.REPORT_RESOLVE_DELETE)
-                .targetId(reportId)
+                .actionType(AuditAction.AUTHOR_DELETE)
+                .targetId(report.getTargetId()) // ID самого автора, а не репорта
                 .performedAt(LocalDateTime.now())
                 .build();
         auditRepository.save(audit);

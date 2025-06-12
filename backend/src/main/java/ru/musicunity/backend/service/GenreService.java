@@ -47,4 +47,12 @@ public class GenreService {
                 .orElseThrow(() -> new GenreNotFoundException(id));
         genreRepository.delete(genre);
     }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void hardDeleteGenre(Long id) {
+        Genre genre = genreRepository.findById(id)
+                .orElseThrow(() -> new GenreNotFoundException(id));
+        genreRepository.delete(genre);
+    }
 }

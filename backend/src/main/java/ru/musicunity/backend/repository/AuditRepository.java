@@ -22,6 +22,18 @@ public interface AuditRepository extends JpaRepository<Audit, Long>, JpaSpecific
 
     Page<Audit> findByTargetId(Long targetId, Pageable pageable);
     
+    Page<Audit> findByIsRolledBack(Boolean isRolledBack, Pageable pageable);
+    
+    // Комбинированные методы с фильтром isRolledBack
+    @Query("SELECT a FROM Audit a WHERE a.actionType = :actionType AND a.isRolledBack = :isRolledBack")
+    Page<Audit> findByActionTypeAndIsRolledBack(AuditAction actionType, Boolean isRolledBack, Pageable pageable);
+    
+    @Query("SELECT a FROM Audit a WHERE a.targetId = :targetId AND a.isRolledBack = :isRolledBack")
+    Page<Audit> findByTargetIdAndIsRolledBack(Long targetId, Boolean isRolledBack, Pageable pageable);
+    
     @Query("SELECT a FROM Audit a")
     Page<Audit> findAllSorted(Pageable pageable);
+    
+    // Найти все записи аудита конкретного модератора с определенным статусом отката
+    List<Audit> findByModeratorAndIsRolledBack(User moderator, Boolean isRolledBack);
 }

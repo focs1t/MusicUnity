@@ -236,7 +236,89 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void demoteModerator(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        
+        // Проверяем, что пользователь действительно модератор
+        if (user.getRights() != UserRole.MODERATOR) {
+            throw new RuntimeException("Пользователь не является модератором");
+        }
+        
+        // Получаем текущего админа
+        User currentAdmin = getCurrentUser();
+        
+        // Откатываем все активные действия этого модератора
+        List<Audit> moderatorActions = auditRepository.findByModeratorAndIsRolledBack(user, false);
+        for (Audit action : moderatorActions) {
+            // Откатываем каждое действие через AuditService
+            try {
+                rollbackModeratorsAction(action);
+            } catch (Exception e) {
+                // Логируем ошибку, но продолжаем откатывать остальные действия
+                System.err.println("Ошибка при откате действия " + action.getLogId() + ": " + e.getMessage());
+            }
+        }
+        
+        // Понижаем до обычного пользователя
+        user.setRights(UserRole.USER);
+        userRepository.save(user);
+        
+        // Создаем запись аудита о понижении
+        Audit audit = Audit.builder()
+                .moderator(currentAdmin)
+                .actionType(AuditAction.USER_DEMOTE_FROM_MODERATOR)
+                .targetId(userId)
+                .performedAt(LocalDateTime.now())
+                .isRolledBack(false)
+                .build();
+        auditRepository.save(audit);
+    }
+    
+    private void rollbackModeratorsAction(Audit audit) {
+        // Реализуем ту же логику что и в AuditService.rollbackAction, но без проверок прав
+        switch (audit.getActionType()) {
+            case USER_BLOCK:
+                userRepository.findById(audit.getTargetId()).ifPresent(user -> {
+                    user.setIsBlocked(false);
+                    userRepository.save(user);
+                });
+                break;
 
+            case USER_UNBLOCK:
+                userRepository.findById(audit.getTargetId()).ifPresent(user -> {
+                    user.setIsBlocked(true);
+                    userRepository.save(user);
+                });
+                break;
+                
+            case REVIEW_DELETE:
+                reviewRepository.findById(audit.getTargetId()).ifPresent(review -> {
+                    review.setIsDeleted(false);
+                    reviewRepository.save(review);
+                });
+                break;
+
+            case REVIEW_RESTORE:
+                reviewRepository.findById(audit.getTargetId()).ifPresent(review -> {
+                    review.setIsDeleted(true);
+                    reviewRepository.save(review);
+                });
+                break;
+                
+            // Остальные типы действий модераторы обычно не выполняют
+            default:
+                // Не откатываем неизвестные действия
+                break;
+        }
+        
+        // Помечаем действие как откаченное
+        audit.setIsRolledBack(true);
+        audit.setRollbackAt(LocalDateTime.now());
+        auditRepository.save(audit);
+    }
 
     public Optional<AuthorDTO> getLinkedAuthor(Long userId) {
         return authorRepository.findByUserUserId(userId)
@@ -289,7 +371,7 @@ public class UserService {
     public Page<UserDTO> filterBlocked(Page<UserDTO> users) {
         return new PageImpl<>(
             users.getContent().stream()
-                .filter(UserDTO::getIsBlocked)
+                .filter(user -> user.getIsBlocked() != null && user.getIsBlocked())
                 .collect(Collectors.toList()),
             users.getPageable(),
             users.getTotalElements()
@@ -299,10 +381,35 @@ public class UserService {
     public Page<UserDTO> filterActive(Page<UserDTO> users) {
         return new PageImpl<>(
             users.getContent().stream()
-                .filter(user -> !user.getIsBlocked())
+                .filter(user -> user.getIsBlocked() == null || !user.getIsBlocked())
                 .collect(Collectors.toList()),
             users.getPageable(),
             users.getTotalElements()
         );
+    }
+
+    public List<UserDTO> getAllModerators() {
+        return userRepository.findByRights(UserRole.MODERATOR, Pageable.unpaged())
+                .stream()
+                .map(userMapper::toDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Получить всех пользователей, которые когда-либо выполняли действия в системе (есть в аудите)
+     */
+    public List<UserDTO> getAllUsersFromAudit() {
+        // Получаем всех уникальных пользователей из аудита
+        List<User> auditUsers = auditRepository.findAll()
+                .stream()
+                .map(Audit::getModerator)
+                .filter(user -> user != null)
+                .distinct()
+                .sorted((u1, u2) -> u1.getUsername().compareToIgnoreCase(u2.getUsername()))
+                .collect(Collectors.toList());
+        
+        return auditUsers.stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
     }
 }

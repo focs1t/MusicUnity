@@ -10,6 +10,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.prepost.PreAuthorize;
 import ru.musicunity.backend.dto.RegistrationRequestDTO;
 import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.model.RegistrationRequest;
@@ -160,6 +161,14 @@ public class RegistrationRequestService {
     public Optional<RegistrationRequestDTO> getRequestById(Long requestId) {
         return registrationRequestRepository.findById(requestId)
                 .map(this::convertToDTO);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void hardDeleteRequest(Long requestId) {
+        RegistrationRequest request = registrationRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Заявка не найдена"));
+        registrationRequestRepository.delete(request);
     }
 
     private void sendAdminNotification(RegistrationRequest request) {

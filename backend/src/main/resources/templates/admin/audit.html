@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Журнал аудита - MusicUnity Admin</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .sorted-asc, .sorted-desc {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/admin">
+                <i class="fas fa-music me-2"></i>MusicUnity Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin">Главная</a>
+                <a class="nav-link" href="/admin/genres">Жанры</a>
+                <a class="nav-link" href="/admin/authors">Авторы</a>
+                <a class="nav-link" href="/admin/releases">Релизы</a>
+                <a class="nav-link" href="/admin/users">Пользователи</a>
+                <a class="nav-link" href="/admin/reviews">Рецензии</a>
+                <a class="nav-link" href="/admin/registration-requests">Заявки</a>
+                <a class="nav-link active" href="/admin/audit">Аудит</a>
+                <a class="nav-link" href="/logout">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2><i class="fas fa-clipboard-list me-2"></i>Журнал аудита</h2>
+                <p class="text-muted">История административных действий</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/admin" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Назад
+                </a>
+            </div>
+        </div>
+
+        <!-- Фильтры -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form th:action="@{/admin/audit}" method="get" class="row g-3" id="filterForm">
+                    <div class="col-md-3">
+                        <label for="actionType" class="form-label">Тип действия</label>
+                        <select class="form-select" id="actionType" name="actionType" onchange="submitForm()">
+                            <option value="">Все действия</option>
+                            <option th:each="action : ${actionTypes}" 
+                                    th:value="${action.name()}" 
+                                    th:text="${action.name() == 'USER_BLOCK' ? 'Блокировка пользователя' : 
+                                             action.name() == 'USER_UNBLOCK' ? 'Разблокировка пользователя' :
+                                             action.name() == 'REVIEW_DELETE' ? 'Удаление рецензии' :
+                                             action.name() == 'REVIEW_RESTORE' ? 'Восстановление рецензии' :
+                                             action.name() == 'RELEASE_ADD' ? 'Добавление релиза' :
+                                             action.name() == 'RELEASE_DELETE' ? 'Удаление релиза' :
+                                             action.name() == 'RELEASE_RESTORE' ? 'Восстановление релиза' :
+                                             action.name() == 'RELEASE_CREATE_OWN' ? 'Создание собственного релиза' :
+                                             action.name() == 'AUTHOR_ADD' ? 'Добавление автора' :
+                                             action.name() == 'AUTHOR_DELETE' ? 'Удаление автора' :
+                                             action.name() == 'USER_DELETE' ? 'Удаление пользователя' :
+                                             action.name() == 'USER_RESTORE' ? 'Восстановление пользователя' :
+                                             action.name() == 'USER_DEMOTE_FROM_MODERATOR' ? 'Понижение модератора' :
+                                             action.name()}" 
+                                    th:selected="${actionType == action.name()}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="moderatorId" class="form-label">Пользователь</label>
+                        <select class="form-select" id="moderatorId" name="moderatorId" onchange="submitForm()">
+                            <option value="">Все пользователи</option>
+                            <option th:each="moderator : ${moderators}" 
+                                    th:value="${moderator.userId}" 
+                                    th:text="${moderator.username + ' (' + (moderator.rights?.name() == 'MODERATOR' ? 'МОД' : moderator.rights?.name() == 'ADMIN' ? 'АДМИН' : 'АВТОР') + ', ID: ' + moderator.userId + ')'}"
+                                    th:selected="${moderatorId != null and moderatorId == moderator.userId}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="targetId" class="form-label">ID цели</label>
+                        <input type="number" class="form-control" id="targetId" name="targetId" 
+                               placeholder="Введите ID" th:value="${targetId}" onchange="submitForm()">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="isRolledBack" class="form-label">Статус</label>
+                        <select class="form-select" id="isRolledBack" name="isRolledBack" onchange="submitForm()">
+                            <option value="false" th:selected="${isRolledBack == null or !isRolledBack}">Активные</option>
+                            <option value="true" th:selected="${isRolledBack != null and isRolledBack}">Откаченные</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary">Применить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Список аудита -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Записи аудита
+                </h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${auditLogs.empty}" class="text-center text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>Нет записей аудита</p>
+                </div>
+                
+                <div th:unless="${auditLogs.empty}">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="sortable" onclick="sortBy('logId')" 
+                                        th:class="${sortBy == 'logId'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        ID 
+                                        <i th:if="${sortBy == 'logId'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'logId'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortBy('actionType')"
+                                        th:class="${sortBy == 'actionType'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Действие
+                                        <i th:if="${sortBy == 'actionType'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'actionType'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortBy('moderator.username')"
+                                        th:class="${sortBy == 'moderator.username'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Пользователь
+                                        <i th:if="${sortBy == 'moderator.username'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'moderator.username'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortBy('targetId')"
+                                        th:class="${sortBy == 'targetId'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        ID цели
+                                        <i th:if="${sortBy == 'targetId'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'targetId'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortBy('performedAt')"
+                                        th:class="${sortBy == 'performedAt'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Дата
+                                        <i th:if="${sortBy == 'performedAt'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'performedAt'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="audit : ${auditLogs.content}">
+                                    <td th:text="${audit.logId}">1</td>
+                                    <td>
+                                        <span th:if="${audit.isRolledBack == null or !audit.isRolledBack}" 
+                                              class="badge bg-primary" 
+                                              th:text="${audit.actionType.name() == 'USER_BLOCK' ? 'Блокировка пользователя' : 
+                                                        audit.actionType.name() == 'REVIEW_DELETE' ? 'Удаление рецензии' : 
+                                                        audit.actionType.name() == 'RELEASE_DELETE' ? 'Удаление релиза' : 
+                                                        audit.actionType.name() == 'RELEASE_ADD' ? 'Добавление релиза' : 
+                                                        audit.actionType.name() == 'RELEASE_CREATE_OWN' ? 'Создание собственного релиза' : 
+                                                        audit.actionType.name() == 'AUTHOR_ADD' ? 'Добавление автора' :
+                                                        audit.actionType.name() == 'AUTHOR_DELETE' ? 'Удаление автора' : audit.actionType.name()}">ACTION</span>
+                                        <span th:if="${audit.isRolledBack != null and audit.isRolledBack}" 
+                                              class="badge bg-secondary" 
+                                              th:text="${(audit.actionType.name() == 'USER_BLOCK' ? 'Блокировка пользователя' : 
+                                                         audit.actionType.name() == 'REVIEW_DELETE' ? 'Удаление рецензии' : 
+                                                         audit.actionType.name() == 'RELEASE_DELETE' ? 'Удаление релиза' : 
+                                                         audit.actionType.name() == 'RELEASE_ADD' ? 'Добавление релиза' : 
+                                                         audit.actionType.name() == 'RELEASE_CREATE_OWN' ? 'Создание собственного релиза' : 
+                                                         audit.actionType.name() == 'AUTHOR_ADD' ? 'Добавление автора' :
+                                                         audit.actionType.name() == 'AUTHOR_DELETE' ? 'Удаление автора' : audit.actionType.name()) + ' (ОТКАЧЕНО)'}">ACTION (ОТКАЧЕНО)</span>
+                                    </td>
+                                    <td>
+                                        <span th:text="${audit.moderator?.username ?: 'Неизвестно'}"></span>
+                                        <small th:if="${audit.moderator?.rights?.name() == 'MODERATOR'}" class="badge bg-warning text-dark ms-1">МОД</small>
+                                        <small th:if="${audit.moderator?.rights?.name() == 'ADMIN'}" class="badge bg-danger ms-1">АДМИН</small>
+                                    </td>
+                                    <td>
+                                                                <!-- Ссылка на цель в зависимости от типа действия -->
+                        <a th:if="${audit.actionType.name() == 'USER_BLOCK' or audit.actionType.name() == 'USER_UNBLOCK' or audit.actionType.name() == 'USER_DELETE' or audit.actionType.name() == 'USER_RESTORE'}"
+                           th:href="@{'/admin/users?userId=' + ${audit.targetId}}" 
+                           th:text="${audit.targetId}"
+                           class="btn btn-outline-primary btn-sm"
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="top"
+                           title="Перейти к пользователю">123</a>
+                        
+                        <a th:if="${audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE'}"
+                           th:href="@{'/admin/reviews?reviewId=' + ${audit.targetId}}" 
+                           th:text="${audit.targetId}"
+                           class="btn btn-outline-success btn-sm"
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="top"
+                           title="Перейти к рецензии">123</a>
+                        
+                        <a th:if="${audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE'}"
+                           th:href="@{'/admin/releases?releaseId=' + ${audit.targetId}}" 
+                           th:text="${audit.targetId}"
+                           class="btn btn-outline-info btn-sm"
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="top"
+                           title="Перейти к релизу">123</a>
+                        
+                        <a th:if="${audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE'}"
+                           th:href="@{'/admin/authors?authorId=' + ${audit.targetId}}" 
+                           th:text="${audit.targetId}"
+                           class="btn btn-outline-warning btn-sm"
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="top"
+                           title="Перейти к автору">123</a>
+                                        
+                                        <!-- Если тип действия не подходит ни под одну категорию -->
+                                        <span th:unless="${audit.actionType.name() == 'USER_BLOCK' or audit.actionType.name() == 'USER_UNBLOCK' or audit.actionType.name() == 'USER_DELETE' or audit.actionType.name() == 'USER_RESTORE' or audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE' or audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE' or audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE'}"
+                                              th:text="${audit.targetId}"
+                                              class="btn btn-outline-secondary btn-sm disabled"
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top"
+                                              title="Неизвестный тип объекта">123</span>
+                                    </td>
+                                    <td th:text="${audit.performedAt}">2024-01-01 12:00</td>
+                                    <td>
+                                        <!-- Показываем кнопки только для активных (не откаченных) действий -->
+                                        <div th:if="${audit.isRolledBack == null or !audit.isRolledBack}" class="btn-group btn-group-sm">
+                                            <button type="button" 
+                                                    class="btn btn-outline-warning btn-sm check-rollback-btn"
+                                                    th:data-audit-id="${audit.logId}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Выполнить откат действия">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                            
+                                            <!-- Кнопка понижения модератора -->
+                                            <button th:if="${(audit.actionType.name() == 'USER_BLOCK' or audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE') and audit.moderator != null}" 
+                                                    type="button"
+                                                    class="btn btn-outline-danger btn-sm demote-moderator-btn"
+                                                    th:data-moderator-id="${audit.moderator.userId}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Понизить модератора, ответственного за решение">
+                                                <i class="fas fa-user-minus"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Для откаченных действий показываем пустую ячейку -->
+                                        <span th:if="${audit.isRolledBack != null and audit.isRolledBack}" class="text-muted">
+                                            <i class="fas fa-check-circle"></i> Откачено
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Пагинация -->
+                    <div th:if="${auditLogs.totalPages > 1}" class="d-flex justify-content-center mt-4">
+                        <nav aria-label="Навигация по страницам">
+                            <ul class="pagination">
+                                <li class="page-item" th:classappend="${auditLogs.first} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/admin/audit(page=${auditLogs.number - 1})}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                
+                                <li th:each="pageNum : ${#numbers.sequence(0, auditLogs.totalPages - 1)}" 
+                                    class="page-item" 
+                                    th:classappend="${pageNum == auditLogs.number} ? 'active'">
+                                    <a class="page-link" 
+                                       th:href="@{/admin/audit(page=${pageNum})}" 
+                                       th:text="${pageNum + 1}"></a>
+                                </li>
+                                
+                                <li class="page-item" th:classappend="${auditLogs.last} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/admin/audit(page=${auditLogs.number + 1})}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Функция сортировки по колонке
+        function sortBy(column) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentSort = urlParams.get('sortBy');
+            const currentDir = urlParams.get('sortDir') || 'desc';
+            
+            // Если кликнули по той же колонке - меняем направление
+            if (currentSort === column) {
+                urlParams.set('sortDir', currentDir === 'asc' ? 'desc' : 'asc');
+            } else {
+                // Новая колонка - ставим по убыванию по умолчанию
+                urlParams.set('sortBy', column);
+                urlParams.set('sortDir', 'desc');
+            }
+            
+            // Перенаправляем на новый URL
+            window.location.search = urlParams.toString();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация тултипов
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Обработчики для кнопок отката
+            document.querySelectorAll('.check-rollback-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const auditId = this.dataset.auditId;
+                    
+                    if (confirm('Вы уверены, что хотите выполнить откат этого действия? Это изменит данные в системе.')) {
+                        rollbackAction(auditId);
+                    }
+                });
+            });
+            
+            // Обработчики для кнопок понижения модератора
+            document.querySelectorAll('.demote-moderator-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const moderatorId = this.dataset.moderatorId;
+                    
+                    if (confirm('Вы уверены, что хотите понизить этого модератора до обычного пользователя?')) {
+                        demoteModerator(moderatorId);
+                    }
+                });
+            });
+        });
+        
+        function submitForm() {
+            document.getElementById('filterForm').submit();
+        }
+        
+        function rollbackAction(auditId) {
+            const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            headers[header] = token;
+            
+            fetch('/admin/audit/' + auditId + '/rollback', {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    return response.text().then(text => Promise.reject(text));
+                }
+            })
+            .then(message => {
+                alert(message);
+                if (message.includes('успешно')) {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                alert('Ошибка при выполнении отката: ' + error);
+            });
+        }
+        
+        function demoteModerator(moderatorId) {
+            const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            headers[header] = token;
+            
+            fetch('/admin/audit/demote-moderator/' + moderatorId, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    return response.text().then(text => Promise.reject(text));
+                }
+            })
+            .then(message => {
+                alert(message);
+                if (message.includes('понижен')) {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                alert('Ошибка при понижении: ' + error);
+            });
+        }
+    </script>
+</body>
+</html> 

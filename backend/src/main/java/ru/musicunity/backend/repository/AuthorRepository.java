@@ -28,6 +28,9 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
     @Query("SELECT a FROM Author a WHERE a.isVerified = true AND a.isDeleted = false")
     Page<Author> findByIsVerifiedTrue(Pageable pageable);
 
+    @Query("SELECT a FROM Author a WHERE a.isVerified = false AND a.isDeleted = false")
+    Page<Author> findByIsVerifiedFalse(Pageable pageable);
+
     @Query("SELECT a FROM Author a WHERE a.isVerified = true AND a.isArtist = true AND a.isDeleted = false")
     Page<Author> findByIsVerifiedTrueAndIsArtistTrue(Pageable pageable);
 

@@ -14,10 +14,13 @@ public class AuditMapper {
         
         AuditDTO dto = new AuditDTO();
         dto.setId(audit.getLogId());
-        dto.setModeratorId(audit.getModerator().getUserId());
+        dto.setModeratorId(audit.getModerator() != null ? audit.getModerator().getUserId() : null);
+        dto.setModeratorUsername(audit.getModerator() != null ? audit.getModerator().getUsername() : "Система");
         dto.setTargetId(audit.getTargetId());
         dto.setActionType(audit.getActionType());
         dto.setPerformedAt(audit.getPerformedAt());
+        dto.setIsRolledBack(audit.getIsRolledBack() != null ? audit.getIsRolledBack() : false);
+        dto.setRollbackAt(audit.getRollbackAt());
         
         return dto;
     }
