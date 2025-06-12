@@ -20,6 +20,7 @@ import ru.musicunity.backend.mapper.AuthorMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.Audit;
 import ru.musicunity.backend.pojo.Author;
+import ru.musicunity.backend.pojo.Release;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.LikeType;
@@ -30,6 +31,11 @@ import ru.musicunity.backend.repository.AuthorRepository;
 import ru.musicunity.backend.repository.LikeRepository;
 import ru.musicunity.backend.repository.ReviewRepository;
 import ru.musicunity.backend.repository.UserRepository;
+import ru.musicunity.backend.repository.ReportRepository;
+import ru.musicunity.backend.repository.ReleaseRepository;
+import ru.musicunity.backend.pojo.Report;
+import ru.musicunity.backend.pojo.enums.ReportStatus;
+import ru.musicunity.backend.service.SessionManager;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,6 +51,8 @@ public class UserService {
     private final AuditRepository auditRepository;
     private final LikeRepository likeRepository;
     private final ReviewRepository reviewRepository;
+    private final ReportRepository reportRepository;
+    private final ReleaseRepository releaseRepository;
     private final PasswordEncoder passwordEncoder;
     private final FavoriteService favoriteService;
     private final AuthorFollowingService authorFollowingService;
@@ -52,6 +60,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final AuthorRepository authorRepository;
     private final AuthorMapper authorMapper;
+    private final SessionManager sessionManager;
 
     /**
      * Получение топ-100 пользователей по рейтингу
@@ -180,12 +189,16 @@ public class UserService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void banUserAsAdmin(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         user.setIsBlocked(true);
 
         userRepository.save(user);
+        
+        // Принудительно выходим пользователя из всех сессий
+        sessionManager.invalidateUserSessions(userId);
     }
 
     @Transactional
@@ -207,9 +220,13 @@ public class UserService {
         auditRepository.save(audit);
 
         userRepository.save(user);
+        
+        // Принудительно выходим пользователя из всех сессий
+        sessionManager.invalidateUserSessions(userId);
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void unbanUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
@@ -218,6 +235,7 @@ public class UserService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void changeUserRole(Long userId, UserRole role) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
@@ -234,6 +252,9 @@ public class UserService {
         
         user.setRights(role);
         userRepository.save(user);
+        
+        // Принудительно выходим пользователя из всех сессий при смене роли
+        sessionManager.invalidateUserSessions(userId);
     }
 
     @Transactional
@@ -250,7 +271,7 @@ public class UserService {
         // Получаем текущего админа
         User currentAdmin = getCurrentUser();
         
-        // Откатываем все активные действия этого модератора
+        // Откатываем все активные действия этого модератора в аудите
         List<Audit> moderatorActions = auditRepository.findByModeratorAndIsRolledBack(user, false);
         for (Audit action : moderatorActions) {
             // Откатываем каждое действие через AuditService
@@ -262,9 +283,23 @@ public class UserService {
             }
         }
         
+        // Откатываем все жалобы, решенные этим модератором
+        List<Report> moderatorReports = reportRepository.findAllResolvedByModerator(userId);
+        for (Report report : moderatorReports) {
+            try {
+                rollbackReportAction(report);
+            } catch (Exception e) {
+                // Логируем ошибку, но продолжаем откатывать остальные жалобы
+                System.err.println("Ошибка при откате жалобы " + report.getReportId() + ": " + e.getMessage());
+            }
+        }
+        
         // Понижаем до обычного пользователя
         user.setRights(UserRole.USER);
         userRepository.save(user);
+        
+        // Принудительно выходим пользователя из всех сессий при понижении роли
+        sessionManager.invalidateUserSessions(userId);
         
         // Создаем запись аудита о понижении
         Audit audit = Audit.builder()
@@ -319,6 +354,87 @@ public class UserService {
         audit.setRollbackAt(LocalDateTime.now());
         auditRepository.save(audit);
     }
+    
+    private void rollbackReportAction(Report report) {
+        // Откатываем действия, которые были выполнены при решении жалобы
+        switch (report.getStatus()) {
+            case RESOLVED:
+                // В зависимости от типа жалобы и действия, нужно откатить изменения
+                switch (report.getType()) {
+                    case REVIEW:
+                        // Проверяем, что именно было сделано - удаление рецензии или блокировка пользователя
+                        // Для жалоб типа REVIEW могут быть выполнены два действия:
+                        // 1. Удаление рецензии (deleteReview)
+                        // 2. Блокировка автора рецензии (banUser)
+                        
+                        // Восстанавливаем рецензию, если она была удалена
+                        reviewRepository.findById(report.getTargetId()).ifPresent(review -> {
+                            if (review.getIsDeleted()) {
+                                review.setIsDeleted(false);
+                                reviewRepository.save(review);
+                            }
+                            
+                            // Также разблокируем автора рецензии, если он был заблокирован
+                            User reviewAuthor = review.getUser();
+                            if (reviewAuthor.getIsBlocked()) {
+                                reviewAuthor.setIsBlocked(false);
+                                userRepository.save(reviewAuthor);
+                            }
+                        });
+                        break;
+                        
+                    case AUTHOR:
+                        // Если был удален автор - восстанавливаем его и его релизы
+                        authorRepository.findById(report.getTargetId()).ifPresent(author -> {
+                            author.setIsDeleted(false);
+                            authorRepository.save(author);
+                            
+                            // Находим ВСЕ релизы автора (включая удаленные) через специальный метод
+                            List<Release> authorReleases = releaseRepository.findAllByAuthorId(author.getAuthorId());
+                            
+                            // Восстанавливаем ВСЕ релизы автора
+                            authorReleases.forEach(release -> {
+                                if (release.getIsDeleted()) {
+                                    release.setIsDeleted(false);
+                                    releaseRepository.save(release);
+                                }
+                            });
+                        });
+                        break;
+                        
+                    case RELEASE:
+                        // Если был удален релиз - восстанавливаем его
+                        releaseRepository.findById(report.getTargetId()).ifPresent(release -> {
+                            release.setIsDeleted(false);
+                            releaseRepository.save(release);
+                        });
+                        break;
+                        
+                    case PROFILE:
+                        // Если был заблокирован пользователь по жалобе на профиль - разблокируем
+                        userRepository.findById(report.getTargetId()).ifPresent(user -> {
+                            user.setIsBlocked(false);
+                            userRepository.save(user);
+                        });
+                        break;
+                }
+                break;
+                
+            case REJECTED:
+                // Для отклоненных жалоб ничего не делаем, так как никаких действий не выполнялось
+                break;
+                
+            default:
+                // Для других статусов ничего не делаем
+                break;
+        }
+        
+        // Возвращаем жалобу в статус PENDING
+        report.setStatus(ReportStatus.PENDING);
+        report.setModerator(null);
+        report.setResolvedAt(null);
+        reportRepository.save(report);
+    }
 
     public Optional<AuthorDTO> getLinkedAuthor(Long userId) {
         return authorRepository.findByUserUserId(userId)
@@ -348,11 +464,13 @@ public class UserService {
                 .map(userMapper::toDTO);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
                 .map(userMapper::toDTO);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Page<UserDTO> searchUsers(String username, String role, String status, Pageable pageable) {
         // Если все фильтры пусты, возвращаем всех пользователей
         if ((username == null || username.trim().isEmpty()) && 

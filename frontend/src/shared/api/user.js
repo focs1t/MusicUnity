@@ -277,5 +277,22 @@ export const userApi = {
       }
       throw error;
     }
+  },
+
+  /**
+   * Проверка статуса текущего пользователя (для отслеживания блокировки)
+   * @returns {Promise<boolean>} - true если пользователь активен, false если заблокирован
+   */
+  checkUserStatus: async () => {
+    try {
+      const response = await httpClient.get(`${API_URL}/status`);
+      return response.data?.isActive !== false; // Возвращаем true если активен
+    } catch (error) {
+      // Если получили 401/403 - пользователь заблокирован или токен недействителен
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        return false;
+      }
+      throw error;
+    }
   }
 }; 

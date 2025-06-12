@@ -55,6 +55,8 @@ httpClient.interceptors.response.use(
     console.error('API Error:', error.response?.status, error.response?.data);
     
     if (error.response?.status === 401) {
+      console.log('Получена 401 ошибка - токен недействителен или пользователь заблокирован');
+      
       // Очищаем данные авторизации из обоих хранилищ
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -64,6 +66,39 @@ httpClient.interceptors.response.use(
       // Устанавливаем флаг выхода для предотвращения автоматической авторизации
       localStorage.setItem('logged_out', 'true');
       sessionStorage.setItem('logged_out', 'true');
+      
+      // Создаем пользовательское событие для уведомления приложения о необходимости выхода
+      const logoutEvent = new CustomEvent('forceLogout', {
+        detail: { 
+          reason: 'unauthorized',
+          message: 'Ваша сессия недействительна. Возможно, ваш аккаунт был заблокирован.'
+        }
+      });
+      window.dispatchEvent(logoutEvent);
+    }
+    
+    if (error.response?.status === 403) {
+      console.log('Получена 403 ошибка - доступ запрещен');
+      
+      // Проверяем, содержит ли ответ информацию о блокировке
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || '';
+      if (errorMessage.toLowerCase().includes('заблокирован') || errorMessage.toLowerCase().includes('blocked')) {
+        // Пользователь заблокирован - принудительный выход
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        localStorage.setItem('logged_out', 'true');
+        sessionStorage.setItem('logged_out', 'true');
+        
+        const logoutEvent = new CustomEvent('forceLogout', {
+          detail: { 
+            reason: 'blocked',
+            message: 'Ваш аккаунт был заблокирован.'
+          }
+        });
+        window.dispatchEvent(logoutEvent);
+      }
     }
     
     // Обработка ошибок сервера

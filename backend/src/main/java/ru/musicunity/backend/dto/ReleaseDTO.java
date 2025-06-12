@@ -17,6 +17,7 @@ public class ReleaseDTO {
     private String releaseLink;
     private Integer favoritesCount;
     private LocalDateTime addedAt;
+    private LocalDateTime deletedAt;
     private List<AuthorDTO> authors;
     private List<GenreDTO> genres;
     private Integer reviewsCount;

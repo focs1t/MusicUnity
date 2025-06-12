@@ -35,6 +35,8 @@ public class ReviewMapper {
                       (1 + (review.getVibe() / 10.0f) * 1.5f)));
             
         dto.setCreatedAt(review.getCreatedAt());
+        // Для удаленных рецензий пока используем createdAt, так как deletedAt в сущности отсутствует
+        dto.setDeletedAt(review.getCreatedAt());
         
         // Заполняем данные пользователя
         if (review.getUser() != null) {
@@ -52,6 +54,24 @@ public class ReviewMapper {
             releaseDTO.setReleaseId(review.getRelease().getReleaseId());
             releaseDTO.setTitle(review.getRelease().getTitle());
             releaseDTO.setCoverUrl(review.getRelease().getCoverUrl());
+            
+            // Добавляем авторов релиза
+            if (review.getRelease().getAuthors() != null) {
+                releaseDTO.setAuthors(review.getRelease().getAuthors().stream()
+                    .map(releaseAuthor -> {
+                        ReviewDTO.AuthorDTO authorDTO = new ReviewDTO.AuthorDTO();
+                        authorDTO.setId(releaseAuthor.getAuthor().getAuthorId());
+                        authorDTO.setAuthorName(releaseAuthor.getAuthor().getAuthorName());
+                        authorDTO.setAvatarUrl(releaseAuthor.getAuthor().getAvatarUrl());
+                        authorDTO.setIsArtist(releaseAuthor.getIsArtist());
+                        authorDTO.setIsProducer(releaseAuthor.getIsProducer());
+                        authorDTO.setBio(releaseAuthor.getAuthor().getBio());
+                        authorDTO.setIsVerified(releaseAuthor.getAuthor().getIsVerified());
+                        return authorDTO;
+                    })
+                    .collect(java.util.stream.Collectors.toList()));
+            }
+            
             dto.setRelease(releaseDTO);
         }
         

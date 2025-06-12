@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Удаленные рецензии - Админ панель</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .review-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        .review-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .release-cover {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .review-type-badge {
+            font-size: 0.8rem;
+        }
+        .rating-score {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .action-buttons {
+            gap: 0.5rem;
+        }
+        .btn-restore {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        .btn-restore:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            color: white;
+        }
+        .btn-hard-delete {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        .btn-hard-delete:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+            color: white;
+        }
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .review-content {
+            max-height: 4em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/admin">
+                <i class="fas fa-music me-2"></i>MusicUnity Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin">Главная</a>
+                <a class="nav-link" href="/admin/genres">Жанры</a>
+                <a class="nav-link" href="/admin/users">Пользователи</a>
+                <a class="nav-link" href="/admin/registration-requests">Заявки</a>
+                <a class="nav-link" href="/admin/audit">Аудит</a>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                        Удаленные
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/deleted-releases">
+                            <i class="fas fa-compact-disc me-2"></i>Релизы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-authors">
+                            <i class="fas fa-microphone me-2"></i>Авторы
+                        </a></li>
+                        <li><a class="nav-link active" href="/admin/deleted-reviews">
+                            <i class="fas fa-edit me-2"></i>Рецензии
+                        </a></li>
+                    </ul>
+                </div>
+                <a class="nav-link" href="/logout">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2><i class="fas fa-edit me-2"></i>Удаленные рецензии</h2>
+                <p class="text-muted">Восстановление или безвозвратное удаление рецензий</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/admin" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Назад
+                </a>
+            </div>
+        </div>
+
+                <!-- Уведомления -->
+                <div th:if="${error}" class="alert alert-danger alert-custom" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span th:text="${error}"></span>
+                        </div>
+
+        <!-- Flash сообщения -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${success}">Успешное сообщение</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span th:text="${error}">Сообщение об ошибке</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Список удаленных рецензий -->
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Удаленные рецензии
+                </h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${deletedReviews.content.empty}" class="text-center text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>Нет удаленных рецензий</p>
+                </div>
+
+                <div th:unless="${deletedReviews.content.empty}">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Автор</th>
+                                    <th>Релиз</th>
+                                    <th>Название</th>
+                                    <th>Содержание</th>
+                                    <th>Дата создания</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="review : ${deletedReviews.content}">
+                                    <!-- Автор -->
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img th:if="${review.user.avatarUrl != null and !review.user.avatarUrl.isEmpty()}"
+                                                 th:src="${review.user.avatarUrl}" 
+                                                 class="rounded-circle me-2" 
+                                                 style="width: 40px; height: 40px; object-fit: cover;"
+                                                 alt="Аватар пользователя">
+                                            <div th:unless="${review.user.avatarUrl != null and !review.user.avatarUrl.isEmpty()}"
+                                                 class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white me-2" 
+                                                 style="width: 40px; height: 40px; font-size: 16px;">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <span th:text="${review.user.username}">Пользователь</span>
+                                        </div>
+                                    </td>
+                                    <!-- Релиз -->
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img th:if="${review.release.coverUrl != null and !review.release.coverUrl.isEmpty()}"
+                                                 th:src="${review.release.coverUrl}" 
+                                                 class="rounded me-2" 
+                                                 style="width: 40px; height: 40px; object-fit: cover;"
+                                                 alt="Обложка релиза">
+                                            <div th:unless="${review.release.coverUrl != null and !review.release.coverUrl.isEmpty()}"
+                                                 class="rounded bg-secondary d-flex align-items-center justify-content-center text-white me-2" 
+                                                 style="width: 40px; height: 40px; font-size: 16px;">
+                                                <i class="fas fa-music"></i>
+                                            </div>
+                                            <div>
+                                                <strong th:text="${review.release.title}">Название релиза</strong>
+                                                <br>
+                                                <small class="text-muted" 
+                                                       th:text="${review.release.authors != null and !review.release.authors.empty ? review.release.authors[0].authorName : 'Автор не указан'}">Автор</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <!-- Название рецензии -->
+                                    <td>
+                                        <span th:if="${review.title != null and !review.title.isEmpty()}" 
+                                              th:text="${review.title}">Название рецензии</span>
+                                        <span th:unless="${review.title != null and !review.title.isEmpty()}" 
+                                              class="text-muted">Без названия</span>
+                                    </td>
+                                    <!-- Содержание -->
+                                    <td style="max-width: 300px;">
+                                        <span th:if="${review.content != null and !review.content.isEmpty()}" 
+                                              th:text="${#strings.abbreviate(review.content, 100)}" 
+                                              th:title="${review.content}">Содержание рецензии</span>
+                                        <span th:unless="${review.content != null and !review.content.isEmpty()}" 
+                                              class="text-muted">Без текста</span>
+                                    </td>
+                                    <!-- Дата создания -->
+                                    <td th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                                    <!-- Действия -->
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" 
+                                                    class="btn btn-outline-success btn-sm restore-review-btn"
+                                                    th:data-review-id="${review.reviewId}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Восстановить рецензию">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm permanent-delete-review-btn"
+                                                    th:data-review-id="${review.reviewId}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Удалить навсегда">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Инициализация tooltips
+        function initTooltips() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        // Инициализация при загрузке страницы  
+        document.addEventListener('DOMContentLoaded', function() {
+            initTooltips();
+            
+            // Добавляем обработчики для кнопок
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.restore-review-btn')) {
+                    const btn = e.target.closest('.restore-review-btn');
+                    const reviewId = btn.dataset.reviewId;
+                    restoreReview(reviewId);
+                }
+                
+                if (e.target.closest('.permanent-delete-review-btn')) {
+                    const btn = e.target.closest('.permanent-delete-review-btn');
+                    const reviewId = btn.dataset.reviewId;
+                    confirmHardDelete(reviewId);
+                }
+            });
+        });
+
+        function restoreReview(reviewId) {
+            if (confirm('Вы уверены, что хотите восстановить эту рецензию?')) {
+                const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                
+                fetch(`/admin/deleted-reviews/${reviewId}/restore`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                .then(response => response.text())
+                .then(message => {
+                    alert(message);
+                    if (message.includes('успешно')) {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    alert('Ошибка при восстановлении рецензии: ' + error);
+                });
+            }
+        }
+
+        function confirmHardDelete(reviewId, reviewTitle) {
+            if (confirm(`ВНИМАНИЕ! Вы уверены, что хотите БЕЗВОЗВРАТНО удалить рецензию "${reviewTitle}"?\n\nЭто действие также удалит:\n- Все лайки на эту рецензию\n\nЭто действие НЕЛЬЗЯ отменить!`)) {
+                if (confirm('Последнее предупреждение! Это действие НЕЛЬЗЯ отменить. Продолжить?')) {
+                    hardDeleteReview(reviewId);
+                }
+            }
+        }
+
+        function hardDeleteReview(reviewId) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+            
+            fetch(`/admin/deleted-reviews/${reviewId}/hard-delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => response.text())
+            .then(message => {
+                alert(message);
+                // Обновляем страницу в любом случае для актуализации данных
+                location.reload();
+            })
+            .catch(error => {
+                alert('Ошибка при удалении рецензии: ' + error);
+                // Даже при ошибке обновляем страницу на случай частичного выполнения
+                location.reload();
+            });
+        }
+    </script>
+</body>
+</html> 

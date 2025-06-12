@@ -191,4 +191,7 @@ public interface ReleaseRepository extends JpaRepository<Release, Long>, JpaSpec
            "     OR LOWER(ra.author.authorName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
            "ORDER BY r.releaseDate DESC")
     Page<Release> findByTitleContainingIgnoreCase(@Param("search") String search, Pageable pageable);
+
+    @Query("SELECT DISTINCT r FROM Release r JOIN r.authors ra WHERE ra.author.authorId = :authorId")
+    List<Release> findAllByAuthorId(@Param("authorId") Long authorId);
 }

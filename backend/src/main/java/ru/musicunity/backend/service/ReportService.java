@@ -21,6 +21,7 @@ import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.ReportStatus;
 import ru.musicunity.backend.repository.AuditRepository;
 import ru.musicunity.backend.repository.ReportRepository;
+import ru.musicunity.backend.service.SessionManager;
 
 import java.time.LocalDateTime;
 
@@ -36,6 +37,7 @@ public class ReportService {
     private final UserMapper userMapper;
     private final ReviewMapper reviewMapper;
     private final AuditRepository auditRepository;
+    private final SessionManager sessionManager;
 
     public Page<ReportDTO> getAllSorted(Pageable pageable) {
         return reportRepository.findAllSorted(pageable)
@@ -173,6 +175,9 @@ public class ReportService {
             Review review = reviewService.getReviewEntityById(report.getTargetId());
             User userToBan = review.getUser();
             userService.banUser(userToBan.getUserId());
+            
+            // Принудительно выходим пользователя из всех сессий
+            sessionManager.invalidateUserSessions(userToBan.getUserId());
         }
 
         report.setStatus(ReportStatus.RESOLVED);

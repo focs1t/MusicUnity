@@ -23,6 +23,22 @@
                 <a class="nav-link" href="/admin/users">Пользователи</a>
                 <a class="nav-link" href="/admin/registration-requests">Заявки</a>
                 <a class="nav-link" href="/admin/audit">Аудит</a>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        Удаленные
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/deleted-releases">
+                            <i class="fas fa-compact-disc me-2"></i>Релизы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-authors">
+                            <i class="fas fa-microphone me-2"></i>Авторы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-reviews">
+                            <i class="fas fa-edit me-2"></i>Рецензии
+                        </a></li>
+                    </ul>
+                </div>
                 <a class="nav-link" href="/logout">Выход</a>
             </div>
         </div>
@@ -64,7 +80,7 @@
         </div>
             
         <!-- Дополнительные функции -->
-        <div class="row">
+        <div class="row mb-5">
             <div class="col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-header bg-primary text-white">
@@ -94,6 +110,69 @@
                         <div class="d-grid">
                             <a href="/admin/audit" class="btn btn-info">
                                 <i class="fas fa-history me-2"></i>Открыть журнал
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление удаленными объектами -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="h4 mb-3">
+                    <i class="fas fa-trash-restore me-2 text-danger"></i>Управление удаленными объектами
+                </h2>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-compact-disc me-2"></i>Удаленные релизы
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Восстановление или безвозвратное удаление релизов</p>
+                        <div class="d-grid">
+                            <a href="/admin/deleted-releases" class="btn btn-outline-danger">
+                                <i class="fas fa-search me-2"></i>Просмотреть
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-microphone me-2"></i>Удаленные авторы
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Восстановление или безвозвратное удаление авторов</p>
+                        <div class="d-grid">
+                            <a href="/admin/deleted-authors" class="btn btn-outline-warning">
+                                <i class="fas fa-search me-2"></i>Просмотреть
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-secondary">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Удаленные рецензии
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Восстановление или безвозвратное удаление рецензий</p>
+                        <div class="d-grid">
+                            <a href="/admin/deleted-reviews" class="btn btn-outline-secondary">
+                                <i class="fas fa-search me-2"></i>Просмотреть
                             </a>
                         </div>
                     </div>

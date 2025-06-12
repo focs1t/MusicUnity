@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Управление пользователями - MusicUnity Admin</title>
     
     <!-- Bootstrap CSS -->
@@ -33,6 +35,22 @@
                 <a class="nav-link active" href="/admin/users">Пользователи</a>
                 <a class="nav-link" href="/admin/registration-requests">Заявки</a>
                 <a class="nav-link" href="/admin/audit">Аудит</a>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        Удаленные
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/deleted-releases">
+                            <i class="fas fa-compact-disc me-2"></i>Релизы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-authors">
+                            <i class="fas fa-microphone me-2"></i>Авторы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-reviews">
+                            <i class="fas fa-edit me-2"></i>Рецензии
+                        </a></li>
+                    </ul>
+                </div>
                 <a class="nav-link" href="/logout">Выход</a>
             </div>
         </div>
@@ -265,7 +283,7 @@
                                              <button type="button" 
                                                      th:if="${!user.isBlocked}" 
                                                      class="btn btn-outline-danger btn-sm"
-                                                     th:onclick="'if(confirm(\'Заблокировать пользователя?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/block\''"
+                                                     th:onclick="'if(confirm(\'Заблокировать пользователя?\')) submitUserAction(' + ${user.userId} + ', \'block\')'"
                                                      data-bs-toggle="tooltip" 
                                                      data-bs-placement="top" 
                                                      title="Заблокировать пользователя">
@@ -275,7 +293,7 @@
                                              <button type="button" 
                                                      th:if="${user.isBlocked}" 
                                                      class="btn btn-outline-success btn-sm"
-                                                     th:onclick="'if(confirm(\'Разблокировать пользователя?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/unblock\''"
+                                                     th:onclick="'if(confirm(\'Разблокировать пользователя?\')) submitUserAction(' + ${user.userId} + ', \'unblock\')'"
                                                      data-bs-toggle="tooltip" 
                                                      data-bs-placement="top" 
                                                      title="Разблокировать пользователя">
@@ -286,7 +304,7 @@
                                              <button type="button" 
                                                      th:if="${user.rights?.name() == 'USER'}" 
                                                      class="btn btn-outline-warning btn-sm"
-                                                     th:onclick="'if(confirm(\'Назначить пользователя модератором?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/promote-to-moderator\''"
+                                                     th:onclick="'if(confirm(\'Назначить пользователя модератором?\')) submitUserAction(' + ${user.userId} + ', \'promote-to-moderator\')'"
                                                      data-bs-toggle="tooltip" 
                                                      data-bs-placement="top" 
                                                      title="Назначить модератором">
@@ -296,7 +314,7 @@
                                              <button type="button" 
                                                      th:if="${user.rights?.name() == 'MODERATOR'}" 
                                                      class="btn btn-outline-primary btn-sm"
-                                                     th:onclick="'if(confirm(\'Понизить модератора до обычного пользователя?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/demote-to-user\''"
+                                                     th:onclick="'if(confirm(\'Понизить модератора до обычного пользователя?\')) submitUserAction(' + ${user.userId} + ', \'demote-to-user\')'"
                                                      data-bs-toggle="tooltip" 
                                                      data-bs-placement="top" 
                                                      title="Понизить до пользователя">
@@ -511,13 +529,13 @@
                                             '<div class="text-muted"><i class="fas fa-shield-alt me-1"></i>Администратор</div>' :
                                             `<div class="btn-group btn-group-sm">
                                                 ${!user.isBlocked ?
-                                                    `<button type="button" class="btn btn-outline-danger btn-sm" onclick="if(confirm('Заблокировать пользователя?')) window.location.href='/admin/users/${user.userId}/block'" data-bs-toggle="tooltip" title="Заблокировать пользователя"><i class="fas fa-ban"></i></button>` :
-                                                    `<button type="button" class="btn btn-outline-success btn-sm" onclick="if(confirm('Разблокировать пользователя?')) window.location.href='/admin/users/${user.userId}/unblock'" data-bs-toggle="tooltip" title="Разблокировать пользователя"><i class="fas fa-check"></i></button>`
+                                                    `<button type="button" class="btn btn-outline-danger btn-sm" onclick="if(confirm('Заблокировать пользователя?')) submitUserAction(${user.userId}, 'block')" data-bs-toggle="tooltip" title="Заблокировать пользователя"><i class="fas fa-ban"></i></button>` :
+                                                    `<button type="button" class="btn btn-outline-success btn-sm" onclick="if(confirm('Разблокировать пользователя?')) submitUserAction(${user.userId}, 'unblock')" data-bs-toggle="tooltip" title="Разблокировать пользователя"><i class="fas fa-check"></i></button>`
                                                 }
                                                 ${user.rights?.name === 'USER' ?
-                                                    `<button type="button" class="btn btn-outline-warning btn-sm" onclick="if(confirm('Назначить пользователя модератором?')) window.location.href='/admin/users/${user.userId}/promote-to-moderator'" data-bs-toggle="tooltip" title="Назначить модератором"><i class="fas fa-arrow-up"></i></button>` :
+                                                    `<button type="button" class="btn btn-outline-warning btn-sm" onclick="if(confirm('Назначить пользователя модератором?')) submitUserAction(${user.userId}, 'promote-to-moderator')" data-bs-toggle="tooltip" title="Назначить модератором"><i class="fas fa-arrow-up"></i></button>` :
                                                     user.rights?.name === 'MODERATOR' ?
-                                                        `<button type="button" class="btn btn-outline-primary btn-sm" onclick="if(confirm('Понизить модератора до обычного пользователя?')) window.location.href='/admin/users/${user.userId}/demote-to-user'" data-bs-toggle="tooltip" title="Понизить до пользователя"><i class="fas fa-arrow-down"></i></button>` : ''
+                                                        `<button type="button" class="btn btn-outline-primary btn-sm" onclick="if(confirm('Понизить модератора до обычного пользователя?')) submitUserAction(${user.userId}, 'demote-to-user')" data-bs-toggle="tooltip" title="Понизить до пользователя"><i class="fas fa-arrow-down"></i></button>` : ''
                                                 }
                                             </div>`
                                         }
@@ -559,6 +577,64 @@
             });
         }
 
+        // Отправка POST запроса для действий с пользователем
+        async function submitUserAction(userId, action) {
+            try {
+                const response = await fetch(`/admin/users/${userId}/${action}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `_csrf=${document.querySelector('meta[name="_csrf"]').getAttribute('content')}`
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showNotification(result.message || 'Операция выполнена успешно', 'success');
+                    // Перезагружаем таблицу
+                    loadUsers(currentPage);
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Произошла ошибка при выполнении операции', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка при выполнении действия:', error);
+                showNotification('Произошла ошибка при выполнении операции', 'error');
+            }
+        }
+
+        // Показать уведомление
+        function showNotification(message, type) {
+            // Удаляем существующие уведомления
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            // Создаем новое уведомление
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+            
+            const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${icon} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Вставляем уведомление в начало контейнера
+            const container = document.querySelector('.container.mt-4');
+            container.insertAdjacentHTML('afterbegin', alertHtml);
+            
+            // Автоматически скрываем через 5 секунд
+            setTimeout(() => {
+                const alert = document.querySelector('.alert');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             // Инициализация текущих параметров из URL или значений по умолчанию
@@ -567,8 +643,22 @@
             currentSortBy = urlParams.get('sortBy') || 'createdAt';
             currentSortDir = urlParams.get('sortDir') || 'desc';
             
+            // Устанавливаем значения фильтров из URL
+            const usernameParam = urlParams.get('username');
+            const roleParam = urlParams.get('role');
+            const statusParam = urlParams.get('status');
+            
+            if (usernameParam) document.getElementById('username').value = usernameParam;
+            if (roleParam) document.getElementById('role').value = roleParam;
+            if (statusParam) document.getElementById('status').value = statusParam;
+            
             // Инициализация тултипов для статичных элементов
             initTooltips();
+            
+            // Автоматически загружаем данные через AJAX если страница пустая или есть параметры фильтрации
+            if (document.querySelector('#usersTableContainer .table') === null || urlParams.toString()) {
+                loadUsers(currentPage);
+            }
         });
     </script>
 </body>

@@ -20,6 +20,7 @@ import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.repository.ReviewRepository;
 import ru.musicunity.backend.repository.UserRepository;
+import ru.musicunity.backend.repository.LikeRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class ReviewService {
     private final ReviewMapper reviewMapper;
     private final UserMapper userMapper;
     private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
 
     public ReviewDTO getReviewById(Long id) {
         return reviewRepository.findById(id)
@@ -142,6 +144,12 @@ public class ReviewService {
     public void hardDeleteReview(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        
+        // Каскадное удаление: удаляем все лайки рецензии
+        likeRepository.findAllByReviewId(reviewId).forEach(like -> {
+            likeRepository.delete(like);
+        });
+        
         reviewRepository.delete(review);
     }
 

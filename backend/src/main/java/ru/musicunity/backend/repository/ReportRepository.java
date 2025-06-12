@@ -10,6 +10,7 @@ import ru.musicunity.backend.pojo.Report;
 import ru.musicunity.backend.pojo.enums.ReportStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface ReportRepository extends JpaRepository<Report, Long> {
@@ -31,4 +32,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     @Query("SELECT r FROM Report r WHERE r.user.userId = :userId")
     Page<Report> findByUser(Long userId, Pageable pageable);
+    
+    @Query("SELECT r FROM Report r WHERE r.moderator.userId = :moderatorId AND r.status != ru.musicunity.backend.pojo.enums.ReportStatus.PENDING")
+    List<Report> findAllResolvedByModerator(Long moderatorId);
 }

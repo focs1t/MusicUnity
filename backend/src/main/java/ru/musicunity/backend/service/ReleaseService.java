@@ -21,6 +21,7 @@ import ru.musicunity.backend.pojo.*;
 import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.repository.*;
+import ru.musicunity.backend.repository.LikeRepository;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
@@ -38,6 +39,7 @@ public class ReleaseService {
     private final ReleaseMapper releaseMapper;
     private final ReleaseAuthorService releaseAuthorService;
     private final AuditRepository auditRepository;
+    private final LikeRepository likeRepository;
 
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
@@ -316,6 +318,24 @@ public class ReleaseService {
     public void hardDeleteRelease(Long releaseId) {
         Release release = releaseRepository.findById(releaseId)
                 .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
+        
+        // Каскадное удаление: удаляем все связанные рецензии
+        release.getReviews().forEach(review -> {
+            // Удаляем все лайки рецензии
+            likeRepository.findAllByReviewId(review.getReviewId()).forEach(like -> {
+                likeRepository.delete(like);
+            });
+        });
+        
+        // Удаляем все избранные этого релиза
+        release.getFavorites().clear();
+        
+        // Удаляем связи с авторами
+        release.getAuthors().clear();
+        
+        // Удаляем связи с жанрами
+        release.getGenres().clear();
+        
         releaseRepository.delete(release);
     }
 

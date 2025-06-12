@@ -21,6 +21,7 @@ public class ReviewDTO {
     private Integer likesCount;
     private Integer totalScore;
     private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
     
     // Дополнительные данные о пользователе (авторе рецензии)
     private UserDTO user;
@@ -44,5 +45,17 @@ public class ReviewDTO {
         private Long releaseId;
         private String title;
         private String coverUrl;
+        private java.util.List<AuthorDTO> authors;
+    }
+    
+    @Data
+    public static class AuthorDTO {
+        private Long id;
+        private String authorName;
+        private String avatarUrl;
+        private Boolean isArtist;
+        private Boolean isProducer;
+        private String bio;
+        private Boolean isVerified;
     }
 } 

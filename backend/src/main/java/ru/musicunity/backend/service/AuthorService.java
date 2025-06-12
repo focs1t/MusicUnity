@@ -13,10 +13,14 @@ import ru.musicunity.backend.exception.AuthorAlreadyExistsException;
 import ru.musicunity.backend.exception.AuthorNotFoundException;
 import ru.musicunity.backend.mapper.AuthorMapper;
 import ru.musicunity.backend.pojo.Author;
+import ru.musicunity.backend.pojo.Release;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.UserFollowing;
 import ru.musicunity.backend.repository.AuthorRepository;
 import ru.musicunity.backend.repository.UserFollowingRepository;
+import ru.musicunity.backend.repository.ReleaseRepository;
+import ru.musicunity.backend.repository.UserRepository;
+import ru.musicunity.backend.repository.LikeRepository;
 import ru.musicunity.backend.service.UserService;
 
 import java.util.List;
@@ -28,6 +32,9 @@ import java.util.stream.Collectors;
 public class AuthorService {
     private final AuthorRepository authorRepository;
     private final UserFollowingRepository userFollowingRepository;
+    private final ReleaseRepository releaseRepository;
+    private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
     private final UserService userService;
     private final AuthorMapper authorMapper;
 
@@ -170,6 +177,17 @@ public class AuthorService {
         author.setIsDeleted(true);
         authorRepository.save(author);
         
+        // Помечаем ВСЕ релизы автора как удаленные независимо от других авторов
+        author.getReleases().forEach(releaseAuthor -> {
+            Release release = releaseAuthor.getRelease();
+            
+            // Удаляем релиз если он еще не удален
+            if (!release.getIsDeleted()) {
+                release.setIsDeleted(true);
+                releaseRepository.save(release);
+            }
+        });
+        
         // Пересчитываем followingCount для всех авторов, исключая удаленных
         List<Author> allAuthors = authorRepository.findAll();
         for (Author a : allAuthors) {
@@ -188,6 +206,44 @@ public class AuthorService {
     public void hardDeleteAuthor(Long authorId) {
         Author author = authorRepository.findById(authorId)
                 .orElseThrow(() -> new AuthorNotFoundException(authorId));
+        
+        // Находим ВСЕ релизы автора (включая удаленные) через репозиторий
+        List<Release> authorReleases = releaseRepository.findAllByAuthorId(authorId);
+        
+        // Каскадное удаление всех релизов автора
+        authorReleases.forEach(release -> {
+            // Удаляем все рецензии релиза
+            release.getReviews().forEach(review -> {
+                // Удаляем все лайки рецензии
+                likeRepository.findAllByReviewId(review.getReviewId()).forEach(like -> {
+                    likeRepository.delete(like);
+                });
+            });
+            
+            // Удаляем все избранные релиза
+            release.getFavorites().clear();
+            
+            // Удаляем связи с жанрами
+            release.getGenres().clear();
+            
+            // Удаляем связи с авторами
+            release.getAuthors().clear();
+            
+            // Удаляем релиз
+            releaseRepository.delete(release);
+        });
+        
+        // Если автор верифицирован и связан с пользователем, блокируем пользователя
+        if (author.getIsVerified() && author.getUser() != null) {
+            User user = author.getUser();
+            user.setIsBlocked(true);
+            userRepository.save(user);
+        }
+        
+        // Удаляем все подписки на автора
+        author.getFollowings().clear();
+        
+        // Удаляем автора
         authorRepository.delete(author);
     }
 
@@ -198,6 +254,16 @@ public class AuthorService {
                 .orElseThrow(() -> new AuthorNotFoundException(authorId));
         author.setIsDeleted(false);
         authorRepository.save(author);
+        
+        // Находим ВСЕ релизы автора (включая удаленные) и восстанавливаем их
+        List<Release> authorReleases = releaseRepository.findAllByAuthorId(authorId);
+        
+        authorReleases.forEach(release -> {
+            if (release.getIsDeleted()) {
+                release.setIsDeleted(false);
+                releaseRepository.save(release);
+            }
+        });
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -23,6 +23,8 @@ import ru.musicunity.backend.service.UserService;
 import ru.musicunity.backend.mapper.UserMapper;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Tag(name = "User", description = "API для работы с пользователями")
 @RestController
@@ -149,6 +151,21 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserDTO> getCurrentUser() {
         return ResponseEntity.ok(userMapper.toDTO(userService.getCurrentUser()));
+    }
+
+    @Operation(summary = "Проверка статуса текущего пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Статус пользователя получен"),
+        @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован"),
+        @ApiResponse(responseCode = "403", description = "Пользователь заблокирован")
+    })
+    @GetMapping("/status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Boolean>> getUserStatus() {
+        var currentUser = userService.getCurrentUser();
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("isActive", currentUser.getIsBlocked() == null || !currentUser.getIsBlocked());
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Получение привязанного автора для пользователя")

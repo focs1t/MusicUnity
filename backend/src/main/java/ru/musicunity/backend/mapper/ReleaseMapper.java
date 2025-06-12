@@ -34,6 +34,7 @@ public class ReleaseMapper {
         dto.setReleaseLink(release.getReleaseLink());
         dto.setFavoritesCount(release.getFavoritesCount());
         dto.setAddedAt(release.getAddedAt());
+        dto.setDeletedAt(release.getAddedAt());
         
         // Маппим авторов
         dto.setAuthors(release.getAuthors().stream()
