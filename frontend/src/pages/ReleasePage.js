@@ -339,14 +339,11 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
 
       {/* Содержимое рецензии */}
       <div>
-        <div className="max-h-[120px] overflow-hidden relative transition-all duration-300 mb-4 px-1.5 block">
-          {review.title && <div className="text-base lg:text-lg mt-3 mb-2 font-semibold">{review.title}</div>}
-          <div className="mt-2 tracking-[-0.2px] font-light">
-            <div className="prose prose-invert text-[15px] text-white lg:text-base lg:leading-[150%]">
-              {review.content && review.content.length > 100 
-                ? review.content.substring(0, 100) + '...' 
-                : (review.content || 'Нет содержания')
-              }
+        <div className="relative transition-all duration-300 mb-4 px-1.5 block w-full">
+          {review.title && <div className="text-base lg:text-lg mt-3 mb-2 font-semibold w-full">{review.title}</div>}
+          <div className="mt-2 tracking-[-0.2px] font-light w-full">
+            <div className="text-[15px] text-white lg:text-base lg:leading-[150%] w-full break-words">
+              {review.content || 'Нет содержания'}
             </div>
           </div>
         </div>
@@ -459,16 +456,20 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
 function ReleasePage() {
   const { id } = useParams();
   const location = useLocation();
-  const { user, isAuth } = useAuth();
+  const { user } = useAuth();
   const [release, setRelease] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [inFavorites, setInFavorites] = useState(false);
-  
+  const [coverModalOpen, setCoverModalOpen] = useState(false);
+
   // Состояния для модальных окон авторизации
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
+  
+  // Состояние для модального окна критериев оценки
+  const [criteriaModalOpen, setCriteriaModalOpen] = useState(false);
   
   // Проверка роли пользователя
   const [userRole, setUserRole] = useState(null);
@@ -506,7 +507,7 @@ function ReleasePage() {
   // Состояния для пагинации
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [pageSize] = useState(1); // Количество рецензий на странице (для тестирования)
+  const [pageSize] = useState(3); // Количество рецензий на странице (для тестирования)
   
   // Состояния для лайков
   const [likedReviews, setLikedReviews] = useState(new Set());
@@ -530,7 +531,7 @@ function ReleasePage() {
   useEffect(() => {
     const checkUserRole = async () => {
       setUserRoleLoading(true);
-      if (isAuth && user) {
+      if (user && user.id) {
         try {
           const userData = await userApi.getCurrentUser();
           setUserRole(userData.rights);
@@ -546,7 +547,7 @@ function ReleasePage() {
     };
     
     checkUserRole();
-  }, [isAuth, user]);
+  }, [user]);
 
   // Рассчитываем общий счет на основе формулы из бэкенда
   const calculateTotalScore = () => {
@@ -586,7 +587,7 @@ function ReleasePage() {
   
   // Обработчик отправки формы
   const handleSubmitReview = async () => {
-    if (!isAuth || !user || !user.id) {
+    if (!user || !user.id) {
       setSubmitError('Для создания рецензии необходимо авторизоваться');
       return;
     }
@@ -605,6 +606,12 @@ function ReleasePage() {
         
         if (reviewContent.length < 10) {
           setSubmitError('Текст рецензии должен содержать не менее 10 символов');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (reviewContent.length > 1000) {
+          setSubmitError('Текст рецензии не должен превышать 1000 символов');
           setIsSubmitting(false);
           return;
         }
@@ -705,9 +712,13 @@ function ReleasePage() {
       const userId = getCurrentUserIdInComponent();
       console.log('fetchReviews: currentUserId =', userId);
       
+      // Очищаем старые данные лайков перед загрузкой новых
+      setLikedReviews(new Set());
+      setAuthorLikes({});
+      
       // Параллельно загружаем рецензии и лайкнутые рецензии для повышения производительности
-      const [reviewsResponse, likedReviewsSet] = await Promise.all([
-        reviewApi.getExtendedReviewsByRelease(id, currentPage - 1, pageSize, sortBy),
+              const [reviewsResponse, likedReviewsSet] = await Promise.all([
+          reviewApi.getExtendedReviewsByRelease(id, currentPage - 1, pageSize, sortBy),
         userId ? fetchLikedReviewsByCurrentUser() : new Set()
       ]);
       
@@ -739,7 +750,10 @@ function ReleasePage() {
   // Загрузка лайкнутых рецензий пользователя (как в ReviewsPage)
   const fetchLikedReviewsByCurrentUser = async () => {
     const userId = getCurrentUserIdInComponent();
-    if (!userId) return new Set();
+    if (!userId) {
+      console.log('Пользователь не авторизован, возвращаем пустой Set');
+      return new Set();
+    }
     
     try {
       console.log(`Загружаем рецензии, лайкнутые пользователем ID ${userId}`);
@@ -753,7 +767,7 @@ function ReleasePage() {
               .map(review => review.reviewId || review.id || 0)
               .filter(id => id > 0)
           );
-          console.log(`Получено ${likedIds.size} лайкнутых рецензий:`, Array.from(likedIds));
+          console.log(`Получено ${likedIds.size} лайкнутых рецензий для пользователя ${userId}:`, Array.from(likedIds));
           return likedIds;
         }
       } catch (apiError) {
@@ -887,7 +901,7 @@ function ReleasePage() {
 
     fetchRelease();
     fetchReviews();
-  }, [id]);
+      }, [id]);
 
   // Перезагружаем рецензии при изменении сортировки или страницы
   useEffect(() => {
@@ -900,11 +914,11 @@ function ReleasePage() {
     if (!release) return;
     
     try {
-      if (inFavorites) {
-        await releaseApi.removeFromFavorites(id);
-      } else {
-        await releaseApi.addToFavorites(id);
-      }
+              if (inFavorites) {
+          await releaseApi.removeFromFavorites(id);
+        } else {
+          await releaseApi.addToFavorites(id);
+        }
       
       setInFavorites(!inFavorites);
       setRelease(prev => ({
@@ -1091,20 +1105,20 @@ function ReleasePage() {
   };
 
   // Функции для модальных окон авторизации
-  const handleOpenLoginModal = () => {
-    // Сохраняем текущую страницу для возврата после авторизации
-    localStorage.setItem('redirectAfterAuth', location.pathname + location.search);
-    setLoginModalOpen(true);
-  };
+      const handleOpenLoginModal = () => {
+      // Сохраняем текущую страницу для возврата после авторизации
+      localStorage.setItem('redirectAfterAuth', location.pathname + location.search);
+      setLoginModalOpen(true);
+    };
 
   const handleCloseLoginModal = () => {
     setLoginModalOpen(false);
   };
 
-  const handleOpenRegisterModal = () => {
-    localStorage.setItem('redirectAfterAuth', location.pathname + location.search);
-    setRegisterModalOpen(true);
-  };
+      const handleOpenRegisterModal = () => {
+      localStorage.setItem('redirectAfterAuth', location.pathname + location.search);
+      setRegisterModalOpen(true);
+    };
 
   const handleCloseRegisterModal = () => {
     setRegisterModalOpen(false);
@@ -1377,6 +1391,17 @@ function ReleasePage() {
     };
   }, [sortDropdownOpen]);
 
+  // Получаем ID пользователя при каждом рендере, чтобы гарантировать актуальность
+  const currentUserId = getCurrentUserIdInComponent();
+  console.log('ReleasePage инициализация, текущий ID пользователя:', currentUserId);
+  
+  // Очищаем состояние лайков при смене пользователя
+  useEffect(() => {
+    console.log('Смена пользователя обнаружена, очищаем состояние лайков');
+    setLikedReviews(new Set());
+    setAuthorLikes({});
+  }, [currentUserId]);
+
   if (loading || userRoleLoading) {
     return (
       <div className="release-page">
@@ -1521,7 +1546,15 @@ function ReleasePage() {
               
               {/* Обложка релиза */}
               <div className="cover-container">
-                <div className="cover-wrapper" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-:r3i9:" data-state="closed">
+                <div 
+                  className="cover-wrapper" 
+                  type="button" 
+                  aria-haspopup="dialog" 
+                  aria-expanded="false" 
+                  data-state="closed"
+                  onClick={() => setCoverModalOpen(true)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="zoom-button">
                     <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="11" cy="11" r="8"></circle>
@@ -1766,7 +1799,7 @@ function ReleasePage() {
                 </div>
                 
                 {/* Кнопка репорта на релиз */}
-                {release && isAuth && (
+                {release && user && (
                   <ReportButton
                     type={ReportType.RELEASE}
                     targetId={release.releaseId}
@@ -1779,7 +1812,7 @@ function ReleasePage() {
             </div>
             
             {/* Блок создания рецензии - отображается только для авторизованных пользователей (кроме авторов) */}
-            {isAuth && user && !isAuthor ? (
+            {user && !isAuthor ? (
               <div className="review-form-container">
                 <div className="review-form-title">Оценить работу</div>
                 <div dir="ltr" data-orientation="vertical" className="review-form-grid">
@@ -1840,22 +1873,16 @@ function ReleasePage() {
                       </svg>
                       <h5 className="review-alert-title">Ознакомьтесь с критериями.</h5>
                       <div className="review-alert-content">
-                        <div>Будут отклонены рецензии:</div>
-                        <ul className="review-alert-list">
-                          <li className="review-alert-list-item">с матом</li>
-                          <li className="review-alert-list-item">с оскорблениями</li>
-                          <li className="review-alert-list-item">с рекламой и ссылками</li>
-                          <li className="review-alert-list-item">малосодержательные</li>
-                        </ul>
                         <button 
                           className="review-criteria-button" 
                           type="button" 
                           aria-haspopup="dialog" 
                           aria-expanded="false" 
-                          aria-controls="radix-:rk:" 
+                          aria-controls="criteria-modal" 
                           data-state="closed"
+                          onClick={() => setCriteriaModalOpen(true)}
                         >
-                          Критерии оценки
+                          Ознакомиться с критериями
                         </button>
                       </div>
                     </div>
@@ -1987,8 +2014,8 @@ function ReleasePage() {
                                     className="review-content-textarea" 
                                     name="content" 
                                     id="content" 
-                                    placeholder="Текст рецензии (от 300 до 8500 символов)" 
-                                    maxLength="9000"
+                                    placeholder="Текст рецензии (от 10 до 1000 символов)" 
+                                    maxLength="1000"
                                     value={reviewContent}
                                     onChange={handleContentChange}
                                   ></textarea>
@@ -2008,7 +2035,7 @@ function ReleasePage() {
                                       </svg>
                                       <span>Очистить черновик</span>
                                     </button>
-                                    <div className="review-count-display">{contentLength}/8500</div>
+                                    <div className="review-count-display">{contentLength}/1000</div>
                                   </div>
                                 </div>
                                 
@@ -2195,7 +2222,7 @@ function ReleasePage() {
                   </div>
                 </div>
               </div>
-            ) : (!isAuth && (
+            ) : (!user && (
               <div className="review-auth-container">
                 <div className="review-auth-box">
                   <div className="review-auth-message">Чтобы оставить рецензию, необходимо авторизоваться</div>
@@ -2291,6 +2318,307 @@ function ReleasePage() {
         onClose={handleCloseForgotPasswordModal}
         onSwitchToLogin={handleSwitchToLogin}
       />
+
+      {/* Модальное окно критериев оценки */}
+      {criteriaModalOpen && (
+        <div className="criteria-modal-overlay bg-black bg-opacity-50 p-4">
+          <div 
+            className="relative w-full max-h-[80vh] overflow-y-auto"
+            style={{
+              maxWidth: '600px',
+              borderRadius: '16px',
+              backgroundColor: '#121212',
+              backgroundImage: 'linear-gradient(135deg, #121212 0%, #1e1e1e 100%)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+              color: '#ffffff'
+            }}
+          >
+            {/* Крестик закрытия */}
+            <div 
+              style={{
+                position: 'absolute', 
+                right: '12px', 
+                top: '12px', 
+                zIndex: 10,
+                cursor: 'pointer',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%'
+              }}
+              className="hover:bg-white hover:bg-opacity-10 transition-colors"
+              onClick={() => setCriteriaModalOpen(false)}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18" stroke="#777" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M6 6L18 18" stroke="#777" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+
+            <div style={{ padding: '20px 24px 24px 24px' }}>
+              {/* Заголовок */}
+              <h2 
+                style={{ 
+                  textAlign: 'center', 
+                  marginBottom: '20px', 
+                  fontWeight: 600, 
+                  color: '#fff',
+                  textShadow: '0px 2px 4px rgba(0,0,0,0.3)',
+                  fontSize: '1.25rem'
+                }}
+              >
+                Критерии оценки
+              </h2>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} className="text-white">
+                <div>
+                  <h3 
+                    style={{ 
+                      fontSize: '1rem',
+                      fontWeight: 600, 
+                      marginBottom: '16px', 
+                      color: '#4dabf5',
+                      textAlign: 'center'
+                    }}
+                  >
+                    Параметры оценки
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div 
+                      style={{
+                        borderLeft: '3px solid #4dabf5',
+                        paddingLeft: '12px',
+                        backgroundColor: 'rgba(0,0,0,0.3)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <h4 style={{ fontWeight: 600, color: '#ffffff', marginBottom: '6px', fontSize: '14px' }}>
+                        Рифма и образность (1-10 баллов)
+                      </h4>
+                      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', lineHeight: '1.4', margin: 0 }}>
+                        Качество рифм, их разнообразие, использование метафор, сравнений и других художественных приемов.
+                      </p>
+                    </div>
+                    
+                    <div 
+                      style={{
+                        borderLeft: '3px solid #10b981',
+                        paddingLeft: '12px',
+                        backgroundColor: 'rgba(0,0,0,0.3)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <h4 style={{ fontWeight: 600, color: '#ffffff', marginBottom: '6px', fontSize: '14px' }}>
+                        Структура и ритм (1-10 баллов)
+                      </h4>
+                      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', lineHeight: '1.4', margin: 0 }}>
+                        Построение композиции трека, логичность изложения, соблюдение ритмической структуры.
+                      </p>
+                    </div>
+                    
+                    <div 
+                      style={{
+                        borderLeft: '3px solid #8b5cf6',
+                        paddingLeft: '12px',
+                        backgroundColor: 'rgba(0,0,0,0.3)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <h4 style={{ fontWeight: 600, color: '#ffffff', marginBottom: '6px', fontSize: '14px' }}>
+                        Стиль и исполнение (1-10 баллов)
+                      </h4>
+                      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', lineHeight: '1.4', margin: 0 }}>
+                        Подача материала, техника исполнения, соответствие стилю жанра.
+                      </p>
+                    </div>
+                    
+                    <div 
+                      style={{
+                        borderLeft: '3px solid #f59e0b',
+                        paddingLeft: '12px',
+                        backgroundColor: 'rgba(0,0,0,0.3)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <h4 style={{ fontWeight: 600, color: '#ffffff', marginBottom: '6px', fontSize: '14px' }}>
+                        Индивидуальность (1-10 баллов)
+                      </h4>
+                      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', lineHeight: '1.4', margin: 0 }}>
+                        Уникальность подхода, оригинальность идей, узнаваемость стиля автора.
+                      </p>
+                    </div>
+                    
+                    <div 
+                      style={{
+                        borderLeft: '3px solid #10b981',
+                        paddingLeft: '12px',
+                        backgroundColor: 'rgba(0,0,0,0.3)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <h4 style={{ fontWeight: 600, color: '#ffffff', marginBottom: '6px', fontSize: '14px' }}>
+                        Вайб (1-10 баллов)
+                      </h4>
+                      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', lineHeight: '1.4', margin: 0 }}>
+                        Общее впечатление от трека, эмоциональное воздействие, атмосфера.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', marginTop: '16px' }}>
+                  <h3 
+                    style={{ 
+                      fontSize: '1rem',
+                      fontWeight: 600, 
+                      marginBottom: '12px', 
+                      color: '#4dabf5',
+                      textAlign: 'center'
+                    }}
+                  >
+                    Формула вычисления
+                  </h3>
+                  <div 
+                    style={{
+                      backgroundColor: 'rgba(0,0,0,0.4)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255,255,255,0.1)'
+                    }}
+                  >
+                    <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '8px', fontWeight: 600, textAlign: 'center', fontSize: '13px' }}>
+                      (Рифма + Структура + Стиль + Индивидуальность) × (1 + Вайб/10 × 1.5)
+                    </p>
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', margin: 0, textAlign: 'center' }}>
+                      Максимум: 100 баллов. Вайб работает как мультипликатор.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                <button 
+                  onClick={() => setCriteriaModalOpen(false)}
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    color: '#000',
+                    borderRadius: '8px',
+                    padding: '8px 20px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = 'white';
+                    e.target.style.boxShadow = '0 6px 16px rgba(0,0,0,0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'rgba(255,255,255,0.9)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+                  }}
+                >
+                  Понятно
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно для просмотра обложки */}
+      {coverModalOpen && (
+        <div 
+          className="criteria-modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px'
+          }}
+          onClick={() => setCoverModalOpen(false)}
+        >
+          <div 
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Кнопка закрытия */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '0px',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease'
+              }}
+              className="hover:bg-white hover:bg-opacity-20 transition-colors"
+              onClick={() => setCoverModalOpen(false)}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+
+            {/* Обложка */}
+            <img 
+              alt={release?.title || 'Обложка релиза'} 
+              src={release?.coverUrl}
+              style={{ 
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.7)'
+              }} 
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

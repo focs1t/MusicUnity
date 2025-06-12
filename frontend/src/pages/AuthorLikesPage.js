@@ -559,6 +559,13 @@ const AuthorLikesPage = () => {
   const currentUserId = getCurrentUserIdInComponent();
   console.log('AuthorLikesPage инициализация, текущий ID пользователя:', currentUserId);
   
+  // Очищаем состояние лайков при смене пользователя
+  useEffect(() => {
+    console.log('Смена пользователя обнаружена, очищаем состояние лайков');
+    setLikedReviews(new Set());
+    setAuthorLikes({});
+  }, [currentUserId]);
+  
   // Выводим данные авторизации из контекста
   useEffect(() => {
     if (auth) {
@@ -586,7 +593,10 @@ const AuthorLikesPage = () => {
   // Загрузка данных лайкнутых рецензий
   const fetchLikedReviewsByCurrentUser = async () => {
     const userId = getCurrentUserId();
-    if (!userId) return new Set();
+    if (!userId) {
+      console.log('Пользователь не авторизован, возвращаем пустой Set');
+      return new Set();
+    }
     
     try {
       console.log(`Загружаем рецензии, лайкнутые пользователем ID ${userId}`);
@@ -600,18 +610,13 @@ const AuthorLikesPage = () => {
               .map(review => review.reviewId || review.id || 0)
               .filter(id => id > 0)
           );
-          console.log(`Получено ${likedIds.size} лайкнутых рецензий:`, Array.from(likedIds));
+          console.log(`Получено ${likedIds.size} лайкнутых рецензий для пользователя ${userId}:`, Array.from(likedIds));
           return likedIds;
         }
       } catch (apiError) {
         console.error('Ошибка API при загрузке лайкнутых рецензий:', apiError);
-        console.log('Используем тестовые данные для отображения');
-        
-        // Используем тестовые данные, если API недоступен
-        // В реальном приложении этого кода не должно быть - только для отладки!
-        const testLikedIds = new Set([1, 4, 7]); // Пример лайкнутых рецензий
-        console.log('Тестовые данные лайков:', Array.from(testLikedIds));
-        return testLikedIds;
+        // Убираем тестовые данные - они могут вызывать путаницу
+        return new Set();
       }
       
       return new Set();
@@ -748,6 +753,10 @@ const AuthorLikesPage = () => {
       // Сначала получаем актуальный ID пользователя
       const userId = getCurrentUserId();
       console.log('fetchReviews: currentUserId =', userId);
+      
+      // Очищаем старые данные лайков перед загрузкой новых
+      setLikedReviews(new Set());
+      setAuthorLikes({});
       
       // Параллельно загружаем рецензии с авторскими лайками и лайкнутые рецензии для повышения производительности
       const [reviewsResponse, likedReviewsSet] = await Promise.all([
