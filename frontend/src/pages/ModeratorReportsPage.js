@@ -94,6 +94,7 @@ const ModeratorReportsPage = () => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [actionDialog, setActionDialog] = useState({ open: false, type: '', report: null });
   const [reasonDialog, setReasonDialog] = useState({ open: false, reason: '' });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   // Загрузка репортов
   const loadReports = async (pageNumber = 0) => {
@@ -292,6 +293,59 @@ const ModeratorReportsPage = () => {
     setReasonDialog({ open: true, reason });
   };
 
+  // Функция сортировки
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Сортировка данных
+  const sortedReports = React.useMemo(() => {
+    if (!sortConfig.key) return reports;
+
+    return [...reports].sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+
+      // Специальная обработка для даты
+      if (sortConfig.key === 'createdAt') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+
+      // Специальная обработка для типа
+      if (sortConfig.key === 'type') {
+        aValue = getReportTypeText(aValue);
+        bValue = getReportTypeText(bValue);
+      }
+
+      // Специальная обработка для статуса
+      if (sortConfig.key === 'status') {
+        aValue = getStatusText(aValue);
+        bValue = getStatusText(bValue);
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [reports, sortConfig]);
+
+  // Функция для получения иконки сортировки
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) {
+      return '↕️';
+    }
+    return sortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
   // Компонент для отображения причины с сокращением
   const ReasonCell = ({ report }) => {
     const maxLength = 40;
@@ -470,17 +524,65 @@ const ModeratorReportsPage = () => {
                   <Table>
                     <TableHead>
                       <TableRow sx={{ bgcolor: '#1a1a1a' }}>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>ID</TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Тип</TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>№</TableCell>
+                        <TableCell 
+                          sx={{ 
+                            color: '#ffffff', 
+                            fontWeight: 600, 
+                            borderBottom: '1px solid #333333',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                          }}
+                          onClick={() => handleSort('type')}
+                        >
+                          Тип {getSortIcon('type')}
+                        </TableCell>
                         <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Переход</TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Причина</TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Статус</TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Дата</TableCell>
+                        <TableCell 
+                          sx={{ 
+                            color: '#ffffff', 
+                            fontWeight: 600, 
+                            borderBottom: '1px solid #333333',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                          }}
+                          onClick={() => handleSort('reason')}
+                        >
+                          Причина {getSortIcon('reason')}
+                        </TableCell>
+                        <TableCell 
+                          sx={{ 
+                            color: '#ffffff', 
+                            fontWeight: 600, 
+                            borderBottom: '1px solid #333333',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                          }}
+                          onClick={() => handleSort('status')}
+                        >
+                          Статус {getSortIcon('status')}
+                        </TableCell>
+                        <TableCell 
+                          sx={{ 
+                            color: '#ffffff', 
+                            fontWeight: 600, 
+                            borderBottom: '1px solid #333333',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                          }}
+                          onClick={() => handleSort('createdAt')}
+                        >
+                          Дата {getSortIcon('createdAt')}
+                        </TableCell>
                         <TableCell sx={{ color: '#ffffff', fontWeight: 600, borderBottom: '1px solid #333333' }}>Действия</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {reports.map((report) => {
+                      {sortedReports.map((report, index) => {
                         console.log('Обработка репорта:', report);
                         const availableActions = getAvailableActions(report.type);
                         return (
@@ -493,7 +595,7 @@ const ModeratorReportsPage = () => {
                             }}
                           >
                             <TableCell sx={{ color: '#ffffff', borderBottom: '1px solid #222222' }}>
-                              #{report.reportId}
+                              {page * 10 + index + 1}
                             </TableCell>
                             <TableCell sx={{ color: '#ffffff', borderBottom: '1px solid #222222' }}>
                               <Chip 
