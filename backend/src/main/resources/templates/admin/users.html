@@ -9,6 +9,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .sorted-asc, .sorted-desc {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <!-- Навигация -->
@@ -20,10 +30,7 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="/admin">Главная</a>
                 <a class="nav-link" href="/admin/genres">Жанры</a>
-                <a class="nav-link" href="/admin/authors">Авторы</a>
-                <a class="nav-link" href="/admin/releases">Релизы</a>
                 <a class="nav-link active" href="/admin/users">Пользователи</a>
-                <a class="nav-link" href="/admin/reviews">Рецензии</a>
                 <a class="nav-link" href="/admin/registration-requests">Заявки</a>
                 <a class="nav-link" href="/admin/audit">Аудит</a>
                 <a class="nav-link" href="/logout">Выход</a>
@@ -32,6 +39,19 @@
     </nav>
 
     <div class="container mt-4">
+        <!-- Flash сообщения -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${success}">Успешное сообщение</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span th:text="${error}">Сообщение об ошибке</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
         <div class="row mb-4">
             <div class="col-md-8">
                 <h2><i class="fas fa-users me-2"></i>Управление пользователями</h2>
@@ -44,6 +64,42 @@
             </div>
         </div>
 
+        <!-- Фильтры -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form class="row g-3" id="filterForm" onsubmit="return false;">
+                    <div class="col-md-5">
+                        <label for="username" class="form-label">Поиск по имени</label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="Введите имя пользователя" th:value="${username}" oninput="debounceSearch()">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="role" class="form-label">Роль</label>
+                        <select class="form-select" id="role" name="role" onchange="loadUsers()">
+                            <option value="">Все роли</option>
+                            <option th:each="userRole : ${roles}" 
+                                    th:value="${userRole.name()}" 
+                                    th:text="${userRole.name() == 'USER' ? 'Пользователь' : 
+                                             userRole.name() == 'AUTHOR' ? 'Автор' :
+                                             userRole.name() == 'MODERATOR' ? 'Модератор' :
+                                             userRole.name() == 'ADMIN' ? 'Администратор' :
+                                             userRole.name()}" 
+                                    th:selected="${role == userRole.name()}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Статус</label>
+                        <select class="form-select" id="status" name="status" onchange="loadUsers()">
+                            <option value="">Все статусы</option>
+                            <option value="active" th:selected="${status == 'active'}">Активные</option>
+                            <option value="blocked" th:selected="${status == 'blocked'}">Заблокированные</option>
+                        </select>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
         <!-- Список пользователей -->
         <div class="card">
             <div class="card-header bg-primary text-white">
@@ -52,61 +108,201 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div th:if="${users != null and users.empty}" class="text-center text-muted">
-                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                    <p>Нет пользователей</p>
+                <!-- Индикатор загрузки -->
+                <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Загрузка пользователей...</p>
                 </div>
 
-                <div th:if="${users != null and !users.empty}">
+                <!-- Контейнер для таблицы -->
+                <div id="usersTableContainer">
+                    <div th:if="${users != null and users.empty}" class="text-center text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Нет пользователей</p>
+                    </div>
+
+                    <div th:if="${users != null and !users.empty}">
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Имя пользователя</th>
-                                    <th>Email</th>
-                                    <th>Роль</th>
-                                    <th>Статус</th>
-                                    <th>Дата регистрации</th>
+                                    <th>Аватар</th>
+                                    <th class="sortable" onclick="sortBy('username')" 
+                                        th:class="${sortBy == 'username'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Имя пользователя
+                                        <i th:if="${sortBy == 'username'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'username'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortBy('email')"
+                                        th:class="${sortBy == 'email'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Email
+                                        <i th:if="${sortBy == 'email'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'email'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortBy('rights')"
+                                        th:class="${sortBy == 'rights'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Роль
+                                        <i th:if="${sortBy == 'rights'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'rights'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortBy('isBlocked')"
+                                        th:class="${sortBy == 'isBlocked'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Статус
+                                        <i th:if="${sortBy == 'isBlocked'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'isBlocked'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th>Био</th>
+                                    <th class="sortable" onclick="sortBy('createdAt')"
+                                        th:class="${sortBy == 'createdAt'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Дата регистрации
+                                        <i th:if="${sortBy == 'createdAt'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'createdAt'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortBy('lastLogin')"
+                                        th:class="${sortBy == 'lastLogin'} ? (${sortDir == 'asc'} ? 'sorted-asc sortable' : 'sorted-desc sortable') : 'sortable'">
+                                        Последний вход
+                                        <i th:if="${sortBy == 'lastLogin'}" 
+                                           th:class="${sortDir == 'asc'} ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                                           class="ms-1"></i>
+                                        <i th:unless="${sortBy == 'lastLogin'}" class="fas fa-sort ms-1 text-muted"></i>
+                                    </th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="user : ${users.content}">
-                                    <td th:text="${user.userId}">1</td>
+                                    <!-- Аватар -->
+                                    <td>
+                                        <div th:if="${user.rights?.name() == 'AUTHOR' and user.linkedAuthor != null}">
+                                            <img th:if="${user.linkedAuthor.avatarUrl != null and !user.linkedAuthor.avatarUrl.isEmpty()}" 
+                                                 th:src="${user.linkedAuthor.avatarUrl}" 
+                                                 class="rounded-circle" 
+                                                 style="width: 40px; height: 40px; object-fit: cover;"
+                                                 alt="Аватар автора">
+                                            <div th:unless="${user.linkedAuthor.avatarUrl != null and !user.linkedAuthor.avatarUrl.isEmpty()}" 
+                                                 class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" 
+                                                 style="width: 40px; height: 40px; font-size: 16px;">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        </div>
+                                        <div th:unless="${user.rights?.name() == 'AUTHOR' and user.linkedAuthor != null}">
+                                            <img th:if="${user.avatarUrl != null and !user.avatarUrl.isEmpty()}" 
+                                                 th:src="${user.avatarUrl}" 
+                                                 class="rounded-circle" 
+                                                 style="width: 40px; height: 40px; object-fit: cover;"
+                                                 alt="Аватар">
+                                            <div th:unless="${user.avatarUrl != null and !user.avatarUrl.isEmpty()}" 
+                                                 class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" 
+                                                 style="width: 40px; height: 40px; font-size: 16px;">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <!-- Имя пользователя -->
                                     <td th:text="${user.username}">username</td>
+                                    <!-- Email -->
                                     <td th:text="${user.email}">email@example.com</td>
+                                    <!-- Роль -->
                                     <td>
                                         <span class="badge" 
                                               th:classappend="${user.rights?.name() == 'ADMIN'} ? 'bg-danger' : 
-                                                              (${user.rights?.name() == 'MODERATOR'} ? 'bg-warning text-dark' : 'bg-primary')"
+                                                              (${user.rights?.name() == 'AUTHOR'} ? 'bg-success' :
+                                                              (${user.rights?.name() == 'MODERATOR'} ? 'bg-warning text-dark' : 'bg-primary'))"
                                               th:text="${user.rights?.name() ?: 'USER'}">USER</span>
                                     </td>
+                                    <!-- Статус -->
                                     <td>
                                         <span th:if="${user.isBlocked}" class="badge bg-danger">Заблокирован</span>
                                         <span th:unless="${user.isBlocked}" class="badge bg-success">Активен</span>
                                     </td>
-                                    <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}">2024-01-01</td>
+                                    <!-- Био -->
                                     <td>
-                                        <div class="btn-group btn-group-sm" th:if="${user.rights?.name() != 'ADMIN'}">
-                                            <button type="button" 
-                                                    th:if="${!user.isBlocked}" 
-                                                    class="btn btn-outline-danger btn-sm"
-                                                    th:onclick="'if(confirm(\'Заблокировать пользователя?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/block\''">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                            
-                                            <button type="button" 
-                                                    th:if="${user.isBlocked}" 
-                                                    class="btn btn-outline-success btn-sm"
-                                                    th:onclick="'if(confirm(\'Разблокировать пользователя?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/unblock\''">
-                                                <i class="fas fa-check"></i>
-                                            </button>
+                                        <div th:if="${user.rights?.name() == 'AUTHOR' and user.linkedAuthor != null}">
+                                            <span th:if="${user.linkedAuthor.bio != null and !user.linkedAuthor.bio.isEmpty()}" 
+                                                  th:text="${#strings.abbreviate(user.linkedAuthor.bio, 50)}" 
+                                                  th:title="${user.linkedAuthor.bio}">Био автора</span>
+                                            <span th:unless="${user.linkedAuthor.bio != null and !user.linkedAuthor.bio.isEmpty()}" 
+                                                  class="text-muted">Нет биографии</span>
+                                        </div>
+                                        <div th:unless="${user.rights?.name() == 'AUTHOR' and user.linkedAuthor != null}">
+                                            <span th:if="${user.bio != null and !user.bio.isEmpty()}" 
+                                                  th:text="${#strings.abbreviate(user.bio, 50)}" 
+                                                  th:title="${user.bio}">Биография</span>
+                                            <span th:unless="${user.bio != null and !user.bio.isEmpty()}" 
+                                                  class="text-muted">Нет биографии</span>
+                                        </div>
+                                    </td>
+                                    <!-- Дата регистрации -->
+                                    <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}">2024-01-01</td>
+                                    <!-- Последний вход -->
+                                    <td>
+                                        <span th:if="${user.lastLogin != null}" 
+                                              th:text="${#temporals.format(user.lastLogin, 'yyyy-MM-dd HH:mm')}"
+                                              class="text-success">2024-01-01 12:00</span>
+                                        <span th:unless="${user.lastLogin != null}" 
+                                              class="text-muted">Никогда</span>
+                                    </td>
+                                    <!-- Действия -->
+                                    <td>
+                                        <div th:if="${user.rights?.name() == 'ADMIN'}" class="text-muted">
+                                            <i class="fas fa-shield-alt me-1"></i>Администратор
                                         </div>
                                         
-                                        <span th:if="${user.rights?.name() == 'ADMIN'}" class="text-muted">
-                                            <i class="fas fa-shield-alt me-1"></i>Администратор
-                                        </span>
+                                                                                 <div th:unless="${user.rights?.name() == 'ADMIN'}" class="btn-group btn-group-sm">
+                                             <!-- Блокировка/разблокировка -->
+                                             <button type="button" 
+                                                     th:if="${!user.isBlocked}" 
+                                                     class="btn btn-outline-danger btn-sm"
+                                                     th:onclick="'if(confirm(\'Заблокировать пользователя?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/block\''"
+                                                     data-bs-toggle="tooltip" 
+                                                     data-bs-placement="top" 
+                                                     title="Заблокировать пользователя">
+                                                 <i class="fas fa-ban"></i>
+                                             </button>
+                                             
+                                             <button type="button" 
+                                                     th:if="${user.isBlocked}" 
+                                                     class="btn btn-outline-success btn-sm"
+                                                     th:onclick="'if(confirm(\'Разблокировать пользователя?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/unblock\''"
+                                                     data-bs-toggle="tooltip" 
+                                                     data-bs-placement="top" 
+                                                     title="Разблокировать пользователя">
+                                                 <i class="fas fa-check"></i>
+                                             </button>
+                                             
+                                             <!-- Управление ролями -->
+                                             <button type="button" 
+                                                     th:if="${user.rights?.name() == 'USER'}" 
+                                                     class="btn btn-outline-warning btn-sm"
+                                                     th:onclick="'if(confirm(\'Назначить пользователя модератором?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/promote-to-moderator\''"
+                                                     data-bs-toggle="tooltip" 
+                                                     data-bs-placement="top" 
+                                                     title="Назначить модератором">
+                                                 <i class="fas fa-arrow-up"></i>
+                                             </button>
+                                             
+                                             <button type="button" 
+                                                     th:if="${user.rights?.name() == 'MODERATOR'}" 
+                                                     class="btn btn-outline-primary btn-sm"
+                                                     th:onclick="'if(confirm(\'Понизить модератора до обычного пользователя?\')) window.location.href=\'/admin/users/' + ${user.userId} + '/demote-to-user\''"
+                                                     data-bs-toggle="tooltip" 
+                                                     data-bs-placement="top" 
+                                                     title="Понизить до пользователя">
+                                                 <i class="fas fa-arrow-down"></i>
+                                             </button>
+                                         </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -117,18 +313,27 @@
                     <nav th:if="${users.totalPages > 1}">
                         <ul class="pagination justify-content-center">
                             <li class="page-item" th:classappend="${users.first} ? 'disabled'">
-                                <a class="page-link" th:href="@{/admin/users(page=${users.number - 1})}">Предыдущая</a>
+                                <a class="page-link" 
+                                   th:href="@{/admin/users(page=${users.number - 1}, size=${users.size}, sortBy=${sortBy}, sortDir=${sortDir}, username=${username}, role=${role}, status=${status})}">
+                                   Предыдущая
+                                </a>
                             </li>
                             <li class="page-item" 
                                 th:each="page : ${#numbers.sequence(0, users.totalPages - 1)}"
                                 th:classappend="${page == users.number} ? 'active'">
-                                <a class="page-link" th:href="@{/admin/users(page=${page})}" th:text="${page + 1}">1</a>
+                                <a class="page-link" 
+                                   th:href="@{/admin/users(page=${page}, size=${users.size}, sortBy=${sortBy}, sortDir=${sortDir}, username=${username}, role=${role}, status=${status})}" 
+                                   th:text="${page + 1}">1</a>
                             </li>
                             <li class="page-item" th:classappend="${users.last} ? 'disabled'">
-                                <a class="page-link" th:href="@{/admin/users(page=${users.number + 1})}">Следующая</a>
+                                <a class="page-link" 
+                                   th:href="@{/admin/users(page=${users.number + 1}, size=${users.size}, sortBy=${sortBy}, sortDir=${sortDir}, username=${username}, role=${role}, status=${status})}">
+                                   Следующая
+                                </a>
                             </li>
                         </ul>
                     </nav>
+                    </div>
                 </div>
             </div>
         </div>
@@ -136,5 +341,235 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let currentPage = 0;
+        let currentSortBy = 'createdAt';
+        let currentSortDir = 'desc';
+        let debounceTimer = null;
+
+        // Загрузка пользователей через AJAX
+        async function loadUsers(page = 0) {
+            try {
+                currentPage = page;
+                showLoading(true);
+
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    size: 10,
+                    sortBy: currentSortBy,
+                    sortDir: currentSortDir,
+                    username: document.getElementById('username').value || '',
+                    role: document.getElementById('role').value || '',
+                    status: document.getElementById('status').value || ''
+                });
+
+                const response = await fetch(`/admin/users/api?${params}`);
+                if (!response.ok) throw new Error('Ошибка загрузки данных');
+                
+                const data = await response.json();
+                renderUsersTable(data);
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showError('Произошла ошибка при загрузке пользователей');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Функция сортировки с AJAX
+        function sortBy(column) {
+            if (currentSortBy === column) {
+                currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortBy = column;
+                currentSortDir = 'desc';
+            }
+            loadUsers(0);
+        }
+
+        // Дебаунс для поиска по имени
+        function debounceSearch() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                loadUsers(0);
+            }, 500);
+        }
+
+        
+
+        // Показать/скрыть индикатор загрузки
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+            document.getElementById('usersTableContainer').style.display = show ? 'none' : 'block';
+        }
+
+        // Показать ошибку
+        function showError(message) {
+            document.getElementById('usersTableContainer').innerHTML = `
+                <div class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // Отрисовка таблицы пользователей
+        function renderUsersTable(data) {
+            const container = document.getElementById('usersTableContainer');
+            
+            if (data.content.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Нет пользователей</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = `
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Аватар</th>
+                                <th class="sortable ${currentSortBy === 'username' ? (currentSortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}" onclick="sortBy('username')">
+                                    Имя пользователя
+                                    <i class="fas ${currentSortBy === 'username' ? (currentSortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'} ms-1 ${currentSortBy === 'username' ? '' : 'text-muted'}"></i>
+                                </th>
+                                <th class="sortable ${currentSortBy === 'email' ? (currentSortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}" onclick="sortBy('email')">
+                                    Email
+                                    <i class="fas ${currentSortBy === 'email' ? (currentSortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'} ms-1 ${currentSortBy === 'email' ? '' : 'text-muted'}"></i>
+                                </th>
+                                <th class="sortable ${currentSortBy === 'rights' ? (currentSortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}" onclick="sortBy('rights')">
+                                    Роль
+                                    <i class="fas ${currentSortBy === 'rights' ? (currentSortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'} ms-1 ${currentSortBy === 'rights' ? '' : 'text-muted'}"></i>
+                                </th>
+                                <th class="sortable ${currentSortBy === 'isBlocked' ? (currentSortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}" onclick="sortBy('isBlocked')">
+                                    Статус
+                                    <i class="fas ${currentSortBy === 'isBlocked' ? (currentSortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'} ms-1 ${currentSortBy === 'isBlocked' ? '' : 'text-muted'}"></i>
+                                </th>
+                                <th>Био</th>
+                                                                 <th class="sortable ${currentSortBy === 'createdAt' ? (currentSortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}" onclick="sortBy('createdAt')">
+                                     Дата регистрации
+                                     <i class="fas ${currentSortBy === 'createdAt' ? (currentSortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'} ms-1 ${currentSortBy === 'createdAt' ? '' : 'text-muted'}"></i>
+                                 </th>
+                                 <th class="sortable ${currentSortBy === 'lastLogin' ? (currentSortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}" onclick="sortBy('lastLogin')">
+                                     Последний вход
+                                     <i class="fas ${currentSortBy === 'lastLogin' ? (currentSortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'} ms-1 ${currentSortBy === 'lastLogin' ? '' : 'text-muted'}"></i>
+                                 </th>
+                                 <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.content.map(user => `
+                                <tr>
+                                    <td>
+                                        ${user.rights?.name === 'AUTHOR' && user.linkedAuthor ?
+                                            (user.linkedAuthor.avatarUrl ?
+                                                `<img src="${user.linkedAuthor.avatarUrl}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Аватар автора">` :
+                                                `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 16px;"><i class="fas fa-user"></i></div>`) :
+                                            (user.avatarUrl ?
+                                                `<img src="${user.avatarUrl}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Аватар">` :
+                                                `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 16px;"><i class="fas fa-user"></i></div>`)
+                                        }
+                                    </td>
+                                    <td>${user.username}</td>
+                                    <td>${user.email}</td>
+                                    <td>
+                                        <span class="badge ${
+                                            user.rights?.name === 'ADMIN' ? 'bg-danger' :
+                                            user.rights?.name === 'AUTHOR' ? 'bg-success' :
+                                            user.rights?.name === 'MODERATOR' ? 'bg-warning text-dark' : 'bg-primary'
+                                        }">${user.rights?.name || 'USER'}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge ${user.isBlocked ? 'bg-danger' : 'bg-success'}">
+                                            ${user.isBlocked ? 'Заблокирован' : 'Активен'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        ${user.rights?.name === 'AUTHOR' && user.linkedAuthor ?
+                                            (user.linkedAuthor.bio ?
+                                                `<span title="${user.linkedAuthor.bio}">${user.linkedAuthor.bio.length > 50 ? user.linkedAuthor.bio.substring(0, 50) + '...' : user.linkedAuthor.bio}</span>` :
+                                                '<span class="text-muted">Нет биографии</span>') :
+                                            (user.bio ?
+                                                `<span title="${user.bio}">${user.bio.length > 50 ? user.bio.substring(0, 50) + '...' : user.bio}</span>` :
+                                                '<span class="text-muted">Нет биографии</span>')
+                                        }
+                                    </td>
+                                                                         <td>${new Date(user.createdAt).toLocaleDateString('ru-RU')}</td>
+                                     <td>
+                                         ${user.lastLogin ? 
+                                             `<span class="text-success">${new Date(user.lastLogin).toLocaleDateString('ru-RU')} ${new Date(user.lastLogin).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}</span>` : 
+                                             '<span class="text-muted">Никогда</span>'
+                                         }
+                                     </td>
+                                     <td>
+                                        ${user.rights?.name === 'ADMIN' ?
+                                            '<div class="text-muted"><i class="fas fa-shield-alt me-1"></i>Администратор</div>' :
+                                            `<div class="btn-group btn-group-sm">
+                                                ${!user.isBlocked ?
+                                                    `<button type="button" class="btn btn-outline-danger btn-sm" onclick="if(confirm('Заблокировать пользователя?')) window.location.href='/admin/users/${user.userId}/block'" data-bs-toggle="tooltip" title="Заблокировать пользователя"><i class="fas fa-ban"></i></button>` :
+                                                    `<button type="button" class="btn btn-outline-success btn-sm" onclick="if(confirm('Разблокировать пользователя?')) window.location.href='/admin/users/${user.userId}/unblock'" data-bs-toggle="tooltip" title="Разблокировать пользователя"><i class="fas fa-check"></i></button>`
+                                                }
+                                                ${user.rights?.name === 'USER' ?
+                                                    `<button type="button" class="btn btn-outline-warning btn-sm" onclick="if(confirm('Назначить пользователя модератором?')) window.location.href='/admin/users/${user.userId}/promote-to-moderator'" data-bs-toggle="tooltip" title="Назначить модератором"><i class="fas fa-arrow-up"></i></button>` :
+                                                    user.rights?.name === 'MODERATOR' ?
+                                                        `<button type="button" class="btn btn-outline-primary btn-sm" onclick="if(confirm('Понизить модератора до обычного пользователя?')) window.location.href='/admin/users/${user.userId}/demote-to-user'" data-bs-toggle="tooltip" title="Понизить до пользователя"><i class="fas fa-arrow-down"></i></button>` : ''
+                                                }
+                                            </div>`
+                                        }
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                ${data.totalPages > 1 ? `
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item ${data.first ? 'disabled' : ''}">
+                                <a class="page-link" href="#" onclick="loadUsers(${data.number - 1}); return false;">Предыдущая</a>
+                            </li>
+                            ${Array.from({length: data.totalPages}, (_, i) => `
+                                <li class="page-item ${i === data.number ? 'active' : ''}">
+                                    <a class="page-link" href="#" onclick="loadUsers(${i}); return false;">${i + 1}</a>
+                                </li>
+                            `).join('')}
+                            <li class="page-item ${data.last ? 'disabled' : ''}">
+                                <a class="page-link" href="#" onclick="loadUsers(${data.number + 1}); return false;">Следующая</a>
+                            </li>
+                        </ul>
+                    </nav>
+                ` : ''}
+            `;
+            
+            container.innerHTML = html;
+            initTooltips();
+        }
+
+        // Инициализация тултипов
+        function initTooltips() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация текущих параметров из URL или значений по умолчанию
+            const urlParams = new URLSearchParams(window.location.search);
+            currentPage = parseInt(urlParams.get('page') || '0');
+            currentSortBy = urlParams.get('sortBy') || 'createdAt';
+            currentSortDir = urlParams.get('sortDir') || 'desc';
+            
+            // Инициализация тултипов для статичных элементов
+            initTooltips();
+        });
+    </script>
 </body>
 </html> 

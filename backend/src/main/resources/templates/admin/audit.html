@@ -32,10 +32,7 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="/admin">Главная</a>
                 <a class="nav-link" href="/admin/genres">Жанры</a>
-                <a class="nav-link" href="/admin/authors">Авторы</a>
-                <a class="nav-link" href="/admin/releases">Релизы</a>
                 <a class="nav-link" href="/admin/users">Пользователи</a>
-                <a class="nav-link" href="/admin/reviews">Рецензии</a>
                 <a class="nav-link" href="/admin/registration-requests">Заявки</a>
                 <a class="nav-link active" href="/admin/audit">Аудит</a>
                 <a class="nav-link" href="/logout">Выход</a>
@@ -212,29 +209,12 @@
                            data-bs-placement="top"
                            title="Перейти к пользователю">123</a>
                         
-                        <a th:if="${audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE'}"
-                           th:href="@{'/admin/reviews?reviewId=' + ${audit.targetId}}" 
-                           th:text="${audit.targetId}"
-                           class="btn btn-outline-success btn-sm"
-                           data-bs-toggle="tooltip" 
-                           data-bs-placement="top"
-                           title="Перейти к рецензии">123</a>
-                        
-                        <a th:if="${audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE'}"
-                           th:href="@{'/admin/releases?releaseId=' + ${audit.targetId}}" 
-                           th:text="${audit.targetId}"
-                           class="btn btn-outline-info btn-sm"
-                           data-bs-toggle="tooltip" 
-                           data-bs-placement="top"
-                           title="Перейти к релизу">123</a>
-                        
-                        <a th:if="${audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE'}"
-                           th:href="@{'/admin/authors?authorId=' + ${audit.targetId}}" 
-                           th:text="${audit.targetId}"
-                           class="btn btn-outline-warning btn-sm"
-                           data-bs-toggle="tooltip" 
-                           data-bs-placement="top"
-                           title="Перейти к автору">123</a>
+                        <span th:if="${audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE' or audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE' or audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE'}"
+                              th:text="${audit.targetId}"
+                              class="btn btn-outline-secondary btn-sm disabled"
+                              data-bs-toggle="tooltip" 
+                              data-bs-placement="top"
+                              title="Раздел удален из админ панели">123</span>
                                         
                                         <!-- Если тип действия не подходит ни под одну категорию -->
                                         <span th:unless="${audit.actionType.name() == 'USER_BLOCK' or audit.actionType.name() == 'USER_UNBLOCK' or audit.actionType.name() == 'USER_DELETE' or audit.actionType.name() == 'USER_RESTORE' or audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE' or audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE' or audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE'}"

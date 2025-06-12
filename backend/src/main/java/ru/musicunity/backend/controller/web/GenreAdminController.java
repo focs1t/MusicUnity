@@ -73,6 +73,17 @@ public class GenreAdminController {
         }
     }
 
+    @PostMapping("/{id}/delete")
+    @ResponseBody
+    public ResponseEntity<?> deleteGenre(@PathVariable Long id) {
+        try {
+            genreService.deleteGenre(id);
+            return ResponseEntity.ok().body("Жанр удален");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Ошибка удаления жанра: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/{id}/hard-delete")
     @ResponseBody
     public ResponseEntity<?> hardDeleteGenre(@PathVariable Long id) {

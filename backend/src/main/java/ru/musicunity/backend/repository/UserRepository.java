@@ -33,4 +33,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.isBlocked = false")
     Page<User> findByIsBlockedFalse(Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE " +
+           "(:username IS NULL OR :username = '' OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))) AND " +
+           "(:role IS NULL OR :role = '' OR u.rights = :roleEnum) AND " +
+           "(:status IS NULL OR :status = '' OR " +
+           "  (:status = 'blocked' AND u.isBlocked = true) OR " +
+           "  (:status = 'active' AND u.isBlocked = false))")
+    Page<User> searchUsersWithFilters(@Param("username") String username, 
+                                     @Param("role") String role, 
+                                     @Param("roleEnum") UserRole roleEnum,
+                                     @Param("status") String status, 
+                                     Pageable pageable);
 }

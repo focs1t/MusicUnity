@@ -182,11 +182,13 @@ public interface ReleaseRepository extends JpaRepository<Release, Long>, JpaSpec
     List<Integer> findDistinctMonthsByYearAndType(@Param("year") Integer year, @Param("releaseType") ReleaseType releaseType);
 
     /**
-     * Поиск релизов по названию
+     * Поиск релизов по названию и автору
      */
-    @Query("SELECT r FROM Release r " +
+    @Query("SELECT DISTINCT r FROM Release r " +
+           "LEFT JOIN r.authors ra " +
            "WHERE r.isDeleted = false " +
-           "AND LOWER(r.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
+           "AND (LOWER(r.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "     OR LOWER(ra.author.authorName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
            "ORDER BY r.releaseDate DESC")
-    Page<Release> findByTitleContainingIgnoreCase(@Param("title") String title, Pageable pageable);
+    Page<Release> findByTitleContainingIgnoreCase(@Param("search") String search, Pageable pageable);
 }

@@ -222,14 +222,14 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         
-        // Запрещаем назначать роли AUTHOR и ADMIN
-        if (role == UserRole.AUTHOR || role == UserRole.ADMIN) {
-            throw new RuntimeException("Нельзя назначить роль " + role.name() + " через админ панель");
+        // Запрещаем назначать роль ADMIN
+        if (role == UserRole.ADMIN) {
+            throw new RuntimeException("Нельзя назначить роль ADMIN через админ панель");
         }
         
-        // Запрещаем забирать роль AUTHOR, если она уже есть
-        if (user.getRights() == UserRole.AUTHOR && role != UserRole.AUTHOR) {
-            throw new RuntimeException("Нельзя изменить роль пользователя с ролью AUTHOR");
+        // Запрещаем изменять роль ADMIN пользователей
+        if (user.getRights() == UserRole.ADMIN) {
+            throw new RuntimeException("Нельзя изменить роль администратора");
         }
         
         user.setRights(role);
@@ -350,6 +350,29 @@ public class UserService {
 
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
+                .map(userMapper::toDTO);
+    }
+
+    public Page<UserDTO> searchUsers(String username, String role, String status, Pageable pageable) {
+        // Если все фильтры пусты, возвращаем всех пользователей
+        if ((username == null || username.trim().isEmpty()) && 
+            (role == null || role.isEmpty()) && 
+            (status == null || status.isEmpty())) {
+            return getAllUsers(pageable);
+        }
+        
+        // Преобразуем строку роли в enum
+        UserRole roleEnum = null;
+        if (role != null && !role.isEmpty()) {
+            try {
+                roleEnum = UserRole.valueOf(role.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Если роль неверная, игнорируем фильтр
+                roleEnum = null;
+            }
+        }
+        
+        return userRepository.searchUsersWithFilters(username, role, roleEnum, status, pageable)
                 .map(userMapper::toDTO);
     }
 
