@@ -14,7 +14,6 @@ public class ReleaseDTO {
     private ReleaseType type;
     private LocalDate releaseDate;
     private String coverUrl;
-    private String releaseLink;
     private Integer favoritesCount;
     private LocalDateTime addedAt;
     private LocalDateTime deletedAt;

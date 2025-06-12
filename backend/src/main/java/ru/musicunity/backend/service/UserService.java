@@ -169,21 +169,13 @@ public class UserService {
     }
 
     @Transactional
-    public void updateOwnData(String bio, String avatarUrl, String telegramChatId) {
+    public void updateOwnData(String bio, String avatarUrl) {
         User user = getCurrentUser();
         if (bio != null) {
             user.setBio(bio);
         }
         if (avatarUrl != null) {
             user.setAvatarUrl(avatarUrl);
-        }
-        if (telegramChatId != null) {
-            try {
-                Long telegramId = telegramChatId.isEmpty() ? null : Long.parseLong(telegramChatId);
-                user.setTelegramChatId(telegramId);
-            } catch (NumberFormatException e) {
-                // Если формат неверный, игнорируем
-            }
         }
         userRepository.save(user);
     }

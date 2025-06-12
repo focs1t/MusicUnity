@@ -92,8 +92,7 @@ public class UserController {
     public ResponseEntity<Void> updateOwnData(@RequestBody UserUpdateDTO userUpdateDTO) {
         userService.updateOwnData(
             userUpdateDTO.getBio(), 
-            userUpdateDTO.getAvatarUrl(), 
-            userUpdateDTO.getTelegramChatId()
+            userUpdateDTO.getAvatarUrl()
         );
         return ResponseEntity.ok().build();
     }

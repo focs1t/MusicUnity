@@ -445,7 +445,6 @@ const ModeratorCreateReleasePage = () => {
         type: formData.type,
         releaseDate: formData.releaseDate,
         coverUrl: coverUrl,
-        releaseLink: "",
         authors: formData.authors.map(author => ({
           authorName: String(author.authorName).trim(),
           artist: Boolean(author.artist),
@@ -459,7 +458,6 @@ const ModeratorCreateReleasePage = () => {
       console.log('type:', requestData.type, typeof requestData.type);
       console.log('releaseDate:', requestData.releaseDate, typeof requestData.releaseDate);
       console.log('coverUrl:', requestData.coverUrl, 'длина:', requestData.coverUrl.length);
-      console.log('releaseLink:', requestData.releaseLink);
       console.log('authors:', requestData.authors);
       console.log('genreIds:', requestData.genreIds, requestData.genreIds.map(id => typeof id));
       console.log('Полный объект requestData:', JSON.stringify(requestData, null, 2));

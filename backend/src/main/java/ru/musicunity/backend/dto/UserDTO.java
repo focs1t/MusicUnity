@@ -12,7 +12,6 @@ public class UserDTO {
     private String email;
     private String bio;
     private String avatarUrl;
-    private Long telegramChatId;
     private UserRole rights;
     private Boolean isBlocked;
     private LocalDateTime lastLogin;

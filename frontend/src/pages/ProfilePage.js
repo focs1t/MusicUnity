@@ -6,7 +6,7 @@ import { reviewApi } from '../shared/api/review';
 import { likeApi } from '../shared/api/like';
 import { releaseApi } from '../shared/api/release';
 import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
-import TelegramIcon from '@mui/icons-material/Telegram';
+
 import VkIcon from '@mui/icons-material/Facebook'; // Используем Facebook как заменитель VK
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -2174,15 +2174,7 @@ const ProfilePage = () => {
                     </div>
                   )}
                   
-                  <div className="social-links">
-                    {userDetails?.telegramChatId && (
-                      <button className="social-button">
-                        <a target="_blank" href={`https://t.me/${userDetails.telegramChatId}`} rel="noopener noreferrer">
-                          <TelegramIcon />
-                        </a>
-                      </button>
-                    )}
-                  </div>
+
                 </div>
                 
                 {/* Статистика пользователя */}

@@ -45,15 +45,14 @@ public class ReleaseService {
     @PreAuthorize("hasRole('MODERATOR')")
     public ReleaseDTO createRelease(CreateReleaseRequest request) {
         // Получаем текущего пользователя (модератора)
-        User currentUser = userService.getCurrentUser();
-        
+                User currentUser = userService.getCurrentUser();
+
         // Создаем релиз
         Release release = Release.builder()
                 .title(request.getTitle())
                 .type(request.getType())
                 .releaseDate(request.getReleaseDate())
                 .coverUrl(request.getCoverUrl())
-                .releaseLink(request.getReleaseLink())
                 .favoritesCount(0)
                 .isDeleted(false)
                 .build();
@@ -140,7 +139,6 @@ public class ReleaseService {
                 .type(request.getType())
                 .releaseDate(request.getReleaseDate())
                 .coverUrl(request.getCoverUrl())
-                .releaseLink(request.getReleaseLink())
                 .favoritesCount(0)
                 .isDeleted(false)
                 .build();

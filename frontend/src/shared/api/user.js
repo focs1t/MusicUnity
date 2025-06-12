@@ -99,17 +99,15 @@ export const userApi = {
    * Обновление данных пользователя
    * @param {string} bio - Биография пользователя
    * @param {string} avatarUrl - URL аватара
-   * @param {string} telegramChatId - Telegram ID пользователя
    * @returns {Promise<void>}
    */
-  updateUserData: async (bio, avatarUrl, telegramChatId) => {
+  updateUserData: async (bio, avatarUrl) => {
     try {
-      console.log('Отправляем данные для обновления профиля:', { bio, avatarUrl, telegramChatId });
+      console.log('Отправляем данные для обновления профиля:', { bio, avatarUrl });
       
       const response = await httpClient.patch(`${API_URL}/data`, {
         bio,
-        avatarUrl,
-        telegramChatId
+        avatarUrl
       });
       
       console.log('Ответ после обновления профиля:', response.data);

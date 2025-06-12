@@ -36,7 +36,6 @@ public class UserMapper {
         dto.setEmail(user.getEmail());
         dto.setBio(user.getBio());
         dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setTelegramChatId(user.getTelegramChatId());
         dto.setRights(user.getRights());
         dto.setIsBlocked(user.getIsBlocked());
         dto.setLastLogin(user.getLastLogin());
@@ -69,7 +68,6 @@ public class UserMapper {
         user.setEmail(dto.getEmail());
         user.setBio(dto.getBio());
         user.setAvatarUrl(dto.getAvatarUrl());
-        user.setTelegramChatId(dto.getTelegramChatId());
         user.setRights(dto.getRights());
         user.setIsBlocked(dto.getIsBlocked());
         user.setLastLogin(dto.getLastLogin());

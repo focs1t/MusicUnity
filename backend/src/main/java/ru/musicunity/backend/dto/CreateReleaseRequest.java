@@ -12,7 +12,6 @@ public class CreateReleaseRequest {
     private ReleaseType type;
     private LocalDate releaseDate;
     private String coverUrl;
-    private String releaseLink;
     private Set<AuthorRoleRequest> authors;
     private Set<Long> genreIds;
 

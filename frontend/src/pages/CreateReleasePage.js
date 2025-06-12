@@ -382,7 +382,6 @@ const CreateReleasePage = () => {
         type: formData.type, // Строка, как ожидает enum
         releaseDate: formData.releaseDate, // Строка в формате YYYY-MM-DD
         coverUrl: coverUrl, // Полная ссылка на файл
-        releaseLink: "", // Пустая строка вместо null
         artist: Boolean(formData.isArtist),
         producer: Boolean(formData.isProducer),
         genreIds: formData.genreIds.map(id => Number(id)), // Массив чисел (Jackson преобразует в Set)
@@ -398,7 +397,6 @@ const CreateReleasePage = () => {
       console.log('type:', requestData.type, typeof requestData.type);
       console.log('releaseDate:', requestData.releaseDate, typeof requestData.releaseDate);
       console.log('coverUrl:', requestData.coverUrl, 'длина:', requestData.coverUrl.length);
-      console.log('releaseLink:', requestData.releaseLink);
       console.log('artist:', requestData.artist, typeof requestData.artist);
       console.log('producer:', requestData.producer, typeof requestData.producer);
       console.log('genreIds:', requestData.genreIds, requestData.genreIds.map(id => typeof id));

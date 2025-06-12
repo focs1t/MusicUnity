@@ -40,8 +40,6 @@ public class Release {
 
     private String coverUrl;
 
-    private String releaseLink;
-
     @Column(nullable = false)
     private Integer favoritesCount = 0;
 

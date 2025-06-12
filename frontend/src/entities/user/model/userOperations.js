@@ -52,8 +52,7 @@ export const updateUserProfile = (profileData) => async (dispatch) => {
   try {
     const updatedUser = await userApi.updateUserData(
       profileData.bio,
-      profileData.avatarUrl,
-      profileData.telegramChatId
+      profileData.avatarUrl
     );
     dispatch(updateProfileSuccess(updatedUser));
     return updatedUser;

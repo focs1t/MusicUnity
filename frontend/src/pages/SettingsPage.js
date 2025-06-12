@@ -181,7 +181,6 @@ const SettingsPage = () => {
   
   // Поля формы
   const [bio, setBio] = useState('');
-  const [telegramChatId, setTelegramChatId] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [previewAvatar, setPreviewAvatar] = useState(null);
   
@@ -231,8 +230,6 @@ const SettingsPage = () => {
           setBio(userData.bio || '');
           setAvatarUrl(userData.avatarUrl || '');
         }
-        
-        setTelegramChatId(userData.telegramChatId || '');
         
         setError(null);
       } catch (err) {
@@ -320,7 +317,7 @@ const SettingsPage = () => {
         await authorApi.updateAuthorData(bio, processedAvatarUrl);
       } else {
         // Для обычных пользователей обновляем данные пользователя
-        await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+        await userApi.updateUserData(bio, processedAvatarUrl);
       }
       
       // Сохраняем аватар в localStorage для синхронизации между компонентами
@@ -377,7 +374,7 @@ const SettingsPage = () => {
         await authorApi.updateAuthorData(bio, processedAvatarUrl);
       } else {
         // Для обычных пользователей обновляем данные пользователя
-        await userApi.updateUserData(bio, processedAvatarUrl, telegramChatId);
+        await userApi.updateUserData(bio, processedAvatarUrl);
       }
       
       // Сохраняем аватар в localStorage для синхронизации между компонентами
@@ -754,38 +751,7 @@ const SettingsPage = () => {
                     />
                   </Box>
                   
-                  {!isAuthor && (
-                    <Box>
-                      <Typography component="label" htmlFor="telegram" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'block', mb: 1 }}>
-                        Telegram
-                      </Typography>
-                      <TextField
-                        id="telegram"
-                        value={telegramChatId}
-                        onChange={(e) => setTelegramChatId(e.target.value)}
-                        fullWidth
-                        placeholder="https://t.me/"
-                        variant="outlined"
-                        InputProps={{
-                          sx: {
-                            backgroundColor: 'transparent',
-                            color: 'white',
-                            height: '40px',
-                            borderRadius: '6px',
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'rgba(161, 161, 170, 0.2)'
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'rgba(161, 161, 170, 0.3)'
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'rgba(161, 161, 170, 0.5)'
-                            }
-                          }
-                        }}
-                      />
-                    </Box>
-                  )}
+
                 </Box>
               </Box>
             </CardContent>

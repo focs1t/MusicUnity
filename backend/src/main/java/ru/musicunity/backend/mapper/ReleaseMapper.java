@@ -31,7 +31,6 @@ public class ReleaseMapper {
         dto.setType(release.getType());
         dto.setReleaseDate(release.getReleaseDate());
         dto.setCoverUrl(release.getCoverUrl());
-        dto.setReleaseLink(release.getReleaseLink());
         dto.setFavoritesCount(release.getFavoritesCount());
         dto.setAddedAt(release.getAddedAt());
         dto.setDeletedAt(release.getAddedAt());
@@ -147,7 +146,6 @@ public class ReleaseMapper {
         release.setType(dto.getType());
         release.setReleaseDate(dto.getReleaseDate());
         release.setCoverUrl(dto.getCoverUrl());
-        release.setReleaseLink(dto.getReleaseLink());
         release.setFavoritesCount(dto.getFavoritesCount());
         release.setAddedAt(dto.getAddedAt());
         release.setIsDeleted(false);

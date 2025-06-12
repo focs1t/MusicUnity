@@ -9,5 +9,4 @@ import lombok.Data;
 public class UserUpdateDTO {
     private String bio;
     private String avatarUrl;
-    private String telegramChatId;
 } 
