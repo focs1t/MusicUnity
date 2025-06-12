@@ -484,7 +484,7 @@
                             ${data.content.map(user => `
                                 <tr>
                                     <td>
-                                        ${user.rights?.name === 'AUTHOR' && user.linkedAuthor ?
+                                        ${user.rights === 'AUTHOR' && user.linkedAuthor ?
                                             (user.linkedAuthor.avatarUrl ?
                                                 `<img src="${user.linkedAuthor.avatarUrl}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Аватар автора">` :
                                                 `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 16px;"><i class="fas fa-user"></i></div>`) :
@@ -497,10 +497,10 @@
                                     <td>${user.email}</td>
                                     <td>
                                         <span class="badge ${
-                                            user.rights?.name === 'ADMIN' ? 'bg-danger' :
-                                            user.rights?.name === 'AUTHOR' ? 'bg-success' :
-                                            user.rights?.name === 'MODERATOR' ? 'bg-warning text-dark' : 'bg-primary'
-                                        }">${user.rights?.name || 'USER'}</span>
+                                            user.rights === 'ADMIN' ? 'bg-danger' :
+                                            user.rights === 'AUTHOR' ? 'bg-success' :
+                                            user.rights === 'MODERATOR' ? 'bg-warning text-dark' : 'bg-primary'
+                                        }">${user.rights || 'USER'}</span>
                                     </td>
                                     <td>
                                         <span class="badge ${user.isBlocked ? 'bg-danger' : 'bg-success'}">
@@ -508,7 +508,7 @@
                                         </span>
                                     </td>
                                     <td>
-                                        ${user.rights?.name === 'AUTHOR' && user.linkedAuthor ?
+                                        ${user.rights === 'AUTHOR' && user.linkedAuthor ?
                                             (user.linkedAuthor.bio ?
                                                 `<span title="${user.linkedAuthor.bio}">${user.linkedAuthor.bio.length > 50 ? user.linkedAuthor.bio.substring(0, 50) + '...' : user.linkedAuthor.bio}</span>` :
                                                 '<span class="text-muted">Нет биографии</span>') :
@@ -525,16 +525,16 @@
                                          }
                                      </td>
                                      <td>
-                                        ${user.rights?.name === 'ADMIN' ?
+                                        ${user.rights === 'ADMIN' ?
                                             '<div class="text-muted"><i class="fas fa-shield-alt me-1"></i>Администратор</div>' :
                                             `<div class="btn-group btn-group-sm">
                                                 ${!user.isBlocked ?
                                                     `<button type="button" class="btn btn-outline-danger btn-sm" onclick="if(confirm('Заблокировать пользователя?')) submitUserAction(${user.userId}, 'block')" data-bs-toggle="tooltip" title="Заблокировать пользователя"><i class="fas fa-ban"></i></button>` :
                                                     `<button type="button" class="btn btn-outline-success btn-sm" onclick="if(confirm('Разблокировать пользователя?')) submitUserAction(${user.userId}, 'unblock')" data-bs-toggle="tooltip" title="Разблокировать пользователя"><i class="fas fa-check"></i></button>`
                                                 }
-                                                ${user.rights?.name === 'USER' ?
+                                                ${user.rights === 'USER' ?
                                                     `<button type="button" class="btn btn-outline-warning btn-sm" onclick="if(confirm('Назначить пользователя модератором?')) submitUserAction(${user.userId}, 'promote-to-moderator')" data-bs-toggle="tooltip" title="Назначить модератором"><i class="fas fa-arrow-up"></i></button>` :
-                                                    user.rights?.name === 'MODERATOR' ?
+                                                    user.rights === 'MODERATOR' ?
                                                         `<button type="button" class="btn btn-outline-primary btn-sm" onclick="if(confirm('Понизить модератора до обычного пользователя?')) submitUserAction(${user.userId}, 'demote-to-user')" data-bs-toggle="tooltip" title="Понизить до пользователя"><i class="fas fa-arrow-down"></i></button>` : ''
                                                 }
                                             </div>`

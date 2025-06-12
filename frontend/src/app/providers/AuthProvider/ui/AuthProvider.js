@@ -35,6 +35,9 @@ const AuthProvider = ({ children }) => {
   // Локальное состояние для отслеживания проверки авторизации
   const [authChecked, setAuthChecked] = useState(false);
   
+  // Флаг для предотвращения дублирования принудительного выхода
+  const [logoutInProgress, setLogoutInProgress] = useState(false);
+  
   // Функция для выхода из системы
   const logout = () => {
     console.log('AuthProvider: Выполняем выход из системы');
@@ -120,7 +123,16 @@ const AuthProvider = ({ children }) => {
   // Обработчик принудительного выхода из системы
   useEffect(() => {
     const handleForceLogout = (event) => {
+      // Проверяем, не идет ли уже процесс выхода
+      if (logoutInProgress) {
+        console.log('AuthProvider: Принудительный выход уже в процессе, игнорируем');
+        return;
+      }
+
       console.log('AuthProvider: Получено событие принудительного выхода:', event.detail);
+      
+      // Устанавливаем флаг выхода
+      setLogoutInProgress(true);
       
       // Выполняем выход из системы
       dispatch(authModel.logout());
@@ -155,6 +167,11 @@ const AuthProvider = ({ children }) => {
       
       // Перенаправляем на главную страницу
       navigate('/');
+      
+      // Сбрасываем флаг выхода через небольшую задержку
+      setTimeout(() => {
+        setLogoutInProgress(false);
+      }, 1000);
     };
 
     // Добавляем обработчик события
@@ -164,20 +181,25 @@ const AuthProvider = ({ children }) => {
     return () => {
       window.removeEventListener('forceLogout', handleForceLogout);
     };
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, logoutInProgress]);
 
   // Периодическая проверка статуса пользователя (каждые 30 секунд)
   useEffect(() => {
     let statusCheckInterval;
 
-    if (isAuth && user) {
+    if (isAuth && user && !logoutInProgress) {
       console.log('AuthProvider: Запуск периодической проверки статуса пользователя');
       
       const checkUserStatus = async () => {
+        // Дополнительная проверка на случай если выход уже начался
+        if (logoutInProgress) {
+          return;
+        }
+
         try {
           const isActive = await userApi.checkUserStatus();
           
-          if (!isActive) {
+          if (!isActive && !logoutInProgress) {
             console.log('AuthProvider: Пользователь заблокирован, принудительный выход');
             
             // Создаем событие принудительного выхода
@@ -193,7 +215,7 @@ const AuthProvider = ({ children }) => {
           console.error('AuthProvider: Ошибка при проверке статуса пользователя:', error);
           
           // Если получили 401/403 - возможно пользователь заблокирован
-          if (error.response?.status === 401 || error.response?.status === 403) {
+          if ((error.response?.status === 401 || error.response?.status === 403) && !logoutInProgress) {
             const logoutEvent = new CustomEvent('forceLogout', {
               detail: { 
                 reason: 'unauthorized',
@@ -215,7 +237,7 @@ const AuthProvider = ({ children }) => {
         console.log('AuthProvider: Остановка периодической проверки статуса');
       }
     };
-  }, [isAuth, user]);
+  }, [isAuth, user, logoutInProgress]);
 
   // Предоставляем контекст авторизации для всех дочерних компонентов
   return (
