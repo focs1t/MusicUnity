@@ -470,7 +470,6 @@
 
 .release-page .bookmark-button {
   background-color: #090808;
-  padding: 0.25rem 0.5rem;
   display: flex;
   border-radius: 0.75rem;
   align-items: center;
@@ -481,7 +480,7 @@
 
 @media (min-width: 1024px) {
   .release-page .bookmark-button {
-    padding: 0.5rem 0.75rem;
+    /* padding removed */
   }
 }
 
