@@ -6,6 +6,7 @@ import { ThemeProvider } from './providers/ThemeProvider';
 import { AppRouter } from './providers/RouterProvider';
 import { Header } from '../widgets/Header';
 import { Sidebar } from '../widgets/Sidebar';
+import { Footer } from '../widgets/Footer';
 import store from './store';
 
 const App = () => {
@@ -19,6 +20,7 @@ const App = () => {
               <div className="content">
                 <Header />
                 <AppRouter />
+                <Footer />
               </div>
             </div>
           </AuthProvider>

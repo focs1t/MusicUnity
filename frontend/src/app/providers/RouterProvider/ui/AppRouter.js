@@ -24,6 +24,9 @@ import ModeratorCreateReleasePage from '../../../../pages/ModeratorCreateRelease
 import ModeratorReportsPage from '../../../../pages/ModeratorReportsPage';
 // Страница поиска
 import SearchPage from '../../../../pages/SearchPage';
+// Страницы для пользовательского соглашения и политики обработки персональных данных
+import UserAgreementPage from '../../../../pages/UserAgreementPage';
+import PrivacyPolicyPage from '../../../../pages/PrivacyPolicyPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -76,6 +79,10 @@ const AppRouter = () => {
       
       {/* Поиск */}
       <Route path="/search" element={<PublicRoute element={<SearchPage />} />} />
+      
+      {/* Маршруты для пользовательского соглашения и политики обработки персональных данных */}
+      <Route path={ROUTES.USER_AGREEMENT} element={<PublicRoute element={<UserAgreementPage />} />} />
+      <Route path={ROUTES.PRIVACY_POLICY} element={<PublicRoute element={<PrivacyPolicyPage />} />} />
       
       {/* Редирект на главную при переходе на неизвестный маршрут */}
       <Route path="*" element={<Navigate to="/" replace />} />

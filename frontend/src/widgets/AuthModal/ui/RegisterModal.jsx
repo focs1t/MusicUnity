@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, Button, TextField, Box, Typography, Checkbox, FormControlLabel, Alert, Radio, RadioGroup, FormControl, FormLabel } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { authModel } from '../../../entities/auth';
 import { modalStyles } from './styles';
 import httpClient from '../../../shared/api/httpClient';
+import { ROUTES } from '../../../shared/config/routes';
 
 const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
   const dispatch = useDispatch();
@@ -17,6 +19,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     password: '',
     confirmPassword: '',
     agreeTerms: false,
+    agreePrivacy: false,
     userType: 'user', // 'user' или 'author'
     authorName: '' // для авторов
   });
@@ -52,6 +55,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
       password: '',
       confirmPassword: '',
       agreeTerms: false,
+      agreePrivacy: false,
       userType: 'user',
       authorName: ''
     });
@@ -64,7 +68,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     const { name, value, checked } = e.target;
     setRegisterData(prev => ({
       ...prev,
-      [name]: name === 'agreeTerms' ? checked : value
+      [name]: name === 'agreeTerms' || name === 'agreePrivacy' ? checked : value
     }));
 
     // Очистить ошибку при изменении поля
@@ -109,7 +113,11 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     }
     
     if (!registerData.agreeTerms) {
-      newErrors.agreeTerms = 'Необходимо согласиться с условиями';
+      newErrors.agreeTerms = 'Необходимо согласиться с условиями пользовательского соглашения';
+    }
+    
+    if (!registerData.agreePrivacy) {
+      newErrors.agreePrivacy = 'Необходимо согласиться с условиями политики обработки персональных данных';
     }
     
     setErrors(newErrors);
@@ -168,6 +176,27 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     resetForm();
     onClose();
   };
+  
+  // Функция для временного закрытия модального окна при переходе по ссылкам
+  const handleNavigateToTerms = (e) => {
+    e.preventDefault();
+    // Сохраняем состояние формы в localStorage
+    localStorage.setItem('registerFormData', JSON.stringify(registerData));
+    // Закрываем модальное окно
+    onClose();
+    // Открываем новую вкладку с пользовательским соглашением
+    window.open(ROUTES.USER_AGREEMENT, '_blank');
+  };
+  
+  const handleNavigateToPrivacy = (e) => {
+    e.preventDefault();
+    // Сохраняем состояние формы в localStorage
+    localStorage.setItem('registerFormData', JSON.stringify(registerData));
+    // Закрываем модальное окно
+    onClose();
+    // Открываем новую вкладку с политикой обработки персональных данных
+    window.open(ROUTES.PRIVACY_POLICY, '_blank');
+  };
 
   return (
     <Dialog 
@@ -206,7 +235,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
             </Alert>
             <Typography sx={modalStyles.normalText}>
               {registerData.userType === 'author-request-sent' 
-                ? 'Ваша заявка на роль автора отправлена. Для подтверждения статуса автора напишите на musicunity@mail.ru с доказательствами ваших музыкальных работ.' 
+                ? 'Ваша заявка на роль автора отправлена. Для подтверждения статуса автора напишите на musciunity@mail.ru с доказательствами ваших музыкальных работ.' 
                 : 'Теперь вы можете использовать все возможности нашего сервиса. Добро пожаловать в MusicUnity!'}
             </Typography>
             <Button
@@ -368,12 +397,13 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
                 <Typography sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.95em' }}>Подтверждение статуса автора:</Typography>
                 <Typography sx={{ fontSize: '0.85em', lineHeight: 1.3 }}>
                   После регистрации напишите на{' '}
-                  <strong style={{ color: '#1976d2' }}>musicunity@mail.ru</strong>{' '}
+                                        <strong style={{ color: '#1976d2' }}>musciunity@mail.ru</strong>{' '}
                   с доказательствами ваших музыкальных работ.
                 </Typography>
               </Alert>
             )}
             
+            {/* Чекбокс для пользовательского соглашения */}
             <FormControlLabel
               control={
                 <Checkbox 
@@ -385,7 +415,13 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               }
               label={
                 <Typography variant="body2" sx={modalStyles.normalText}>
-                  Я согласен с <span style={{ textDecoration: 'underline', cursor: 'pointer', color: 'white' }}>условиями использования</span>
+                  Принимаю условия{' '}
+                  <span 
+                    style={{ textDecoration: 'underline', cursor: 'pointer', color: '#4dabf5' }}
+                    onClick={handleNavigateToTerms}
+                  >
+                    Пользовательского соглашения
+                  </span>{' '}*
                 </Typography>
               }
               sx={{ mt: 1 }}
@@ -393,6 +429,35 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
             {errors.agreeTerms && (
               <Typography variant="caption" sx={{ display: 'block', ml: 2, color: '#bf616a' }}>
                 {errors.agreeTerms}
+              </Typography>
+            )}
+            
+            {/* Чекбокс для политики обработки персональных данных */}
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  name="agreePrivacy" 
+                  checked={registerData.agreePrivacy}
+                  onChange={handleChange}
+                  sx={modalStyles.checkbox}
+                />
+              }
+              label={
+                <Typography variant="body2" sx={modalStyles.normalText}>
+                  Принимаю условия{' '}
+                  <span 
+                    style={{ textDecoration: 'underline', cursor: 'pointer', color: '#4dabf5' }}
+                    onClick={handleNavigateToPrivacy}
+                  >
+                    Политики обработки персональных данных
+                  </span>{' '}*
+                </Typography>
+              }
+              sx={{ mt: 1 }}
+            />
+            {errors.agreePrivacy && (
+              <Typography variant="caption" sx={{ display: 'block', ml: 2, color: '#bf616a' }}>
+                {errors.agreePrivacy}
               </Typography>
             )}
             

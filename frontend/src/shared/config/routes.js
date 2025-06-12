@@ -20,5 +20,7 @@ export const ROUTES = {
   CREATE_RELEASE: '/create-release',
   MODERATOR_CREATE_RELEASE: '/moderator/create-release',
   MODERATOR_REPORTS: '/moderator/reports',
-  CONTACT: '/contact'
+  CONTACT: '/contact',
+  USER_AGREEMENT: '/user-agreement',
+  PRIVACY_POLICY: '/policy-personal'
 }; 
