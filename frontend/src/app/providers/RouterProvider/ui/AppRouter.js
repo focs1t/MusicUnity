@@ -27,6 +27,10 @@ import SearchPage from '../../../../pages/SearchPage';
 // Страницы для пользовательского соглашения и политики обработки персональных данных
 import UserAgreementPage from '../../../../pages/UserAgreementPage';
 import PrivacyPolicyPage from '../../../../pages/PrivacyPolicyPage';
+// Новые страницы
+import AboutPage from '../../../../pages/AboutPage';
+import ContactPage from '../../../../pages/ContactPage';
+import FAQPage from '../../../../pages/FAQPage';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -68,14 +72,14 @@ const AppRouter = () => {
       <Route path={ROUTES.AUTHORS} element={<PublicRoute element={<AuthorsPage />} />} />
       <Route path={ROUTES.AUTHOR} element={<PublicRoute element={<AuthorPage />} />} />
       <Route path="/genres" element={<PublicRoute element={<div>Жанры</div>} />} />
-      <Route path={ROUTES.ABOUT} element={<PublicRoute element={<div>О нас</div>} />} />
+      <Route path={ROUTES.ABOUT} element={<PublicRoute element={<AboutPage />} />} />
       <Route path={ROUTES.TOP_100} element={<PublicRoute element={<Top100Page />} />} />
-      <Route path={ROUTES.FAQ} element={<PublicRoute element={<div>Часто задаваемые вопросы</div>} />} />
+      <Route path={ROUTES.FAQ} element={<PublicRoute element={<FAQPage />} />} />
       <Route path={ROUTES.RATING} element={<PublicRoute element={<RatingPage />} />} />
       <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<AuthorLikesPage />} />} />
       <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<VerifiedAuthorsPage />} />} />
       <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<ReviewsPage />} />} />
-      <Route path={ROUTES.CONTACT} element={<PublicRoute element={<div>Обратная связь</div>} />} />
+      <Route path={ROUTES.CONTACT} element={<PublicRoute element={<ContactPage />} />} />
       
       {/* Поиск */}
       <Route path="/search" element={<PublicRoute element={<SearchPage />} />} />
