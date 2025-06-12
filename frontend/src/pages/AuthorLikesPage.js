@@ -1037,65 +1037,67 @@ const AuthorLikesPage = () => {
   // Рендер сортировки
   const renderSortDropdown = () => {
     return React.createElement('div', {
-      className: 'rounded-lg border text-card-foreground shadow-sm p-3 bg-zinc-900'
+      className: 'rating-filters-container'
     }, 
-      React.createElement('div', { className: 'md:flex md:items-center gap-4' }, 
-        React.createElement('div', { className: 'flex items-center gap-4' }, [
+      React.createElement('div', { className: 'rating-filters-card' }, 
+        React.createElement('div', { className: 'rating-filters-content' }, [
           React.createElement('div', {
-            className: 'max-md:hidden font-bold text-muted-foreground max-md:mb-3 max-md:text-sm',
+            className: 'rating-filters-label',
             key: 'sort-label'
           }, 'Сортировать по:'),
-          React.createElement('div', { className: 'relative', key: 'sort-dropdown' }, [
-            React.createElement('button', {
-              type: 'button',
-              role: 'combobox',
-              'aria-expanded': sortDropdownOpen,
-              onClick: () => setSortDropdownOpen(!sortDropdownOpen),
-              className: 'flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-[150px] md:w-[260px]',
-              key: 'sort-button'
-            }, [
-              React.createElement('span', {
-                style: { pointerEvents: 'none' },
-                key: 'sort-text'
-              }, 
-                sortOption === 'newest' ? 'Новые' :
-                sortOption === 'oldest' ? 'Старые' :
-                sortOption === 'popular' ? 'Популярные' : 'Высший рейтинг'
-              ),
-              React.createElement(ChevronDownIcon, {
-                className: 'h-4 w-4 opacity-50',
-                key: 'sort-icon'
-              })
-            ]),
-            
-            sortDropdownOpen && React.createElement('div', {
-              className: 'absolute z-10 mt-1 w-full rounded-md border border-zinc-700 bg-zinc-800 shadow-lg',
-              key: 'sort-options'
-            }, 
-              React.createElement('ul', { className: 'py-1' }, [
-                React.createElement('li', {
-                  className: 'px-3 py-2 text-sm hover:bg-zinc-700 cursor-pointer',
+          React.createElement('div', { className: 'rating-filters-controls', key: 'sort-controls' }, 
+            React.createElement('div', { className: 'rating-filter-dropdown', key: 'sort-dropdown' }, [
+              React.createElement('button', {
+                type: 'button',
+                className: 'rating-filter-button',
+                onClick: () => setSortDropdownOpen(!sortDropdownOpen),
+                key: 'sort-button'
+              }, [
+                React.createElement('span', {
+                  key: 'sort-text'
+                }, 
+                  sortOption === 'newest' ? 'Новые' :
+                  sortOption === 'oldest' ? 'Старые' :
+                  sortOption === 'popular' ? 'Популярные' : 'Высший рейтинг'
+                ),
+                React.createElement('svg', {
+                  className: 'rating-filter-chevron',
+                  viewBox: '0 0 24 24',
+                  fill: 'none',
+                  stroke: 'currentColor',
+                  strokeWidth: '2',
+                  key: 'sort-icon'
+                }, React.createElement('path', { d: 'm6 9 6 6 6-6' }))
+              ]),
+              
+              sortDropdownOpen && React.createElement('div', {
+                className: 'rating-filter-menu',
+                key: 'sort-options'
+              }, [
+                React.createElement('div', {
+                  className: `rating-filter-option ${sortOption === 'newest' ? 'selected' : ''}`,
                   onClick: () => handleSortChange('newest'),
                   key: 'sort-newest'
                 }, 'Новые'),
-                React.createElement('li', {
-                  className: 'px-3 py-2 text-sm hover:bg-zinc-700 cursor-pointer',
+                React.createElement('div', {
+                  className: `rating-filter-option ${sortOption === 'oldest' ? 'selected' : ''}`,
                   onClick: () => handleSortChange('oldest'),
                   key: 'sort-oldest'
                 }, 'Старые'),
-                React.createElement('li', {
-                  className: 'px-3 py-2 text-sm hover:bg-zinc-700 cursor-pointer',
+                React.createElement('div', {
+                  className: `rating-filter-option ${sortOption === 'popular' ? 'selected' : ''}`,
                   onClick: () => handleSortChange('popular'),
                   key: 'sort-popular'
                 }, 'Популярные'),
-                React.createElement('li', {
-                  className: 'px-3 py-2 text-sm hover:bg-zinc-700 cursor-pointer',
+                React.createElement('div', {
+                  className: `rating-filter-option ${sortOption === 'top_rated' ? 'selected' : ''}`,
                   onClick: () => handleSortChange('top_rated'),
                   key: 'sort-top'
                 }, 'Высший рейтинг')
               ])
-            )
-          ])
+            ])
+          ),
+          React.createElement('div', { className: 'rating-filters-separator', key: 'separator' })
         ])
       )
     );
