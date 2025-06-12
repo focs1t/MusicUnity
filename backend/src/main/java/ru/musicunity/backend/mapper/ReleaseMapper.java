@@ -13,9 +13,11 @@ import java.util.stream.Collectors;
 @Component
 public class ReleaseMapper {
     private final GenreMapper genreMapper;
+    private final UserMapper userMapper;
 
-    public ReleaseMapper(GenreMapper genreMapper) {
+    public ReleaseMapper(GenreMapper genreMapper, UserMapper userMapper) {
         this.genreMapper = genreMapper;
+        this.userMapper = userMapper;
     }
 
     public ReleaseDTO toDTO(Release release) {
@@ -40,7 +42,10 @@ public class ReleaseMapper {
                         author.getAuthor().getAuthorName(),
                         author.getAuthor().getAvatarUrl(),
                         author.getIsArtist(),
-                        author.getIsProducer()
+                        author.getIsProducer(),
+                        author.getAuthor().getBio(),
+                        author.getAuthor().getIsVerified(),
+                        author.getAuthor().getUser() != null ? userMapper.toDTO(author.getAuthor().getUser()) : null
                 ))
                 .collect(Collectors.toList()));
 

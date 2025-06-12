@@ -103,9 +103,7 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary">Применить</button>
-                    </div>
+
                 </form>
             </div>
         </div>
@@ -200,31 +198,65 @@
                                         <small th:if="${audit.moderator?.rights?.name() == 'ADMIN'}" class="badge bg-danger ms-1">АДМИН</small>
                                     </td>
                                     <td>
-                                                                <!-- Ссылка на цель в зависимости от типа действия -->
-                        <a th:if="${audit.actionType.name() == 'USER_BLOCK' or audit.actionType.name() == 'USER_UNBLOCK' or audit.actionType.name() == 'USER_DELETE' or audit.actionType.name() == 'USER_RESTORE'}"
-                           th:href="@{'/admin/users?userId=' + ${audit.targetId}}" 
-                           th:text="${audit.targetId}"
-                           class="btn btn-outline-primary btn-sm"
-                           data-bs-toggle="tooltip" 
-                           data-bs-placement="top"
-                           title="Перейти к пользователю">123</a>
+                                        <!-- Кнопки для просмотра целей -->
+                                        <button th:if="${audit.actionType.name() == 'USER_BLOCK' or audit.actionType.name() == 'USER_UNBLOCK' or audit.actionType.name() == 'USER_DELETE' or audit.actionType.name() == 'USER_RESTORE'}"
+                                               type="button"
+                                               class="btn btn-outline-primary btn-sm view-target-btn"
+                                               th:data-target-id="${audit.targetId}"
+                                               data-target-type="user"
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-placement="top"
+                                               title="Просмотр пользователя"
+                                               th:text="${audit.targetId}">123</button>
                         
-                        <span th:if="${audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE' or audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE' or audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE'}"
-                              th:text="${audit.targetId}"
-                              class="btn btn-outline-secondary btn-sm disabled"
-                              data-bs-toggle="tooltip" 
-                              data-bs-placement="top"
-                              title="Раздел удален из админ панели">123</span>
+                                        <button th:if="${audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE'}"
+                                               type="button"
+                                               class="btn btn-outline-success btn-sm view-target-btn"
+                                               th:data-target-id="${audit.targetId}"
+                                               data-target-type="release"
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-placement="top"
+                                               title="Просмотр релиза"
+                                               th:text="${audit.targetId}">123</button>
+                        
+                                        <button th:if="${audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE'}"
+                                               type="button"
+                                               class="btn btn-outline-warning btn-sm view-target-btn"
+                                               th:data-target-id="${audit.targetId}"
+                                               data-target-type="review"
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-placement="top"
+                                               title="Просмотр рецензии"
+                                               th:text="${audit.targetId}">123</button>
+                        
+                                        <!-- Кнопка для авторов -->
+                                        <button th:if="${audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE'}"
+                                               type="button"
+                                               class="btn btn-outline-info btn-sm view-target-btn"
+                                               th:data-target-id="${audit.targetId}"
+                                               data-target-type="author"
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-placement="top"
+                                               title="Просмотр автора"
+                                               th:text="${audit.targetId}">123</button>
+                        
+                                        <!-- Для остальных типов -->
+                                        <span th:if="${audit.actionType.name() == 'USER_DEMOTE_FROM_MODERATOR'}"
+                                              th:text="${audit.targetId}"
+                                              class="btn btn-outline-secondary btn-sm disabled"
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top"
+                                              title="Просмотр недоступен">123</span>
                                         
                                         <!-- Если тип действия не подходит ни под одну категорию -->
-                                        <span th:unless="${audit.actionType.name() == 'USER_BLOCK' or audit.actionType.name() == 'USER_UNBLOCK' or audit.actionType.name() == 'USER_DELETE' or audit.actionType.name() == 'USER_RESTORE' or audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE' or audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE' or audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE'}"
+                                        <span th:unless="${audit.actionType.name() == 'USER_BLOCK' or audit.actionType.name() == 'USER_UNBLOCK' or audit.actionType.name() == 'USER_DELETE' or audit.actionType.name() == 'USER_RESTORE' or audit.actionType.name() == 'REVIEW_DELETE' or audit.actionType.name() == 'REVIEW_RESTORE' or audit.actionType.name() == 'RELEASE_DELETE' or audit.actionType.name() == 'RELEASE_ADD' or audit.actionType.name() == 'RELEASE_CREATE_OWN' or audit.actionType.name() == 'RELEASE_RESTORE' or audit.actionType.name() == 'AUTHOR_ADD' or audit.actionType.name() == 'AUTHOR_DELETE' or audit.actionType.name() == 'USER_DEMOTE_FROM_MODERATOR'}"
                                               th:text="${audit.targetId}"
                                               class="btn btn-outline-secondary btn-sm disabled"
                                               data-bs-toggle="tooltip" 
                                               data-bs-placement="top"
                                               title="Неизвестный тип объекта">123</span>
                                     </td>
-                                    <td th:text="${audit.performedAt}">2024-01-01 12:00</td>
+                                    <td th:text="${#temporals.format(audit.performedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
                                     <td>
                                         <!-- Показываем кнопки только для активных (не откаченных) действий -->
                                         <div th:if="${audit.isRolledBack == null or !audit.isRolledBack}" class="btn-group btn-group-sm">
@@ -233,7 +265,7 @@
                                                     th:data-audit-id="${audit.logId}"
                                                     data-bs-toggle="tooltip" 
                                                     data-bs-placement="top" 
-                                                    title="Выполнить откат действия">
+                                                    title="Выполнить отмену действия">
                                                 <i class="fas fa-undo"></i>
                                             </button>
                                             
@@ -249,9 +281,9 @@
                                             </button>
                                         </div>
                                         
-                                        <!-- Для откаченных действий показываем пустую ячейку -->
+                                        <!-- Для отмененных действий показываем пустую ячейку -->
                                         <span th:if="${audit.isRolledBack != null and audit.isRolledBack}" class="text-muted">
-                                            <i class="fas fa-check-circle"></i> Откачено
+                                            <i class="fas fa-check-circle"></i> Отменено
                                         </span>
                                     </td>
                                 </tr>
@@ -284,6 +316,90 @@
                                 </li>
                             </ul>
                         </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для пользователя -->
+    <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="userModalLabel">
+                        <i class="fas fa-user me-2"></i>Информация о пользователе
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="userModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для релиза -->
+    <div class="modal fade" id="releaseModal" tabindex="-1" aria-labelledby="releaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="releaseModalLabel">
+                        <i class="fas fa-music me-2"></i>Информация о релизе
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="releaseModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для рецензии -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="reviewModalLabel">
+                        <i class="fas fa-edit me-2"></i>Информация о рецензии
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="reviewModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для автора -->
+    <div class="modal fade" id="authorModal" tabindex="-1" aria-labelledby="authorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="authorModalLabel">
+                        <i class="fas fa-microphone me-2"></i>Информация об авторе
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="authorModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -341,6 +457,16 @@
                     }
                 });
             });
+            
+            // Обработчики для кнопок просмотра таргетов
+            document.querySelectorAll('.view-target-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.dataset.targetId;
+                    const targetType = this.dataset.targetType;
+                    
+                    showTargetInfo(targetId, targetType);
+                });
+            });
         });
         
         function submitForm() {
@@ -375,7 +501,7 @@
                 }
             })
             .catch(error => {
-                alert('Ошибка при выполнении отката: ' + error);
+                alert('Ошибка при выполнении отмены: ' + error);
             });
         }
         
@@ -409,6 +535,310 @@
             .catch(error => {
                 alert('Ошибка при понижении: ' + error);
             });
+        }
+        
+        function showTargetInfo(targetId, targetType) {
+            const modalId = targetType + 'Modal';
+            const modalBodyId = targetType + 'ModalBody';
+            
+            // Показываем модальное окно
+            const modal = new bootstrap.Modal(document.getElementById(modalId));
+            modal.show();
+            
+            // Сбрасываем содержимое на спиннер
+            document.getElementById(modalBodyId).innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-${targetType === 'user' ? 'primary' : targetType === 'release' ? 'success' : targetType === 'author' ? 'info' : 'warning'}" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+            `;
+            
+            // Загружаем данные
+            fetch(`/admin/audit/target/${targetType}/${targetId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Данные не найдены');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (targetType === 'user') {
+                        renderUserInfo(data);
+                    } else if (targetType === 'release') {
+                        renderReleaseInfo(data);
+                    } else if (targetType === 'review') {
+                        renderReviewInfo(data);
+                    } else if (targetType === 'author') {
+                        renderAuthorInfo(data);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById(modalBodyId).innerHTML = `
+                        <div class="text-center text-danger">
+                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                            <h5>Ошибка загрузки</h5>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function renderUserInfo(user) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        ${user.avatarUrl ? 
+                            `<img src="${user.avatarUrl}" class="rounded-circle img-fluid mb-3" style="max-width: 120px; max-height: 120px; object-fit: cover;" alt="Аватар">` :
+                            `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white mx-auto mb-3" style="width: 120px; height: 120px; font-size: 48px;"><i class="fas fa-user"></i></div>`
+                        }
+                        <div class="mb-2">
+                            <span class="badge ${
+                                user.rights?.name === 'ADMIN' ? 'bg-danger' :
+                                user.rights?.name === 'AUTHOR' ? 'bg-success' :
+                                user.rights?.name === 'MODERATOR' ? 'bg-warning text-dark' : 'bg-primary'
+                            }">${user.rights?.name || 'USER'}</span>
+                        </div>
+                        <div>
+                            <span class="badge ${user.isBlocked ? 'bg-danger' : 'bg-success'}">
+                                ${user.isBlocked ? 'Заблокирован' : 'Активен'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 30%;">ID:</th>
+                                <td>${user.userId}</td>
+                            </tr>
+                            <tr>
+                                <th>Имя пользователя:</th>
+                                <td><strong>${user.username}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>${user.email}</td>
+                            </tr>
+                            <tr>
+                                <th>Дата регистрации:</th>
+                                <td>${new Date(user.createdAt).toLocaleDateString('ru-RU')} ${new Date(user.createdAt).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}</td>
+                            </tr>
+                            <tr>
+                                <th>Последний вход:</th>
+                                <td>${user.lastLogin ? 
+                                    new Date(user.lastLogin).toLocaleDateString('ru-RU') + ' ' + new Date(user.lastLogin).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) : 
+                                    '<span class="text-muted">Никогда</span>'
+                                }</td>
+                            </tr>
+                            <tr>
+                                <th>Биография:</th>
+                                <td>${user.bio ? user.bio : '<span class="text-muted">Не указана</span>'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            `;
+            document.getElementById('userModalBody').innerHTML = html;
+        }
+        
+        function renderReleaseInfo(release) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        ${release.coverImageUrl ? 
+                            `<img src="${release.coverImageUrl}" class="img-fluid rounded mb-3" style="max-width: 200px;" alt="Обложка">` :
+                            `<div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white mb-3" style="width: 200px; height: 200px; font-size: 48px; margin: 0 auto;"><i class="fas fa-music"></i></div>`
+                        }
+                    </div>
+                    <div class="col-md-8">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 30%;">ID:</th>
+                                <td>${release.releaseId}</td>
+                            </tr>
+                            <tr>
+                                <th>Название:</th>
+                                <td><strong>${release.title}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Авторы:</th>
+                                <td>
+                                    ${release.authors && release.authors.length > 0 ? 
+                                        release.authors.map(author => {
+                                            let authorInfo = `
+                                                <div class="d-flex align-items-start mb-2 p-2 border rounded bg-light">
+                                                    <div class="me-3">
+                                                        ${author.avatarUrl ? 
+                                                            `<img src="${author.avatarUrl}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Аватар">` :
+                                                            `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 16px;"><i class="fas fa-user"></i></div>`
+                                                        }
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            <strong class="me-2">${author.authorName}</strong>
+                                                            ${author.isVerified ? '<span class="badge bg-success me-2"><i class="fas fa-check-circle"></i> Верифицирован</span>' : ''}
+                                                        </div>
+                                                        <div class="mb-1">
+                                                            <small class="text-muted">
+                                                                ${[
+                                                                    author.isArtist ? 'Исполнитель' : '',
+                                                                    author.isProducer ? 'Продюсер' : ''
+                                                                ].filter(role => role).join(', ') || 'Роли не указаны'}
+                                                            </small>
+                                                        </div>
+                                                        ${author.bio ? `<div class="mb-1"><small class="text-secondary">${author.bio}</small></div>` : ''}
+                                                        ${author.user ? `
+                                                            <div class="mt-1">
+                                                                <small class="text-info">
+                                                                    <i class="fas fa-user-circle me-1"></i>
+                                                                    Пользователь: ${author.user.username}
+                                                                </small>
+                                                            </div>
+                                                        ` : ''}
+                                                    </div>
+                                                </div>
+                                            `;
+                                            return authorInfo;
+                                        }).join('') :
+                                        '<span class="text-muted">Не указаны</span>'
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Жанры:</th>
+                                <td>${release.genres ? release.genres.map(genre => `<span class="badge bg-secondary me-1">${genre.name}</span>`).join('') : '<span class="text-muted">Не указаны</span>'}</td>
+                            </tr>
+                            <tr>
+                                <th>Тип:</th>
+                                <td><span class="badge bg-info">${release.type}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Дата релиза:</th>
+                                <td>${release.releaseDate ? new Date(release.releaseDate).toLocaleDateString('ru-RU') : '<span class="text-muted">Не указана</span>'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            `;
+            document.getElementById('releaseModalBody').innerHTML = html;
+        }
+        
+        function renderReviewInfo(review) {
+            const html = `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">${review.title || 'Рецензия без названия'}</h5>
+                            <div>
+                                <span class="badge bg-secondary">ID: ${review.reviewId}</span>
+                                <span class="badge bg-info ms-1">${review.type}</span>
+                                ${review.rating ? `<span class="badge bg-warning ms-1">${review.rating}/5</span>` : ''}
+                            </div>
+                        </div>
+                        <small class="text-muted">${new Date(review.createdAt).toLocaleDateString('ru-RU')} ${new Date(review.createdAt).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}</small>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Автор рецензии:</strong><br>
+                        <div class="d-flex align-items-center mt-1">
+                            ${review.user?.avatarUrl ? 
+                                `<img src="${review.user.avatarUrl}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;" alt="Аватар">` :
+                                `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white me-2" style="width: 32px; height: 32px; font-size: 14px;"><i class="fas fa-user"></i></div>`
+                            }
+                            <span>${review.user?.username || 'Неизвестный пользователь'}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Релиз:</strong><br>
+                        <span>${review.release?.title || 'Релиз удален'}</span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Содержание рецензии:</strong>
+                    <div class="border rounded p-3 mt-2 bg-light" style="max-height: 300px; overflow-y: auto;">
+                        ${review.content ? review.content.replace(/\n/g, '<br>') : '<span class="text-muted">Содержание отсутствует</span>'}
+                    </div>
+                </div>
+            `;
+            document.getElementById('reviewModalBody').innerHTML = html;
+        }
+        
+        function renderAuthorInfo(author) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        ${author.avatarUrl ? 
+                            `<img src="${author.avatarUrl}" class="rounded-circle img-fluid mb-3" style="max-width: 120px; max-height: 120px; object-fit: cover;" alt="Аватар">` :
+                            `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white mx-auto mb-3" style="width: 120px; height: 120px; font-size: 48px;"><i class="fas fa-microphone"></i></div>`
+                        }
+                        <div class="mb-2">
+                            ${author.isVerified ? 
+                                '<span class="badge bg-success"><i class="fas fa-check-circle"></i> Верифицирован</span>' :
+                                '<span class="badge bg-secondary">Не верифицирован</span>'
+                            }
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge ${author.isDeleted ? 'bg-danger' : 'bg-success'}">
+                                ${author.isDeleted ? 'Удален' : 'Активен'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 30%;">ID:</th>
+                                <td>${author.authorId}</td>
+                            </tr>
+                            <tr>
+                                <th>Имя автора:</th>
+                                <td><strong>${author.authorName}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Роли:</th>
+                                <td>
+                                    ${[
+                                        author.isArtist ? '<span class="badge bg-primary me-1">Исполнитель</span>' : '',
+                                        author.isProducer ? '<span class="badge bg-info me-1">Продюсер</span>' : ''
+                                    ].filter(role => role).join('') || '<span class="text-muted">Роли не указаны</span>'}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Дата создания:</th>
+                                <td>${author.createdAt ? new Date(author.createdAt).toLocaleDateString('ru-RU') + ' ' + new Date(author.createdAt).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) : '<span class="text-muted">Не указана</span>'}</td>
+                            </tr>
+                            <tr>
+                                <th>Подписчики:</th>
+                                <td>${author.followingCount || 0}</td>
+                            </tr>
+                            <tr>
+                                <th>Биография:</th>
+                                <td>${author.bio ? author.bio : '<span class="text-muted">Не указана</span>'}</td>
+                            </tr>
+                            ${author.user ? `
+                                <tr>
+                                    <th>Связанный пользователь:</th>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            ${author.user.avatarUrl ? 
+                                                `<img src="${author.user.avatarUrl}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;" alt="Аватар">` :
+                                                `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white me-2" style="width: 32px; height: 32px; font-size: 14px;"><i class="fas fa-user"></i></div>`
+                                            }
+                                            <div>
+                                                <strong>${author.user.username}</strong><br>
+                                                <small class="text-muted">${author.user.email}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ` : ''}
+                        </table>
+                    </div>
+                </div>
+            `;
+            document.getElementById('authorModalBody').innerHTML = html;
         }
     </script>
 </body>

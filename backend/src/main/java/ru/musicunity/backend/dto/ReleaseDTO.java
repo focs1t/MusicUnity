@@ -38,13 +38,19 @@ public class ReleaseDTO {
         private String avatarUrl;
         private Boolean isArtist;
         private Boolean isProducer;
+        private String bio;
+        private Boolean isVerified;
+        private UserDTO user;
 
-        public AuthorDTO(Long id, String authorName, String avatarUrl, Boolean isArtist, Boolean isProducer) {
+        public AuthorDTO(Long id, String authorName, String avatarUrl, Boolean isArtist, Boolean isProducer, String bio, Boolean isVerified, UserDTO user) {
             this.id = id;
             this.authorName = authorName;
             this.avatarUrl = avatarUrl;
             this.isArtist = isArtist;
             this.isProducer = isProducer;
+            this.bio = bio;
+            this.isVerified = isVerified;
+            this.user = user;
         }
     }
 

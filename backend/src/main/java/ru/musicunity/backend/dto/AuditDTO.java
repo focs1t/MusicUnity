@@ -42,8 +42,6 @@ public class AuditDTO {
                 return "Добавление автора";
             case AUTHOR_DELETE:
                 return "Удаление автора";
-            case USER_DELETE:
-                return "Удаление пользователя";
             case USER_RESTORE:
                 return "Восстановление пользователя";
             case USER_DEMOTE_FROM_MODERATOR:

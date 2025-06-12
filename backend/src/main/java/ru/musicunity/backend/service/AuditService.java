@@ -87,14 +87,6 @@ public class AuditService {
                     userRepository.save(user);
                 });
                 break;
-
-            case USER_DELETE:
-                // Удаление пользователей не поддерживается в системе
-                throw new RuntimeException("Удаление пользователей не предусмотрено в системе");
-
-            case USER_RESTORE:
-                // Восстановление пользователей не поддерживается (нет удаления)
-                throw new RuntimeException("Восстановление пользователей не предусмотрено в системе");
                 
             case REVIEW_DELETE:
                 // Восстанавливаем удаленную рецензию (убираем флаг удален)
@@ -196,9 +188,6 @@ public class AuditService {
             case RELEASE_CREATE_OWN:
             case USER_DEMOTE_FROM_MODERATOR:
                 return true;
-            case USER_DELETE:
-            case USER_RESTORE:
-                return false; // Удаление/восстановление пользователей не поддерживается в системе
             default:
                 return false;
         }

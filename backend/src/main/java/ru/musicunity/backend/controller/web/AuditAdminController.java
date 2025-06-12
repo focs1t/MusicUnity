@@ -11,11 +11,17 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AuditDTO;
 import ru.musicunity.backend.dto.UserDTO;
+import ru.musicunity.backend.dto.ReleaseDTO;
+import ru.musicunity.backend.dto.ReviewDTO;
+import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.pojo.Audit;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.service.AuditService;
 import ru.musicunity.backend.service.UserService;
+import ru.musicunity.backend.service.ReleaseService;
+import ru.musicunity.backend.service.ReviewService;
+import ru.musicunity.backend.service.AuthorService;
 import ru.musicunity.backend.repository.AuditRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +34,9 @@ public class AuditAdminController {
     
     private final AuditService auditService;
     private final UserService userService;
+    private final ReleaseService releaseService;
+    private final ReviewService reviewService;
+    private final AuthorService authorService;
     private final AuditRepository auditRepository;
 
     @GetMapping
@@ -141,6 +150,50 @@ public class AuditAdminController {
             return ResponseEntity.ok("Модератор понижен до пользователя");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Ошибка при понижении: " + e.getMessage());
+        }
+    }
+    
+    @GetMapping("/target/user/{userId}")
+    @ResponseBody
+    public ResponseEntity<UserDTO> getUserTarget(@PathVariable Long userId) {
+        try {
+            UserDTO user = userService.getUserById(userId);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/target/release/{releaseId}")
+    @ResponseBody
+    public ResponseEntity<ReleaseDTO> getReleaseTarget(@PathVariable Long releaseId) {
+        try {
+            ReleaseDTO release = releaseService.getReleaseById(releaseId);
+            return ResponseEntity.ok(release);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/target/review/{reviewId}")
+    @ResponseBody
+    public ResponseEntity<ReviewDTO> getReviewTarget(@PathVariable Long reviewId) {
+        try {
+            ReviewDTO review = reviewService.getReviewById(reviewId);
+            return ResponseEntity.ok(review);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/target/author/{authorId}")
+    @ResponseBody
+    public ResponseEntity<AuthorDTO> getAuthorTarget(@PathVariable Long authorId) {
+        try {
+            AuthorDTO author = authorService.getAuthorById(authorId);
+            return ResponseEntity.ok(author);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
         }
     }
 } 
