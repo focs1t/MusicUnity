@@ -222,8 +222,31 @@ const RatingPage = () => {
         })
       );
       
-      setTopTracks(tracksWithStats);
-      setTopAlbums(albumsWithStats);
+      // Сортируем треки и альбомы по приоритету: полные рецензии, потом простые
+      const sortByRating = (releases) => {
+        return releases.sort((a, b) => {
+          // Приоритет 1: Есть ли полные рецензии
+          const aHasExtended = a.avgExtendedRating && a.avgExtendedRating > 0;
+          const bHasExtended = b.avgExtendedRating && b.avgExtendedRating > 0;
+          
+          if (aHasExtended && !bHasExtended) return -1;
+          if (!aHasExtended && bHasExtended) return 1;
+          
+          // Если у обоих есть полные рецензии, сортируем по их рейтингу
+          if (aHasExtended && bHasExtended) {
+            return b.avgExtendedRating - a.avgExtendedRating;
+          }
+          
+          // Если у обоих нет полных рецензий, сортируем по простым
+          const aSimpleRating = a.avgRating || 0;
+          const bSimpleRating = b.avgRating || 0;
+          
+          return bSimpleRating - aSimpleRating;
+        });
+      };
+
+      setTopTracks(sortByRating([...tracksWithStats]));
+      setTopAlbums(sortByRating([...albumsWithStats]));
       
     } catch (error) {
       console.error('Ошибка загрузки данных рейтинга:', error);

@@ -16,7 +16,7 @@ import ChevronDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
-const REVIEWS_PER_PAGE = 9;
+const REVIEWS_PER_PAGE = 6;
 
 // Встроенный плейсхолдер в формате data URI для аватара
 const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMzMzMiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNTAiIGZpbGw9IiM2NjY2NjYiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIyMzAiIHI9IjEwMCIgZmlsbD0iIzY2NjY2NiIvPjwvc3ZnPg==';
@@ -33,7 +33,7 @@ const getCurrentUserId = () => {
       const userId = userData?.id || userData?.userId;
       if (userId) {
         console.log('ID пользователя из localStorage:', userId);
-        return userId;
+        return parseInt(userId, 10) || null;
       }
     }
   } catch (error) {
@@ -50,7 +50,7 @@ const getCurrentUserId = () => {
         const userIdFromToken = payload?.userId || payload?.id || payload?.sub;
         if (userIdFromToken) {
           console.log('ID пользователя из токена:', userIdFromToken);
-          return userIdFromToken;
+          return parseInt(userIdFromToken, 10) || null;
         }
       }
     }
@@ -101,7 +101,8 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
   // Безопасное получение ID пользователя
   const getUserId = () => {
     if (!review.user) return 0;
-    return review.user.id || review.user.userId || review.userId || 0;
+    const userId = review.user.id || review.user.userId || review.userId || 0;
+    return parseInt(userId, 10) || 0; // Приводим к числу
   };
 
   // Состояние для ранга пользователя
@@ -198,9 +199,11 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
   const currentUserId = getCurrentUserId();
   console.log(`ReviewCard: рецензия ID ${review.id || review.reviewId}, автор ID ${getUserId()}, текущий пользователь ID ${currentUserId}`);
   
-  // Если у нас есть какие-то данные о пользователе, используем их для проверки
-  const isOwnReview = getUserId() === currentUserId;
-  console.log(`Является ли рецензия собственной: ${isOwnReview}`);
+  // Приводим оба ID к числу для корректного сравнения
+  const reviewAuthorId = parseInt(getUserId(), 10) || 0;
+  const currentUserIdNum = parseInt(currentUserId, 10) || 0;
+  const isOwnReview = reviewAuthorId === currentUserIdNum && currentUserIdNum !== 0;
+  console.log(`Является ли рецензия собственной: ${isOwnReview} (автор: ${reviewAuthorId}, текущий: ${currentUserIdNum})`);
   
   // Состояние для отображения сообщения
   const [showMessage, setShowMessage] = useState(false);
@@ -543,12 +546,13 @@ const AuthorLikesPage = () => {
       const authUserId = auth.user.id || auth.user.userId;
       if (authUserId) {
         console.log('ID пользователя из useAuth:', authUserId);
-        return authUserId;
+        return parseInt(authUserId, 10) || null;
       }
     }
     
     // Если нет данных из useAuth, используем функцию для поиска в других источниках
-    return getCurrentUserId();
+    const userId = getCurrentUserId();
+    return userId ? parseInt(userId, 10) || null : null;
   };
   
   // Получаем ID пользователя при каждом рендере, чтобы гарантировать актуальность
@@ -690,6 +694,52 @@ const AuthorLikesPage = () => {
     }
   };
 
+  // Функция сортировки рецензий
+  const sortReviews = (reviewsArray, sortOption) => {
+    const sorted = [...reviewsArray];
+    
+    switch (sortOption) {
+      case 'newest':
+        return sorted.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+      
+      case 'oldest':
+        return sorted.sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date));
+      
+      case 'popular':
+        return sorted.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+      
+      case 'top_rated':
+        return sorted.sort((a, b) => {
+          // Получаем рейтинг для каждой рецензии
+          const getRating = (review) => {
+            if (review.totalScore !== undefined && review.totalScore !== null) {
+              return review.totalScore;
+            }
+            
+            if (review.rating && review.rating.total) {
+              return review.rating.total;
+            }
+            
+            // Вычисляем рейтинг по формуле
+            const rhymeImagery = review.rhymeImagery || 0;
+            const structureRhythm = review.structureRhythm || 0;
+            const styleExecution = review.styleExecution || 0;
+            const individuality = review.individuality || 0;
+            const vibe = review.vibe || 0;
+            
+            const baseScore = rhymeImagery + structureRhythm + styleExecution + individuality;
+            const vibeMultiplier = 1 + (vibe / 10) * 1.5;
+            return Math.round(baseScore * vibeMultiplier);
+          };
+          
+          return getRating(b) - getRating(a);
+        });
+      
+      default:
+        return sorted;
+    }
+  };
+
   // Загрузка данных из API
   const fetchReviews = async () => {
     setLoading(true);
@@ -722,7 +772,10 @@ const AuthorLikesPage = () => {
         // Загружаем авторские лайки для всех рецензий
         await fetchAuthorLikes(reviewsWithLikes);
         
-        setReviews(reviewsWithLikes);
+        // Применяем сортировку
+        const sortedReviews = sortReviews(reviewsWithLikes, sortOption);
+        
+        setReviews(sortedReviews);
         const totalPagesFromApi = reviewsResponse.totalPages || 1;
         console.log('Устанавливаем totalPages:', totalPagesFromApi);
         setTotalPages(totalPagesFromApi);
@@ -771,9 +824,13 @@ const AuthorLikesPage = () => {
     const targetReview = reviews.find(r => (r.id || r.reviewId) === reviewId);
     const reviewAuthorId = targetReview?.userId || (targetReview?.user && targetReview.user.id) || 0;
     
+    // Приводим ID к числу для корректного сравнения
+    const reviewAuthorIdNum = parseInt(reviewAuthorId, 10) || 0;
+    const currentUserIdNum = parseInt(currentUserId, 10) || 0;
+    
     // Проверяем, является ли пользователь автором рецензии
-    if (reviewAuthorId === currentUserId) {
-      console.log('Пользователь пытается лайкнуть свою рецензию');
+    if (reviewAuthorIdNum === currentUserIdNum && currentUserIdNum !== 0) {
+      console.log(`Пользователь пытается лайкнуть свою рецензию (автор: ${reviewAuthorIdNum}, текущий: ${currentUserIdNum})`);
       setNotification({
         message: 'Нельзя лайкать свои рецензии',
         type: 'warning'
