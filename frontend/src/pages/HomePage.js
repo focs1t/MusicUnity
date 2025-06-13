@@ -468,8 +468,36 @@ const HomePage = () => {
         })
       ]);
 
-      setNewReleases(newReleasesData.content || []);
-      setTopReleases(topReleasesData.content || []);
+      // Сортировка новых релизов по дате добавления (новые сначала)
+      const sortedNewReleases = (newReleasesData.content || []).sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.addedAt || 0);
+        const dateB = new Date(b.createdAt || b.addedAt || 0);
+        return dateB - dateA;
+      });
+
+      // Сортировка лучших релизов по баллу рецензий (сначала полные, потом простые)
+      const sortedTopReleases = (topReleasesData.content || []).sort((a, b) => {
+        // Приоритет полным рецензиям
+        const aFullRating = a.fullReviewRating || a.averageExtendedRating || 0;
+        const bFullRating = b.fullReviewRating || b.averageExtendedRating || 0;
+        const aSimpleRating = a.simpleReviewRating || a.averageSimpleRating || 0;
+        const bSimpleRating = b.simpleReviewRating || b.averageSimpleRating || 0;
+        
+        // Если у одного есть полная рецензия, а у другого нет - полная выше
+        if (aFullRating > 0 && bFullRating === 0) return -1;
+        if (bFullRating > 0 && aFullRating === 0) return 1;
+        
+        // Если у обоих есть полные рецензии - сравниваем их
+        if (aFullRating > 0 && bFullRating > 0) {
+          return bFullRating - aFullRating;
+        }
+        
+        // Если у обоих нет полных рецензий - сравниваем простые
+        return bSimpleRating - aSimpleRating;
+      });
+
+      setNewReleases(sortedNewReleases);
+      setTopReleases(sortedTopReleases);
       setVerifiedAuthors(verifiedAuthorsData.content || []);
       setTopUsers(topUsersData || []);
       setRecentReviews(recentReviewsData.content || []);
@@ -839,7 +867,7 @@ const HomePage = () => {
         <section className="hero-section">
           <div className="hero-content">
             <h1 className="hero-title">
-              Добро пожаловать в <span className="gradient-text">MusicUnity</span>
+              <span style={{ color: 'white' }}>Добро пожаловать в</span> <span className="gradient-text">MusicUnity</span>
             </h1>
             <p className="hero-subtitle">
               Откройте для себя новую музыку, читайте рецензии и делитесь своими впечатлениями
@@ -972,7 +1000,7 @@ const HomePage = () => {
             <h2 className="section-title">Топ релизы</h2>
             <button 
               className="view-all-button"
-              onClick={() => navigate('/releases')}
+              onClick={() => navigate('/rating-releases')}
             >
               Смотреть все
             </button>
@@ -1254,7 +1282,7 @@ const HomePage = () => {
                   key={user.id}
                   className="user-card"
                 >
-                  <a href={`/profile/${user.username}`} className="user-card-link">
+                  <a href={`/profile/${user.id}`} className="user-card-link">
                     <img
                       src={user.avatarUrl || DEFAULT_AVATAR_PLACEHOLDER}
                       alt={user.username}
@@ -1262,7 +1290,7 @@ const HomePage = () => {
                       onError={handleAvatarError}
                     />
                     <div className="user-info">
-                      <div className="user-name">#{index + 1} {user.username}</div>
+                      <div className="user-name">#{index + 1} {user.username || user.name || 'Пользователь'}</div>
                       <div className="user-score">{user.points || 0} очков</div>
                     </div>
                   </a>
