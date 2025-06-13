@@ -199,6 +199,41 @@
   outline-offset: 2px !important;
 }
 
+/* Стили для кнопки редактирования аватарки */
+.author-page-container .edit-avatar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.author-page-container .edit-avatar-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.05);
+}
+
+.author-page-container .edit-avatar-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1024px) {
+  .author-page-container .edit-avatar-button {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
 .author-page-container .hero-background-image {
   position: absolute;
   top: 0;

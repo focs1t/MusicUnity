@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { authorApi } from '../shared/api/author';
 import { releaseApi } from '../shared/api/release';
 import { userApi } from '../shared/api/user';
+import { useAuth } from '../app/providers/AuthProvider';
 import Notification from '../components/Notification';
 import ReportButton from '../shared/ui/ReportButton/ReportButton';
+import EditAuthorAvatarModal from '../components/EditAuthorAvatarModal';
 import { ReportType } from '../entities/report/model/types';
 import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -36,6 +38,7 @@ const getCurrentUserId = () => {
 const AuthorPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [author, setAuthor] = useState(null);
   const [authorReleases, setAuthorReleases] = useState({ best: [], all: [] });
   const [loading, setLoading] = useState(true);
@@ -43,10 +46,57 @@ const AuthorPage = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [notification, setNotification] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Функция для округления до десятых
   const roundToTenth = (value) => {
     return Math.round(value * 10) / 10;
+  };
+
+  // Проверка на модератора
+  const isModerator = () => {
+    return userDetails?.rights === 'MODERATOR' || user?.rights === 'MODERATOR';
+  };
+
+  // Загрузка данных пользователя для проверки роли
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        try {
+          // Если у пользователя уже есть поле rights, используем его
+          if (user.rights) {
+            setUserDetails(user);
+            return;
+          }
+
+          // Иначе загружаем через API
+          const userData = await userApi.getCurrentUser();
+          setUserDetails(userData);
+        } catch (error) {
+          console.error('Ошибка загрузки данных пользователя:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  // Обработчики для модального окна
+  const handleOpenEditModal = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleAuthorUpdate = (updatedAuthor) => {
+    setAuthor(updatedAuthor);
+    setNotification({
+      message: 'Аватарка автора успешно обновлена',
+      type: 'success'
+    });
   };
 
   useEffect(() => {
@@ -325,6 +375,29 @@ const AuthorPage = () => {
                   size="medium"
                   tooltip="Пожаловаться на автора"
                 />
+              )}
+              
+              {/* Кнопка редактирования аватарки для модераторов незарегистрированных авторов */}
+              {author && isModerator() && !author.isVerified && (
+                <button
+                  className="edit-avatar-button"
+                  onClick={handleOpenEditModal}
+                  title="Редактировать аватарку автора"
+                >
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
               )}
             </div>
 
@@ -876,6 +949,14 @@ const AuthorPage = () => {
           </section>
         </div>
       </main>
+
+      {/* Модальное окно редактирования аватарки */}
+      <EditAuthorAvatarModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        author={author}
+        onAuthorUpdate={handleAuthorUpdate}
+      />
     </div>
   );
 };
