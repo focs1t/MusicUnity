@@ -272,9 +272,9 @@ const HomePage = () => {
     e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
   };
 
-  // Функция для форматирования рейтинга (точная копия из AuthorPage)
+  // Функция для форматирования рейтинга (округление до целых чисел)
   const formatRating = (rating) => {
-    return Math.round(rating * 10) / 10;
+    return Math.round(rating);
   };
 
   // Функция для рендера рейтинговых кружков (точная копия из AuthorPage)
@@ -364,16 +364,27 @@ const HomePage = () => {
           
           {newReleases.length > 0 ? (
             <Swiper
-              modules={[Navigation, Pagination]}
+              modules={[Navigation]}
               spaceBetween={20}
               slidesPerView={1}
               navigation
-              pagination={{ clickable: true }}
               breakpoints={{
-                640: { slidesPerView: 2 },
-                768: { slidesPerView: 3 },
-                1024: { slidesPerView: 4 },
-                1280: { slidesPerView: 5 }
+                640: {
+                  slidesPerView: 2,
+                  spaceBetween: 20,
+                },
+                768: {
+                  slidesPerView: 3,
+                  spaceBetween: 20,
+                },
+                1024: {
+                  slidesPerView: 4,
+                  spaceBetween: 20,
+                },
+                1280: {
+                  slidesPerView: 5,
+                  spaceBetween: 20,
+                },
               }}
               className="releases-swiper"
             >
@@ -429,21 +440,21 @@ const HomePage = () => {
                           {release.title}
                         </a>
                         
-                        <div className="release-authors">
+                        <div className="flex flex-wrap leading-3 mt-1 text-[13px]">
                           {release.authors && release.authors.map((author, index) => (
-                            <React.Fragment key={author.authorId}>
-                              {index > 0 && <span className="separator">, </span>}
-                              <a href={`/author/${author.authorId}`} className="author-link">
+                            <span key={author.authorId || index}>
+                              <a href={`/author/${author.authorId}`} className="border-b border-b-white/0 hover:border-white/30 opacity-70">
                                 {author.authorName}
                               </a>
-                            </React.Fragment>
+                              {index < release.authors.length - 1 && <span className="text-muted-foreground">,&nbsp;</span>}
+                            </span>
                           ))}
                         </div>
+                      </div>
 
-                        <div className="release-ratings">
-                          <div className="release-row-rating-circles">
-                            {renderRatingCircles(release)}
-                          </div>
+                      <div className="release-ratings">
+                        <div className="release-row-rating-circles">
+                          {renderRatingCircles(release)}
                         </div>
                       </div>
                     </div>
@@ -472,16 +483,27 @@ const HomePage = () => {
           
           {topReleases.length > 0 ? (
             <Swiper
-              modules={[Navigation, Pagination]}
+              modules={[Navigation]}
               spaceBetween={20}
               slidesPerView={1}
               navigation
-              pagination={{ clickable: true }}
               breakpoints={{
-                640: { slidesPerView: 2 },
-                768: { slidesPerView: 3 },
-                1024: { slidesPerView: 4 },
-                1280: { slidesPerView: 5 }
+                640: {
+                  slidesPerView: 2,
+                  spaceBetween: 20,
+                },
+                768: {
+                  slidesPerView: 3,
+                  spaceBetween: 20,
+                },
+                1024: {
+                  slidesPerView: 4,
+                  spaceBetween: 20,
+                },
+                1280: {
+                  slidesPerView: 5,
+                  spaceBetween: 20,
+                },
               }}
               className="releases-swiper"
             >
@@ -535,21 +557,21 @@ const HomePage = () => {
                           {release.title}
                         </a>
                         
-                        <div className="release-authors">
+                        <div className="flex flex-wrap leading-3 mt-1 text-[13px]">
                           {release.authors && release.authors.map((author, index) => (
-                            <React.Fragment key={author.authorId}>
-                              {index > 0 && <span className="separator">, </span>}
-                              <a href={`/author/${author.authorId}`} className="author-link">
+                            <span key={author.authorId || index}>
+                              <a href={`/author/${author.authorId}`} className="border-b border-b-white/0 hover:border-white/30 opacity-70">
                                 {author.authorName}
                               </a>
-                            </React.Fragment>
+                              {index < release.authors.length - 1 && <span className="text-muted-foreground">,&nbsp;</span>}
+                            </span>
                           ))}
                         </div>
+                      </div>
 
-                        <div className="release-ratings">
-                          <div className="release-row-rating-circles">
-                            {renderRatingCircles(release)}
-                          </div>
+                      <div className="release-ratings">
+                        <div className="release-row-rating-circles">
+                          {renderRatingCircles(release)}
                         </div>
                       </div>
                     </div>

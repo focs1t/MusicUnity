@@ -145,6 +145,7 @@
   border-radius: 0.75rem;
   border: 1px solid #27272a;
   transition: all 0.3s;
+  min-height: 280px;
 }
 
 @media (min-width: 1024px) {
@@ -238,7 +239,6 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
 .home-page-container .release-title {
@@ -299,6 +299,53 @@
   width: 1.75rem;
   height: 1.75rem;
   font-size: 0.75rem;
+}
+
+/* Стили для кругов рейтинга релизов */
+.home-page-container .release-row-rating-circles {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.home-page-container .release-row-rating-circle {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: default;
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .release-row-rating-circle {
+    width: 1.875rem;
+    height: 1.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+.home-page-container .release-row-rating-circle.filled {
+  background-color: #3a82f7;
+  border-color: #3a82f7;
+  color: #ffffff;
+}
+
+.home-page-container .release-row-rating-circle.outlined {
+  background-color: transparent;
+  border-color: #3a82f7;
+  color: #ffffff;
+}
+
+.home-page-container .release-row-rating-circle.dashed {
+  background-color: transparent;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* Author Cards - точная копия из AuthorsPage */
@@ -1326,4 +1373,45 @@
   .home-page-container .author-hover-content::after {
     display: none;
   }
-} 
+}
+
+/* Tailwind-подобные утилиты для авторов релизов */
+.home-page-container .flex {
+  display: flex;
+}
+
+.home-page-container .flex-wrap {
+  flex-wrap: wrap;
+}
+
+.home-page-container .leading-3 {
+  line-height: 0.75rem;
+}
+
+.home-page-container .mt-1 {
+  margin-top: 0.25rem;
+}
+
+.home-page-container .text-\[13px\] {
+  font-size: 13px;
+}
+
+.home-page-container .border-b {
+  border-bottom-width: 1px;
+}
+
+.home-page-container .border-b-white\/0 {
+  border-bottom-color: transparent;
+}
+
+.home-page-container .hover\:border-white\/30:hover {
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.home-page-container .opacity-70 {
+  opacity: 0.7;
+}
+
+.home-page-container .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.5);
+}
