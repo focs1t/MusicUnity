@@ -12,6 +12,7 @@ import CreateReleasePage from '../../../../pages/CreateReleasePage';
 import RatingPage from '../../../../pages/RatingPage';
 import { ROUTES } from '../../../../shared/config/routes';
 import ReviewsPage from '../../../../pages/ReviewsPage';
+import ReviewPage from '../../../../pages/ReviewPage';
 import AuthorLikesPage from '../../../../pages/AuthorLikesPage';
 import AuthorsPage from '../../../../pages/AuthorsPage';
 import AuthorPage from '../../../../pages/AuthorPage';
@@ -79,6 +80,7 @@ const AppRouter = () => {
       <Route path={ROUTES.AUTHOR_LIKES} element={<PublicRoute element={<AuthorLikesPage />} />} />
       <Route path={ROUTES.AUTHORS_VERIFIED} element={<PublicRoute element={<VerifiedAuthorsPage />} />} />
       <Route path={ROUTES.REVIEWS} element={<PublicRoute element={<ReviewsPage />} />} />
+      <Route path={ROUTES.REVIEW} element={<PublicRoute element={<ReviewPage />} />} />
       <Route path={ROUTES.CONTACT} element={<PublicRoute element={<ContactPage />} />} />
       
       {/* Поиск */}

@@ -15,6 +15,7 @@ export const ROUTES = {
   AUTHORS: '/authors',
   AUTHOR: '/author/:id',
   REVIEWS: '/reviews',
+  REVIEW: '/reviews/:reviewId',
   RELEASES: '/releases',
   RELEASE: '/release/:id',
   CREATE_RELEASE: '/create-release',
