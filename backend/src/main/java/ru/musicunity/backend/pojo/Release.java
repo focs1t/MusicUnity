@@ -14,7 +14,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "releases")
+@Table(
+    name = "releases",
+    indexes = {
+        @Index(name = "idx_release_title", columnList = "title"),
+        @Index(name = "idx_release_type", columnList = "type"),
+        @Index(name = "idx_release_date", columnList = "releaseDate"),
+        @Index(name = "idx_release_is_deleted", columnList = "isDeleted"),
+        @Index(name = "idx_release_favorites_count", columnList = "favoritesCount"),
+        @Index(name = "idx_release_added_at", columnList = "addedAt")
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor

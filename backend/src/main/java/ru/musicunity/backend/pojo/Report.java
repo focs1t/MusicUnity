@@ -12,7 +12,17 @@ import ru.musicunity.backend.pojo.enums.ReportType;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reports")
+@Table(
+    name = "reports",
+    indexes = {
+        @Index(name = "idx_report_user_id", columnList = "user_id"),
+        @Index(name = "idx_report_moderator_id", columnList = "moderator_id"),
+        @Index(name = "idx_report_status", columnList = "status"),
+        @Index(name = "idx_report_type", columnList = "type"),
+        @Index(name = "idx_report_target_id", columnList = "target_id"),
+        @Index(name = "idx_report_created_at", columnList = "createdAt")
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor

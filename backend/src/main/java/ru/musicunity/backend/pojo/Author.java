@@ -12,7 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "authors")
+@Table(
+    name = "authors",
+    indexes = {
+        @Index(name = "idx_author_name", columnList = "authorName"),
+        @Index(name = "idx_author_is_verified", columnList = "isVerified"),
+        @Index(name = "idx_author_is_artist", columnList = "isArtist"),
+        @Index(name = "idx_author_is_producer", columnList = "isProducer"),
+        @Index(name = "idx_author_is_deleted", columnList = "isDeleted"),
+        @Index(name = "idx_author_user_id", columnList = "user_id")
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor
