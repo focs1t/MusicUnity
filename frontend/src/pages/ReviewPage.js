@@ -38,7 +38,15 @@ const DEFAULT_AVATAR_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMj
 const DEFAULT_COVER_PLACEHOLDER = '/path/to/default-cover.png';
 
 // Компонент карточки рецензии (как в ReviewsPage)
-const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
+const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [], getReviewLikesCount }) => {
+  console.log('ReviewCard получил данные:', { 
+    reviewId: review.id || review.reviewId,
+    likesCount: review.likesCount,
+    isLiked,
+    authorLikesCount: authorLikes.length,
+    review
+  });
+
   // Функция для обработки ошибок изображений
   const handleImageError = (e, placeholder) => {
     console.log('Ошибка загрузки изображения, использую placeholder');
@@ -107,8 +115,6 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
     if (!userRank || !userRank.isInTop100) return null;
     return userRank.rank;
   };
-
-
 
   // Безопасное получение данных рейтинга
   const getRatingData = () => {
@@ -352,7 +358,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
         <div className="mt-auto flex justify-between items-center relative pr-1.5">
           <div className="flex gap-2 items-center">
             <button
-              className="review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5"
+              className={`review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5 ${isLiked ? 'bg-red-500/10 border-red-500/20' : 'bg-white/5'}`}
               onClick={() => isOwnReview ? handleOwnReviewLikeClick() : onLikeToggle && onLikeToggle(review.id || review.reviewId)}
             >
               <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center">
@@ -381,8 +387,8 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
                   </svg>
                 )}
               </div>
-              <span className="font-bold text-base lg:text-base">
-                {review.likesCount !== undefined ? review.likesCount : 0}
+              <span className={`font-bold text-base lg:text-base ${isLiked ? 'text-red-400' : ''}`}>
+                {getReviewLikesCount(review)}
               </span>
             </button>
             
@@ -467,6 +473,33 @@ function ReviewPage() {
   // Состояния для лайков
   const [likedReviews, setLikedReviews] = useState(new Set());
   const [authorLikes, setAuthorLikes] = useState({});
+  const [likeStates, setLikeStates] = useState({});
+
+    // Состояния для предпочтений релиза
+  const [inFavorites, setInFavorites] = useState(false);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+
+  // Отладочная информация
+  useEffect(() => {
+    console.log('=== СОСТОЯНИЯ ЛАЙКОВ ===');
+    console.log('likedReviews:', Array.from(likedReviews));
+    console.log('authorLikes:', authorLikes);
+    console.log('likeStates:', likeStates);
+    console.log('review:', review);
+    console.log('========================');
+  }, [likedReviews, authorLikes, likeStates, review]);
+
+  // Отладочная информация для релиза
+  useEffect(() => {
+    console.log('=== СОСТОЯНИЕ РЕЛИЗА ===');
+    console.log('release:', release);
+    console.log('release.releaseId:', release?.releaseId);
+    console.log('release.id:', release?.id);
+    console.log('Object.keys(release):', release ? Object.keys(release) : 'release is null');
+    console.log('favoritesCount:', favoritesCount);
+    console.log('inFavorites:', inFavorites);
+    console.log('========================');
+  }, [release, favoritesCount, inFavorites]);
   
   // Состояния для модальных окон
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -540,6 +573,22 @@ function ReviewPage() {
     return likedReviews.has(reviewId);
   };
 
+  // Функция для получения актуального счетчика лайков (авторские лайки уже включены в likesCount)
+  const getReviewLikesCount = (review) => {
+    const reviewId = review.id || review.reviewId;
+    
+    // Проверяем глобальное состояние лайков
+    if (likeStates[reviewId] && typeof likeStates[reviewId].count === 'number') {
+      console.log(`getReviewLikesCount для рецензии ${reviewId}: возвращаем из likeStates: ${likeStates[reviewId].count}`);
+      return likeStates[reviewId].count;
+    }
+    
+    // В противном случае используем значение из данных рецензии (включает авторские лайки)
+    const count = review.likesCount !== undefined ? review.likesCount : 0;
+    console.log(`getReviewLikesCount для рецензии ${reviewId}: возвращаем из review.likesCount: ${count}`);
+    return count;
+  };
+
   // Обработчик лайка рецензии
   const handleLikeToggle = async (reviewId) => {
     const userId = getCurrentUserIdInComponent();
@@ -573,7 +622,17 @@ function ReviewPage() {
           return newSet;
         });
         
-        // Обновляем счетчик лайков
+        // Обновляем счетчик лайков в likeStates
+        setLikeStates(prev => ({
+          ...prev,
+          [reviewId]: {
+            ...prev[reviewId],
+            isLiked: false,
+            count: Math.max(0, ((prev[reviewId]?.count !== undefined ? prev[reviewId].count : review.likesCount) || 0) - 1)
+          }
+        }));
+        
+        // Обновляем счетчик лайков в review объекте
         setReview(prev => ({
           ...prev,
           likesCount: Math.max(0, (prev.likesCount || 0) - 1)
@@ -588,7 +647,17 @@ function ReviewPage() {
           return newSet;
         });
         
-        // Обновляем счетчик лайков
+        // Обновляем счетчик лайков в likeStates
+        setLikeStates(prev => ({
+          ...prev,
+          [reviewId]: {
+            ...prev[reviewId],
+            isLiked: true,
+            count: ((prev[reviewId]?.count !== undefined ? prev[reviewId].count : review.likesCount) || 0) + 1
+          }
+        }));
+        
+        // Обновляем счетчик лайков в review объекте
         setReview(prev => ({
           ...prev,
           likesCount: (prev.likesCount || 0) + 1
@@ -647,6 +716,20 @@ function ReviewPage() {
       
       console.log(`Итоговый set лайкнутых рецензий:`, Array.from(likedSet));
       setLikedReviews(likedSet);
+      
+      // Обновляем likeStates для синхронизации
+      likedReviewsData.forEach(like => {
+        const reviewId = like.reviewId;
+        if (reviewId) {
+          setLikeStates(prev => ({
+            ...prev,
+            [reviewId]: {
+              ...prev[reviewId],
+              isLiked: true
+            }
+          }));
+        }
+      });
     } catch (error) {
       console.error('Ошибка при загрузке лайкнутых рецензий:', error);
     }
@@ -669,6 +752,125 @@ function ReviewPage() {
     }
   };
 
+  // Загрузка актуального количества лайков рецензии
+  const fetchActualReviewLikesCount = async (reviewData) => {
+    if (!reviewData) return;
+    
+    try {
+      const reviewId = reviewData.id || reviewData.reviewId;
+      console.log(`Загружаем АКТУАЛЬНОЕ количество лайков для рецензии ${reviewId}`);
+      
+      // Получаем все лайки для этой рецензии
+      const reviewLikesData = await likeApi.getLikesCountByReview(reviewId);
+      console.log(`Получено актуальное количество лайков для рецензии ${reviewId}:`, reviewLikesData);
+      
+      // Обновляем likeStates с актуальным count
+      setLikeStates(prev => ({
+        ...prev,
+        [reviewId]: {
+          ...prev[reviewId],
+          count: reviewLikesData || 0
+        }
+      }));
+      
+      // Также обновляем объект review
+      setReview(prev => ({
+        ...prev,
+        likesCount: reviewLikesData || 0
+      }));
+      
+    } catch (error) {
+      console.error('Ошибка при загрузке актуального количества лайков рецензии:', error);
+    }
+  };
+
+  // Обработчик добавления/удаления из предпочтений
+  const handleToggleFavorite = async () => {
+    const userId = getCurrentUserIdInComponent();
+    const releaseId = release?.releaseId || release?.id;
+    console.log('handleToggleFavorite вызван:', { userId, release, releaseId });
+    
+    if (!userId || !release || !releaseId) {
+      console.warn('Пользователь не авторизован или релиз не загружен:', { userId, release, releaseId });
+      return;
+    }
+
+    try {
+      console.log(`Попытка ${inFavorites ? 'удалить' : 'добавить'} релиз ${releaseId} в предпочтения`);
+      
+      if (inFavorites) {
+        // Удаляем из предпочтений
+        await releaseApi.removeFromFavorites(releaseId);
+        setInFavorites(false);
+        setFavoritesCount(prev => Math.max(0, prev - 1));
+        
+        // Обновляем счетчик в объекте релиза
+        setRelease(prev => ({
+          ...prev,
+          favoritesCount: Math.max(0, (prev?.favoritesCount || 0) - 1)
+        }));
+        
+        console.log('Релиз удален из предпочтений');
+      } else {
+        // Добавляем в предпочтения
+        await releaseApi.addToFavorites(releaseId);
+        setInFavorites(true);
+        setFavoritesCount(prev => prev + 1);
+        
+        // Обновляем счетчик в объекте релиза
+        setRelease(prev => ({
+          ...prev,
+          favoritesCount: (prev?.favoritesCount || 0) + 1
+        }));
+        
+        console.log('Релиз добавлен в предпочтения');
+      }
+    } catch (error) {
+      console.error('Ошибка при изменении предпочтений:', error);
+      setNotification({
+        type: 'error',
+        message: 'Ошибка при изменении предпочтений'
+      });
+    }
+  };
+
+  // Загрузка данных о предпочтениях релиза
+  const fetchFavoriteStatus = async (releaseData) => {
+    const userId = getCurrentUserIdInComponent();
+    if (!userId || !releaseData) {
+      console.log('Пользователь не авторизован или релиз не загружен, пропускаем загрузку предпочтений');
+      return;
+    }
+
+    try {
+      const currentReleaseId = releaseData.releaseId || releaseData.id;
+      console.log(`=== НАЧИНАЕМ ЗАГРУЗКУ ПРЕДПОЧТЕНИЙ ДЛЯ РЕЛИЗА ${currentReleaseId} ===`);
+      
+      // Загружаем количество лайков релиза
+      console.log(`Загружаем данные релиза с ID ${currentReleaseId}...`);
+      const releaseWithLikes = await releaseApi.getReleaseById(currentReleaseId);
+      console.log(`Получены данные релиза:`, releaseWithLikes);
+      console.log(`LikesCount в ответе: ${releaseWithLikes.likesCount}`);
+      
+      const likesCount = releaseWithLikes.likesCount || 0;
+      setFavoritesCount(likesCount);
+      console.log(`Установлено favoritesCount: ${likesCount}`);
+
+      // Проверяем, лайкнул ли текущий пользователь этот релиз
+      console.log(`Загружаем лайкнутые релизы для пользователя ${userId}...`);
+      const likedReleases = await userApi.getFavoriteReleases(userId);
+      console.log(`Получены лайкнутые релизы:`, likedReleases);
+      
+      const isLiked = likedReleases.content ? likedReleases.content.some(release => release.releaseId === currentReleaseId) : false;
+      setInFavorites(isLiked);
+      console.log(`Установлено inFavorites: ${isLiked}`);
+      
+      console.log(`=== ФИНАЛЬНОЕ СОСТОЯНИЕ ПРЕДПОЧТЕНИЙ: лайкнут=${isLiked}, всего лайков=${likesCount} ===`);
+    } catch (error) {
+      console.error('Ошибка при загрузке данных о предпочтениях:', error);
+    }
+  };
+
   // Основная загрузка данных
   const fetchData = async () => {
     try {
@@ -677,11 +879,39 @@ function ReviewPage() {
 
       // Загружаем рецензию
       const reviewData = await reviewApi.getReviewById(reviewId);
+      console.log('Загружена рецензия:', reviewData);
+      
+      // Проверяем и загружаем количество лайков если его нет
+      if (reviewData.likesCount === undefined) {
+        try {
+          const reviewWithLikes = await reviewApi.getReviewById(reviewId);
+          reviewData.likesCount = reviewWithLikes.likesCount || 0;
+          console.log('Обновлен likesCount для рецензии:', reviewData.likesCount);
+        } catch (error) {
+          console.warn('Не удалось загрузить количество лайков:', error);
+          reviewData.likesCount = 0;
+        }
+      }
+      
       setReview(reviewData);
+      
+      // Инициализируем likeStates для этой рецензии
+      const currentReviewId = reviewData.id || reviewData.reviewId;
+      setLikeStates(prev => ({
+        ...prev,
+        [currentReviewId]: {
+          isLiked: false, // будет обновлено позже при загрузке лайков
+          count: reviewData.likesCount || 0
+        }
+      }));
 
       // Загружаем данные релиза
       if (reviewData.releaseId) {
+        console.log(`Загружаем релиз с ID: ${reviewData.releaseId}`);
         const releaseData = await releaseApi.getReleaseById(reviewData.releaseId);
+        console.log('Получены данные релиза:', releaseData);
+        console.log('ID релиза:', releaseData?.id);
+        
         setRelease(releaseData);
         
         // Обрабатываем данные релиза
@@ -690,11 +920,19 @@ function ReviewPage() {
           setProducers(releaseData.producers || []);
           setReleaseType(translateReleaseType(releaseData.type));
         }
+        
+        // Загружаем данные о предпочтениях релиза
+        await fetchFavoriteStatus(releaseData);
+      } else {
+        console.warn('reviewData.releaseId отсутствует!', reviewData);
       }
 
       // Загружаем лайки
       await fetchLikedReviewsByCurrentUser();
       await fetchAuthorLikes(reviewData);
+      
+      // ВАЖНО: Загружаем АКТУАЛЬНОЕ количество лайков рецензии после всех запросов
+      await fetchActualReviewLikesCount(reviewData);
 
     } catch (err) {
       console.error('Ошибка загрузки данных:', err);
@@ -853,7 +1091,7 @@ function ReviewPage() {
                   
                   {/* Название релиза */}
                   <div className="release-title">
-                    <Link to={`/release/${release.id}`}>
+                    <Link to={`/release/${release.releaseId}`}>
                       {release.title}
                     </Link>
                   </div>
@@ -959,12 +1197,15 @@ function ReviewPage() {
                 {/* Кнопки действий */}
                 <div className="actions-container">
                   <div className="bookmark-button">
-                    <button data-state="closed">
+                    <button 
+                      data-state={inFavorites ? "open" : "closed"}
+                      onClick={handleToggleFavorite}
+                    >
                       <div className="bookmark-content">
                         <svg 
                           stroke="currentColor" 
-                          fill="none" 
-                          strokeWidth="2" 
+                          fill={inFavorites ? "var(--user-color)" : "none"} 
+                          strokeWidth={inFavorites ? "0" : "2"} 
                           viewBox="0 0 384 512" 
                           className="bookmark-icon" 
                           height="1em" 
@@ -973,30 +1214,47 @@ function ReviewPage() {
                         >
                           <path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"></path>
                         </svg>
-                        <span>0</span>
+                        <span>{release?.favoritesCount || 0}</span>
                       </div>
                     </button>
                   </div>
                   <div className="author-rating-wrapper">
-                    <button className="release-like-button">
+                    <button 
+                      className="release-like-button"
+                      onClick={handleToggleFavorite}
+                    >
                       <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center">
-                        <svg 
-                          width="22" 
-                          height="22" 
-                          viewBox="0 0 24 24" 
-                          fill="none"
-                          stroke="#AAAAAA" 
-                          strokeWidth="2" 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round"
-                        >
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
+                        {inFavorites ? (
+                          <svg 
+                            width="22" 
+                            height="22" 
+                            viewBox="0 0 24 24" 
+                            fill="#FF5252"
+                            stroke="none"
+                          >
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                          </svg>
+                        ) : (
+                          <svg 
+                            width="22" 
+                            height="22" 
+                            viewBox="0 0 24 24" 
+                            fill="none"
+                            stroke="#AAAAAA" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                          </svg>
+                        )}
                       </div>
                     </button>
                     <div className="author-hover-menu">
                       <div className="author-hover-content">
-                        <div className="author-hover-title">Добавить в предпочтения</div>
+                        <div className="author-hover-title">
+                          {inFavorites ? 'Убрать из предпочтений' : 'Добавить в предпочтения'}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1004,7 +1262,7 @@ function ReviewPage() {
                   {/* Кнопка репорта на релиз */}
                   <ReportButton
                     type={ReportType.RELEASE}
-                    targetId={release.id}
+                    targetId={release.releaseId}
                     size="medium"
                     tooltip="Пожаловаться на релиз"
                     style={{ marginLeft: '8px' }}
@@ -1022,12 +1280,15 @@ function ReviewPage() {
               </div>
 
               <div className="reviews-list space-y-4">
-                <ReviewCard
-                  review={review}
-                  isLiked={isReviewLiked(review.id || review.reviewId)}
-                  onLikeToggle={handleLikeToggle}
-                  authorLikes={authorLikes[review.id || review.reviewId] || []}
-                />
+                {review && (
+                  <ReviewCard
+                    review={review}
+                    isLiked={isReviewLiked(review.id || review.reviewId)}
+                    onLikeToggle={handleLikeToggle}
+                    authorLikes={authorLikes[review.id || review.reviewId] || []}
+                    getReviewLikesCount={getReviewLikesCount}
+                  />
+                )}
               </div>
             </section>
           </div>
