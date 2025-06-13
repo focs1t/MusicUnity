@@ -12,12 +12,6 @@ import java.util.Optional;
 @Repository
 public interface RegistrationRequestRepository extends JpaRepository<RegistrationRequest, Long> {
 
-    // Найти заявку по email
-    Optional<RegistrationRequest> findByEmail(String email);
-
-    // Найти заявки по статусу
-    Page<RegistrationRequest> findByStatus(RequestStatus status, Pageable pageable);
-
     // Найти все заявки, отсортированные по дате создания
     Page<RegistrationRequest> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
