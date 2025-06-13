@@ -11,7 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import ru.musicunity.backend.dto.AverageRatingsDTO;
 import ru.musicunity.backend.dto.ReviewDTO;
+import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.service.ReviewService;
 
 @RestController
@@ -29,7 +31,7 @@ public class ReviewController {
     @GetMapping("/{id}")
     public ResponseEntity<ReviewDTO> getReviewById(
         @Parameter(description = "ID отзыва") @PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.getReviewById(id));
+        return ResponseEntity.ok(reviewService.getReviewByIdWithAccessControl(id));
     }
 
     @Operation(summary = "Создание простой оценки")
@@ -38,6 +40,7 @@ public class ReviewController {
         @ApiResponse(responseCode = "400", description = "Некорректные данные оценки")
     })
     @PostMapping("/simple")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReviewDTO> createSimpleReview(
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
         @Parameter(description = "ID релиза") @RequestParam Long releaseId,
@@ -57,6 +60,7 @@ public class ReviewController {
         @ApiResponse(responseCode = "400", description = "Некорректные данные рецензии")
     })
     @PostMapping("/full")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReviewDTO> createFullReview(
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
         @Parameter(description = "ID релиза") @RequestParam Long releaseId,
@@ -84,6 +88,17 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getAllByRelease(releaseId, pageable));
     }
 
+    @Operation(summary = "Получение расширенных отзывов на релиз")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список расширенных отзывов")
+    })
+    @GetMapping("/release/{releaseId}/extended")
+    public ResponseEntity<Page<ReviewDTO>> getExtendedReviewsByRelease(
+        @Parameter(description = "ID релиза") @PathVariable Long releaseId,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(reviewService.getAllExtendedByRelease(releaseId, pageable));
+    }
+
     @Operation(summary = "Получение отзывов пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Список отзывов")
@@ -91,7 +106,11 @@ public class ReviewController {
     @GetMapping("/user/{userId}/reviews")
     public ResponseEntity<Page<ReviewDTO>> getReviewsByUser(
             @Parameter(description = "ID пользователя") @PathVariable Long userId,
+            @Parameter(description = "Тип рецензии (EXTENDED, SIMPLE)") @RequestParam(required = false) ReviewType type,
             @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        if (type != null) {
+            return ResponseEntity.ok(reviewService.getReviewsByUserAndType(userId, type, pageable));
+        }
         return ResponseEntity.ok(reviewService.getAllByUser(userId, pageable));
     }
 
@@ -113,6 +132,26 @@ public class ReviewController {
     public ResponseEntity<Long> getReviewsCountByUser(
         @Parameter(description = "ID пользователя") @PathVariable Long userId) {
         return ResponseEntity.ok(reviewService.getReviewsCountByUser(userId));
+    }
+    
+    @Operation(summary = "Получение количества полных рецензий пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Количество полных рецензий")
+    })
+    @GetMapping("/user/{userId}/extended/count")
+    public ResponseEntity<Long> getExtendedReviewsCountByUser(
+        @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        return ResponseEntity.ok(reviewService.getReviewsCountByUserAndType(userId, ReviewType.EXTENDED));
+    }
+    
+    @Operation(summary = "Получение количества простых рецензий пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Количество простых рецензий")
+    })
+    @GetMapping("/user/{userId}/simple/count")
+    public ResponseEntity<Long> getSimpleReviewsCountByUser(
+        @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        return ResponseEntity.ok(reviewService.getReviewsCountByUserAndType(userId, ReviewType.SIMPLE));
     }
 
     @Operation(summary = "Получение количества отзывов на релиз")
@@ -139,43 +178,14 @@ public class ReviewController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Жесткое удаление отзыва (только для администраторов)")
+    @Operation(summary = "Получение средних оценок по параметрам для релиза")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Отзыв успешно удален"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для удаления отзыва"),
-        @ApiResponse(responseCode = "404", description = "Отзыв не найден")
+        @ApiResponse(responseCode = "200", description = "Средние оценки по параметрам"),
+        @ApiResponse(responseCode = "404", description = "Релиз не найден")
     })
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> hardDeleteReview(
-        @Parameter(description = "ID отзыва") @PathVariable Long id) {
-        reviewService.hardDeleteReview(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Восстановление удаленного отзыва (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Отзыв успешно восстановлен"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для восстановления отзыва"),
-        @ApiResponse(responseCode = "404", description = "Отзыв не найден")
-    })
-    @PatchMapping("/{id}/restore")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> restoreReview(
-        @Parameter(description = "ID отзыва") @PathVariable Long id) {
-        reviewService.restoreReview(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Получение списка удаленных отзывов (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список удаленных отзывов"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра удаленных отзывов")
-    })
-    @GetMapping("/deleted")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<ReviewDTO>> getDeletedReviews(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(reviewService.getAllDeletedReviews(pageable));
+    @GetMapping("/release/{releaseId}/averages")
+    public ResponseEntity<AverageRatingsDTO> getAverageRatingsByRelease(
+        @Parameter(description = "ID релиза") @PathVariable Long releaseId) {
+        return ResponseEntity.ok(reviewService.getAverageRatingsByRelease(releaseId));
     }
 } 

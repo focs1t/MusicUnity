@@ -23,6 +23,7 @@ public class AuthorMapper {
         dto.setBio(author.getBio());
         dto.setFollowingCount(author.getFollowingCount());
         dto.setCreatedAt(author.getCreatedAt());
+        dto.setDeletedAt(author.getCreatedAt());
         
         return dto;
     }
@@ -42,6 +43,7 @@ public class AuthorMapper {
         author.setBio(dto.getBio());
         author.setFollowingCount(dto.getFollowingCount());
         author.setCreatedAt(dto.getCreatedAt());
+        author.setIsDeleted(false);
         
         return author;
     }

@@ -13,7 +13,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(
+    name = "users",
+    indexes = {
+        @Index(name = "idx_user_username", columnList = "username"),
+        @Index(name = "idx_user_email", columnList = "email"),
+        @Index(name = "idx_user_rights", columnList = "rights"),
+        @Index(name = "idx_user_is_blocked", columnList = "isBlocked")
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -49,9 +57,6 @@ public class User {
 
     @Column(nullable = false)
     private Boolean isBlocked = false;
-
-    @Column(name = "telegram_chat_id")
-    private Long telegramChatId;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();

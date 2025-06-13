@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Удаленные релизы - Админ панель</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .release-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        .release-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .release-cover {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .genre-badge {
+            font-size: 0.8rem;
+        }
+        .action-buttons {
+            gap: 0.5rem;
+        }
+        .btn-restore {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        .btn-restore:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            color: white;
+        }
+        .btn-hard-delete {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        .btn-hard-delete:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+            color: white;
+        }
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/admin">
+                <i class="fas fa-music me-2"></i>MusicUnity Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin">Главная</a>
+                <a class="nav-link" href="/admin/genres">Жанры</a>
+                <a class="nav-link" href="/admin/users">Пользователи</a>
+                <a class="nav-link" href="/admin/registration-requests">Заявки</a>
+                <a class="nav-link" href="/admin/audit">Аудит</a>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                        Удаленные
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item active" href="/admin/deleted-releases">
+                            <i class="fas fa-compact-disc me-2"></i>Релизы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-authors">
+                            <i class="fas fa-microphone me-2"></i>Авторы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-reviews">
+                            <i class="fas fa-edit me-2"></i>Рецензии
+                        </a></li>
+                    </ul>
+                </div>
+                <a class="nav-link" href="/logout">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+        <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2><i class="fas fa-compact-disc me-2"></i>Удаленные релизы</h2>
+                <p class="text-muted">Восстановление или безвозвратное удаление релизов</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/admin" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Назад
+                </a>
+            </div>
+        </div>
+
+        <!-- Flash сообщения -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${success}">Успешное сообщение</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span th:text="${error}">Сообщение об ошибке</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Список удаленных релизов -->
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Удаленные релизы
+                </h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${deletedReleases.content.empty}" class="text-center text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>Нет удаленных релизов</p>
+                </div>
+
+                <div th:unless="${deletedReleases.content.empty}">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Обложка</th>
+                                    <th>Название</th>
+                                    <th>Авторы</th>
+                                    <th>Тип</th>
+                                    <th>Жанры</th>
+                                    <th>Дата добавления</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="release : ${deletedReleases.content}">
+                                    <!-- Обложка -->
+                                    <td>
+                                        <img th:if="${release.coverUrl != null and !release.coverUrl.isEmpty()}"
+                                             th:src="${release.coverUrl}" 
+                                             class="rounded" 
+                                             style="width: 60px; height: 60px; object-fit: cover;"
+                                             alt="Обложка релиза">
+                                        <div th:unless="${release.coverUrl != null and !release.coverUrl.isEmpty()}"
+                                             class="rounded bg-secondary d-flex align-items-center justify-content-center text-white" 
+                                             style="width: 60px; height: 60px; font-size: 20px;">
+                                            <i class="fas fa-music"></i>
+                                        </div>
+                                    </td>
+                                    <!-- Название -->
+                                    <td>
+                                        <strong th:text="${release.title}">Название релиза</strong>
+                                    </td>
+                                    <!-- Авторы -->
+                                    <td>
+                                        <span th:if="${release.authors != null and !release.authors.empty}">
+                                            <span th:each="author, iterStat : ${release.authors}" 
+                                                  class="badge bg-secondary me-1"
+                                                  th:text="${author.authorName}">Автор</span>
+                                        </span>
+                                        <span th:if="${release.authors == null or release.authors.empty}" class="text-muted">Не указаны</span>
+                                    </td>
+                                    <!-- Тип -->
+                                    <td>
+                                        <span class="badge bg-info" th:text="${release.type}">Тип</span>
+                                    </td>
+                                    <!-- Жанры -->
+                                    <td>
+                                        <span th:if="${release.genres != null and !release.genres.empty}">
+                                            <span th:each="genre : ${release.genres}" 
+                                                  class="badge bg-success me-1"
+                                                  th:text="${genre.name}">Жанр</span>
+                                        </span>
+                                        <span th:if="${release.genres == null or release.genres.empty}" class="text-muted">Не указаны</span>
+                                    </td>
+                                    <!-- Дата добавления -->
+                                    <td th:text="${#temporals.format(release.addedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                                    <!-- Действия -->
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" 
+                                                    class="btn btn-outline-success btn-sm"
+                                                    th:data-release-id="${release.releaseId}"
+                                                    onclick="restoreRelease(this.dataset.releaseId)"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Восстановить релиз">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    th:data-release-id="${release.releaseId}"
+                                                    th:data-release-title="${release.title}"
+                                                    onclick="confirmHardDelete(this.dataset.releaseId, this.dataset.releaseTitle)"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Удалить навсегда">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                            <!-- Пагинация -->
+                            <div th:if="${deletedReleases.totalPages > 1}" class="d-flex justify-content-center mt-4">
+                                <nav>
+                                    <ul class="pagination">
+                                        <li class="page-item" th:classappend="${deletedReleases.first} ? 'disabled'">
+                                            <a class="page-link" th:href="@{/admin/deleted-releases(page=${deletedReleases.number - 1}, size=${deletedReleases.size}, sortBy=${sortBy}, sortDir=${sortDir})}">Предыдущая</a>
+                                        </li>
+                                        <li class="page-item" 
+                                            th:each="pageNum : ${#numbers.sequence(0, deletedReleases.totalPages - 1)}"
+                                            th:classappend="${pageNum == deletedReleases.number} ? 'active'">
+                                            <a class="page-link" 
+                                               th:href="@{/admin/deleted-releases(page=${pageNum}, size=${deletedReleases.size}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                                               th:text="${pageNum + 1}">1</a>
+                                        </li>
+                                        <li class="page-item" th:classappend="${deletedReleases.last} ? 'disabled'">
+                                            <a class="page-link" th:href="@{/admin/deleted-releases(page=${deletedReleases.number + 1}, size=${deletedReleases.size}, sortBy=${sortBy}, sortDir=${sortDir})}">Следующая</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Инициализация tooltips
+        function initTooltips() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            initTooltips();
+        });
+
+        function restoreRelease(releaseId) {
+            if (confirm('Вы уверены, что хотите восстановить этот релиз?')) {
+                const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                
+                fetch(`/admin/deleted-releases/${releaseId}/restore`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                .then(response => response.text())
+                .then(message => {
+                    alert(message);
+                    if (message.includes('успешно')) {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    alert('Ошибка при восстановлении релиза: ' + error);
+                });
+            }
+        }
+
+        function confirmHardDelete(releaseId, releaseTitle) {
+            if (confirm(`ВНИМАНИЕ! Вы уверены, что хотите БЕЗВОЗВРАТНО удалить релиз "${releaseTitle}"?\n\nЭто действие также удалит:\n- Все рецензии на этот релиз\n- Все лайки на рецензии\n- Все избранные этого релиза\n\nЭто действие НЕЛЬЗЯ отменить!`)) {
+                if (confirm('Последнее предупреждение! Это действие НЕЛЬЗЯ отменить. Продолжить?')) {
+                    hardDeleteRelease(releaseId);
+                }
+            }
+        }
+
+        function hardDeleteRelease(releaseId) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+            
+            fetch(`/admin/deleted-releases/${releaseId}/hard-delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => response.text())
+            .then(message => {
+                alert(message);
+                // Обновляем страницу в любом случае для актуализации данных
+                location.reload();
+            })
+            .catch(error => {
+                alert('Ошибка при удалении релиза: ' + error);
+                // Даже при ошибке обновляем страницу на случай частичного выполнения
+                location.reload();
+            });
+        }
+    </script>
+</body>
+</html> 

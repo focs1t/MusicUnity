@@ -5,7 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.ReleaseDTO;
@@ -15,10 +18,13 @@ import ru.musicunity.backend.exception.*;
 import ru.musicunity.backend.mapper.ReleaseMapper;
 import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.*;
+import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.ReviewType;
 import ru.musicunity.backend.repository.*;
+import ru.musicunity.backend.repository.LikeRepository;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,18 +38,23 @@ public class ReleaseService {
     private final GenreRepository genreRepository;
     private final ReleaseMapper releaseMapper;
     private final ReleaseAuthorService releaseAuthorService;
+    private final AuditRepository auditRepository;
+    private final LikeRepository likeRepository;
 
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
     public ReleaseDTO createRelease(CreateReleaseRequest request) {
+        // Получаем текущего пользователя (модератора)
+                User currentUser = userService.getCurrentUser();
+
         // Создаем релиз
         Release release = Release.builder()
                 .title(request.getTitle())
                 .type(request.getType())
                 .releaseDate(request.getReleaseDate())
                 .coverUrl(request.getCoverUrl())
-                .releaseLink(request.getReleaseLink())
                 .favoritesCount(0)
+                .isDeleted(false)
                 .build();
         
         release = releaseRepository.save(release);
@@ -72,6 +83,7 @@ public class ReleaseService {
                         .isProducer(authorRequest.isProducer())
                         .isVerified(false)
                         .followingCount(0)
+                        .isDeleted(false)
                         .build();
                 author = authorRepository.save(author);
             }
@@ -93,6 +105,15 @@ public class ReleaseService {
                     .orElseThrow(() -> new GenreNotFoundException(genreId));
             release.getGenres().add(genre);
         }
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(currentUser)
+                .actionType(AuditAction.RELEASE_ADD)
+                .targetId(release.getReleaseId())
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
 
         return releaseMapper.toDTO(releaseRepository.save(release));
     }
@@ -118,12 +139,21 @@ public class ReleaseService {
                 .type(request.getType())
                 .releaseDate(request.getReleaseDate())
                 .coverUrl(request.getCoverUrl())
-                .releaseLink(request.getReleaseLink())
                 .favoritesCount(0)
+                .isDeleted(false)
                 .build();
         
         release = releaseRepository.save(release);
 
+        // Обновляем роли текущего автора если необходимо
+        if (request.isArtist() && !userAuthor.getIsArtist()) {
+            userAuthor.setIsArtist(true);
+        }
+        if (request.isProducer() && !userAuthor.getIsProducer()) {
+            userAuthor.setIsProducer(true);
+        }
+        userAuthor = authorRepository.save(userAuthor);
+        
         // Добавляем текущего пользователя как автора
         ReleaseAuthor userReleaseAuthor = ReleaseAuthor.builder()
                 .id(new ReleaseAuthor.ReleaseAuthorId(release.getReleaseId(), userAuthor.getAuthorId()))
@@ -159,6 +189,7 @@ public class ReleaseService {
                             .isProducer(authorRequest.isProducer())
                             .isVerified(false)
                             .followingCount(0)
+                            .isDeleted(false)
                             .build();
                     author = authorRepository.save(author);
                 }
@@ -181,6 +212,15 @@ public class ReleaseService {
                     .orElseThrow(() -> new GenreNotFoundException(genreId));
             release.getGenres().add(genre);
         }
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(currentUser)
+                .actionType(AuditAction.RELEASE_CREATE_OWN)
+                .targetId(release.getReleaseId())
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
 
         return releaseMapper.toDTO(releaseRepository.save(release));
     }
@@ -213,6 +253,26 @@ public class ReleaseService {
                 .orElseThrow(() -> new ReleaseNotFoundException(id));
     }
 
+    public ReleaseDTO getReleaseByIdWithAccessControl(Long id) {
+        Release release = releaseRepository.findById(id)
+                .orElseThrow(() -> new ReleaseNotFoundException(id));
+        
+        // Если релиз удален, проверяем права доступа
+        if (release.getIsDeleted()) {
+            // Проверяем, является ли текущий пользователь админом
+            boolean isAdmin = SecurityContextHolder.getContext().getAuthentication()
+                    .getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .anyMatch(role -> role.equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                throw new ReleaseNotFoundException(id);
+            }
+        }
+        
+        return releaseMapper.toDTO(release);
+    }
+
     public Release getReleaseEntityById(Long id) {
         return releaseRepository.findById(id)
                 .orElseThrow(() -> new ReleaseNotFoundException(id));
@@ -221,10 +281,34 @@ public class ReleaseService {
     @Transactional
     @PreAuthorize("hasRole('MODERATOR')")
     public void softDeleteRelease(Long releaseId) {
+        // Получаем текущего пользователя (модератора)
+        User currentUser = userService.getCurrentUser();
+        
         Release release = releaseRepository.findById(releaseId)
                 .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
         release.setIsDeleted(true);
         releaseRepository.save(release);
+        
+        // Пересчитываем favoritesCount для всех релизов, исключая удаленные
+        List<Release> allReleases = releaseRepository.findAll();
+        for (Release r : allReleases) {
+            if (!r.getIsDeleted()) {
+                long activeFavoritesCount = r.getFavorites().stream()
+                        .filter(f -> !f.getRelease().getIsDeleted())
+                        .count();
+                r.setFavoritesCount((int) activeFavoritesCount);
+            }
+        }
+        releaseRepository.saveAll(allReleases);
+        
+        // Создаем запись аудита
+        Audit audit = Audit.builder()
+                .moderator(currentUser)
+                .actionType(AuditAction.RELEASE_DELETE)
+                .targetId(releaseId)
+                .performedAt(LocalDateTime.now())
+                .build();
+        auditRepository.save(audit);
     }
 
     @Transactional
@@ -232,6 +316,24 @@ public class ReleaseService {
     public void hardDeleteRelease(Long releaseId) {
         Release release = releaseRepository.findById(releaseId)
                 .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
+        
+        // Каскадное удаление: удаляем все связанные рецензии
+        release.getReviews().forEach(review -> {
+            // Удаляем все лайки рецензии
+            likeRepository.findAllByReviewId(review.getReviewId()).forEach(like -> {
+                likeRepository.delete(like);
+            });
+        });
+        
+        // Удаляем все избранные этого релиза
+        release.getFavorites().clear();
+        
+        // Удаляем связи с авторами
+        release.getAuthors().clear();
+        
+        // Удаляем связи с жанрами
+        release.getGenres().clear();
+        
         releaseRepository.delete(release);
     }
 
@@ -257,6 +359,149 @@ public class ReleaseService {
 
     public Page<ReleaseDTO> getAllSorted(Pageable pageable) {
         return releaseRepository.findAllSorted(pageable)
+                .map(releaseMapper::toDTO);
+    }
+
+    /**
+     * Получение топ релизов по рейтингу с фильтрацией
+     */
+    public Page<ReleaseDTO> getTopRatedReleases(Integer year, Integer month, String releaseType, Pageable pageable) {
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+        
+        // Формируем даты для фильтрации
+        if (year != null) {
+            if (month != null) {
+                // Фильтруем по конкретному месяцу
+                startDate = LocalDate.of(year, month, 1);
+                endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            } else {
+                // Фильтруем по году
+                startDate = LocalDate.of(year, 1, 1);
+                endDate = LocalDate.of(year, 12, 31);
+            }
+        }
+        
+        // Преобразуем строку типа релиза в enum
+        ru.musicunity.backend.pojo.enums.ReleaseType type = null;
+        if (releaseType != null && !releaseType.isEmpty()) {
+            try {
+                type = ru.musicunity.backend.pojo.enums.ReleaseType.valueOf(releaseType.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Если тип не найден, игнорируем фильтр
+            }
+        }
+        
+        // Выбираем подходящий метод репозитория в зависимости от фильтров
+        Page<Release> releases;
+        if (type != null && startDate != null && endDate != null) {
+            // Есть и тип, и даты
+            releases = releaseRepository.findTopRatedReleasesWithTypeAndDate(type, startDate, endDate, pageable);
+        } else if (type != null) {
+            // Только тип, без дат
+            releases = releaseRepository.findTopRatedReleasesByTypeOnly(type, pageable);
+        } else if (startDate != null && endDate != null) {
+            // Только даты, без типа
+            releases = releaseRepository.findTopRatedReleasesWithDate(startDate, endDate, pageable);
+        } else {
+            // Без фильтров
+            releases = releaseRepository.findTopRatedReleasesWithoutDate(pageable);
+        }
+        
+        return releases.map(releaseMapper::toDTO);
+    }
+
+    /**
+     * Получение топ релизов определенного типа по рейтингу
+     */
+    public Page<ReleaseDTO> getTopRatedReleasesByType(String releaseType, Integer year, Integer month, Pageable pageable) {
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+        
+        // Формируем даты для фильтрации
+        if (year != null) {
+            if (month != null) {
+                // Фильтруем по конкретному месяцу
+                startDate = LocalDate.of(year, month, 1);
+                endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            } else {
+                // Фильтруем по году
+                startDate = LocalDate.of(year, 1, 1);
+                endDate = LocalDate.of(year, 12, 31);
+            }
+        }
+        
+        // Преобразуем строку типа релиза в enum
+        ru.musicunity.backend.pojo.enums.ReleaseType type;
+        try {
+            type = ru.musicunity.backend.pojo.enums.ReleaseType.valueOf(releaseType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Неподдерживаемый тип релиза: " + releaseType);
+        }
+        
+        // Выбираем подходящий метод репозитория в зависимости от наличия дат
+        Page<Release> releases;
+        if (startDate != null && endDate != null) {
+            // С датами
+            releases = releaseRepository.findTopRatedReleasesByTypeWithDate(type, startDate, endDate, pageable);
+        } else {
+            // Без дат
+            releases = releaseRepository.findTopRatedReleasesByTypeWithoutDate(type, pageable);
+        }
+        
+        return releases.map(releaseMapper::toDTO);
+    }
+
+    /**
+     * Получение доступных годов для фильтрации
+     */
+    public List<Integer> getAvailableYears() {
+        return releaseRepository.findDistinctYears();
+    }
+
+    /**
+     * Получение доступных годов для определенного типа релиза
+     */
+    public List<Integer> getAvailableYearsByType(String releaseType) {
+        ru.musicunity.backend.pojo.enums.ReleaseType type;
+        try {
+            type = ru.musicunity.backend.pojo.enums.ReleaseType.valueOf(releaseType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Неподдерживаемый тип релиза: " + releaseType);
+        }
+        return releaseRepository.findDistinctYearsByType(type);
+    }
+
+    /**
+     * Получение доступных месяцев для определенного года
+     */
+    public List<Integer> getAvailableMonthsByYear(Integer year) {
+        return releaseRepository.findDistinctMonthsByYear(year);
+    }
+
+    /**
+     * Получение доступных месяцев для определенного года и типа релиза
+     */
+    public List<Integer> getAvailableMonthsByYearAndType(Integer year, String releaseType) {
+        ru.musicunity.backend.pojo.enums.ReleaseType type;
+        try {
+            type = ru.musicunity.backend.pojo.enums.ReleaseType.valueOf(releaseType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Неподдерживаемый тип релиза: " + releaseType);
+        }
+        return releaseRepository.findDistinctMonthsByYearAndType(year, type);
+    }
+
+    /**
+     * Поиск релизов по названию
+     */
+    public Page<ReleaseDTO> searchReleasesByTitle(String title, Pageable pageable) {
+        return releaseRepository.findByTitleContainingIgnoreCase(title, pageable)
+                .map(releaseMapper::toDTO);
+    }
+
+    public Page<ReleaseDTO> searchReleases(String search, Pageable pageable) {
+        return releaseRepository.findByTitleContainingIgnoreCase(search, pageable)
                 .map(releaseMapper::toDTO);
     }
 }

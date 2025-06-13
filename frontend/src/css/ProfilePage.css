@@ -1,0 +1,19 @@
+/* Обновленный блок статистики без золотого сердечка */
+.gold-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Ссылки в ТОП-100 */
+.rank-link a, 
+.rank-link a:hover, 
+.rank-link a:visited,
+.rank-link a:active,
+.rank-link .text-white,
+.rank-link .text-white:hover,
+.no-underline,
+.no-underline:hover {
+  text-decoration: none !important;
+  color: white !important;
+} 

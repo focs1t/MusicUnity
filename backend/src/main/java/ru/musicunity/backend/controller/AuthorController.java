@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AuthorDTO;
+import ru.musicunity.backend.dto.AuthorUpdateDTO;
 import ru.musicunity.backend.service.AuthorService;
 import ru.musicunity.backend.service.AuthorFollowingService;
 import ru.musicunity.backend.service.ReleaseService;
@@ -63,20 +64,7 @@ public class AuthorController {
     @GetMapping("/{id}")
     public ResponseEntity<AuthorDTO> getAuthorById(
         @Parameter(description = "ID автора") @PathVariable Long id) {
-        return ResponseEntity.ok(authorService.getAuthorById(id));
-    }
-
-    @Operation(summary = "Получение автора по имени")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Автор найден"),
-        @ApiResponse(responseCode = "404", description = "Автор не найден")
-    })
-    @GetMapping("/name/{authorName}")
-    public ResponseEntity<AuthorDTO> getAuthorByName(
-        @Parameter(description = "Имя автора") @PathVariable String authorName) {
-        Optional<AuthorDTO> author = authorService.findByAuthorName(authorName);
-        return author.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(authorService.getAuthorByIdWithAccessControl(id));
     }
 
     @Operation(summary = "Обновление данных автора")
@@ -91,6 +79,21 @@ public class AuthorController {
         @Parameter(description = "ID автора") @PathVariable Long id,
         @Parameter(description = "Обновляемые поля автора") @RequestBody AuthorDTO updatedAuthor) {
         return ResponseEntity.ok(authorService.updateAuthor(id, updatedAuthor));
+    }
+
+    @Operation(summary = "Обновление данных автора текущим пользователем")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Данные автора обновлены"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация"),
+        @ApiResponse(responseCode = "403", description = "Пользователь не является автором"),
+        @ApiResponse(responseCode = "404", description = "Автор не найден")
+    })
+    @PatchMapping("/data")
+    @PreAuthorize("hasRole('AUTHOR')")
+    public ResponseEntity<Void> updateAuthorData(
+        @Parameter(description = "Обновляемые данные автора") @RequestBody AuthorUpdateDTO updateDTO) {
+        authorService.updateAuthorDataByUser(updateDTO.getBio(), updateDTO.getAvatarUrl());
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Создание нового автора")
@@ -131,7 +134,6 @@ public class AuthorController {
             @ApiResponse(responseCode = "401", description = "Требуется авторизация")
     })
     @GetMapping("/artists")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AuthorDTO>> getArtists(
             @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(authorService.findArtists(pageable));
@@ -143,10 +145,39 @@ public class AuthorController {
             @ApiResponse(responseCode = "401", description = "Требуется авторизация")
     })
     @GetMapping("/producers")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AuthorDTO>> getProducers(
             @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(authorService.findProducers(pageable));
+    }
+
+    @Operation(summary = "Получение верифицированных авторов")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список верифицированных авторов")
+    })
+    @GetMapping("/verified")
+    public ResponseEntity<Page<AuthorDTO>> getVerifiedAuthors(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(authorService.findVerifiedAuthors(pageable));
+    }
+
+    @Operation(summary = "Получение верифицированных исполнителей")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список верифицированных исполнителей")
+    })
+    @GetMapping("/verified/artists")
+    public ResponseEntity<Page<AuthorDTO>> getVerifiedArtists(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(authorService.findVerifiedArtists(pageable));
+    }
+
+    @Operation(summary = "Получение верифицированных продюсеров")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список верифицированных продюсеров")
+    })
+    @GetMapping("/verified/producers")
+    public ResponseEntity<Page<AuthorDTO>> getVerifiedProducers(
+            @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(authorService.findVerifiedProducers(pageable));
     }
 
     @Operation(summary = "Подписка на автора")
@@ -172,6 +203,19 @@ public class AuthorController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Проверка подписки на автора")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Статус подписки"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
+    @GetMapping("/{authorId}/follow-status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> checkFollowStatus(
+            @Parameter(description = "ID автора") @PathVariable Long authorId) {
+        boolean isFollowing = authorFollowingService.isFollowing(authorId, userService.getCurrentUser().getUserId());
+        return ResponseEntity.ok(isFollowing);
+    }
+
     @Operation(summary = "Мягкое удаление автора (только для модераторов)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Автор успешно помечен как удаленный"),
@@ -184,46 +228,6 @@ public class AuthorController {
         @Parameter(description = "ID автора") @PathVariable Long id) {
         authorService.softDeleteAuthor(id);
         return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Жесткое удаление автора (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Автор успешно удален"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для удаления автора"),
-        @ApiResponse(responseCode = "404", description = "Автор не найден")
-    })
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> hardDeleteAuthor(
-        @Parameter(description = "ID автора") @PathVariable Long id) {
-        authorService.hardDeleteAuthor(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Восстановление удаленного автора (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Автор успешно восстановлен"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для восстановления автора"),
-        @ApiResponse(responseCode = "404", description = "Автор не найден")
-    })
-    @PatchMapping("/{id}/restore")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> restoreAuthor(
-        @Parameter(description = "ID автора") @PathVariable Long id) {
-        authorService.restoreAuthor(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Получение списка удаленных авторов (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список удаленных авторов"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра удаленных авторов")
-    })
-    @GetMapping("/deleted")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<AuthorDTO>> getDeletedAuthors(
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(authorService.getAllDeletedAuthors(pageable));
     }
 
     @Operation(summary = "Обновление ролей автора в релизе")

@@ -49,7 +49,7 @@ public class ReleaseController {
     @GetMapping("/{id}")
     public ResponseEntity<ReleaseDTO> getReleaseById(
         @Parameter(description = "ID релиза") @PathVariable Long id) {
-        return ResponseEntity.ok(releaseService.getReleaseById(id));
+        return ResponseEntity.ok(releaseService.getReleaseByIdWithAccessControl(id));
     }
 
     @Operation(summary = "Получение новых релизов")
@@ -142,6 +142,23 @@ public class ReleaseController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Проверка, добавлен ли релиз в избранное текущим пользователем")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Статус избранного"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация"),
+        @ApiResponse(responseCode = "404", description = "Релиз не найден")
+    })
+    @GetMapping("/{id}/favorite/status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> isFavorite(
+        @Parameter(description = "ID релиза") @PathVariable Long id) {
+        Long userId = userService.getCurrentUser().getUserId();
+        System.out.println("API вызов проверки избранного для релиза " + id + " и пользователя " + userId);
+        boolean isFavorite = favoriteService.isFavorite(id, userId);
+        System.out.println("API возвращает результат: " + isFavorite);
+        return ResponseEntity.ok(isFavorite);
+    }
+
     @Operation(summary = "Получение релизов от отслеживаемых авторов")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Список релизов"),
@@ -200,43 +217,95 @@ public class ReleaseController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Жесткое удаление релиза (только для администраторов)")
+    @Operation(summary = "Получение топ релизов по рейтингу")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Релиз успешно удален"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для удаления релиза"),
-        @ApiResponse(responseCode = "404", description = "Релиз не найден")
+        @ApiResponse(responseCode = "200", description = "Список топ релизов по рейтингу")
     })
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> hardDeleteRelease(
-        @Parameter(description = "ID релиза") @PathVariable Long id) {
-        releaseService.hardDeleteRelease(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Восстановление удаленного релиза (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Релиз успешно восстановлен"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для восстановления релиза"),
-        @ApiResponse(responseCode = "404", description = "Релиз не найден")
-    })
-    @PatchMapping("/{id}/restore")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> restoreRelease(
-        @Parameter(description = "ID релиза") @PathVariable Long id) {
-        releaseService.restoreRelease(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Получение списка удаленных релизов (только для администраторов)")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список удаленных релизов"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для просмотра удаленных релизов")
-    })
-    @GetMapping("/deleted")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<ReleaseDTO>> getDeletedReleases(
+    @GetMapping("/top-rated")
+    public ResponseEntity<Page<ReleaseDTO>> getTopRatedReleases(
+        @Parameter(description = "Год для фильтрации") @RequestParam(required = false) Integer year,
+        @Parameter(description = "Месяц для фильтрации") @RequestParam(required = false) Integer month,
+        @Parameter(description = "Тип релиза для фильтрации") @RequestParam(required = false) String releaseType,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(releaseService.getAllDeletedReleases(pageable));
+        return ResponseEntity.ok(releaseService.getTopRatedReleases(year, month, releaseType, pageable));
+    }
+
+    @Operation(summary = "Получение топ релизов определенного типа по рейтингу")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список топ релизов указанного типа"),
+        @ApiResponse(responseCode = "400", description = "Неподдерживаемый тип релиза")
+    })
+    @GetMapping("/top-rated/{type}")
+    public ResponseEntity<Page<ReleaseDTO>> getTopRatedReleasesByType(
+        @Parameter(description = "Тип релиза (SINGLE, ALBUM, EP, MIXTAPE, COMPILATION)") @PathVariable String type,
+        @Parameter(description = "Год для фильтрации") @RequestParam(required = false) Integer year,
+        @Parameter(description = "Месяц для фильтрации") @RequestParam(required = false) Integer month,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        try {
+            return ResponseEntity.ok(releaseService.getTopRatedReleasesByType(type, year, month, pageable));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Получение доступных годов для фильтрации")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список доступных годов")
+    })
+    @GetMapping("/years")
+    public ResponseEntity<List<Integer>> getAvailableYears() {
+        return ResponseEntity.ok(releaseService.getAvailableYears());
+    }
+
+    @Operation(summary = "Получение доступных годов для определенного типа релиза")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список доступных годов для типа релиза"),
+        @ApiResponse(responseCode = "400", description = "Неподдерживаемый тип релиза")
+    })
+    @GetMapping("/years/{type}")
+    public ResponseEntity<List<Integer>> getAvailableYearsByType(
+        @Parameter(description = "Тип релиза (SINGLE, ALBUM, EP, MIXTAPE, COMPILATION)") @PathVariable String type) {
+        try {
+            return ResponseEntity.ok(releaseService.getAvailableYearsByType(type));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Получение доступных месяцев для года")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список доступных месяцев")
+    })
+    @GetMapping("/months")
+    public ResponseEntity<List<Integer>> getAvailableMonthsByYear(
+        @Parameter(description = "Год для фильтрации") @RequestParam Integer year) {
+        return ResponseEntity.ok(releaseService.getAvailableMonthsByYear(year));
+    }
+
+    @Operation(summary = "Получение доступных месяцев для года и типа релиза")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список доступных месяцев для года и типа"),
+        @ApiResponse(responseCode = "400", description = "Неподдерживаемый тип релиза")
+    })
+    @GetMapping("/months/{type}")
+    public ResponseEntity<List<Integer>> getAvailableMonthsByYearAndType(
+        @Parameter(description = "Год для фильтрации") @RequestParam Integer year,
+        @Parameter(description = "Тип релиза (SINGLE, ALBUM, EP, MIXTAPE, COMPILATION)") @PathVariable String type) {
+        try {
+            return ResponseEntity.ok(releaseService.getAvailableMonthsByYearAndType(year, type));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Поиск релизов по названию")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список найденных релизов")
+    })
+    @GetMapping("/search")
+    public ResponseEntity<Page<ReleaseDTO>> searchReleases(
+        @Parameter(description = "Название релиза для поиска") @RequestParam String title,
+        @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        return ResponseEntity.ok(releaseService.searchReleasesByTitle(title, pageable));
     }
 }

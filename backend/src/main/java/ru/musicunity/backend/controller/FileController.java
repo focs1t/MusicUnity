@@ -57,13 +57,14 @@ public class FileController {
         @RequestParam("file") MultipartFile file
     ) {
         String key = s3Service.uploadFile(file, "avatars");
-        String url = s3Service.getPresignedUrl(key);
-        return ResponseEntity.ok(new FileUploadResponse(key, url));
+        String permanentUrl = s3Service.getPermanentUrl(key);
+        String temporaryUrl = s3Service.getPresignedUrl(key);
+        return ResponseEntity.ok(new FileUploadResponse(key, temporaryUrl, permanentUrl));
     }
 
     @Operation(
         summary = "Загрузить обложку релиза",
-        description = "Загружает файл обложки в S3 хранилище. Доступно только авторам."
+        description = "Загружает файл обложки в S3 хранилище. Доступно авторам и модераторам."
     )
     @ApiResponses({
         @ApiResponse(
@@ -80,7 +81,7 @@ public class FileController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Пользователь не является автором"
+            description = "Пользователь не является автором или модератором"
         ),
         @ApiResponse(
             responseCode = "400",
@@ -88,7 +89,7 @@ public class FileController {
         )
     })
     @PostMapping(value = "/upload/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('AUTHOR')")
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR')")
     public ResponseEntity<FileUploadResponse> uploadCover(
         @Parameter(
             description = "Файл обложки (изображение)",
@@ -98,8 +99,9 @@ public class FileController {
         @RequestParam("file") MultipartFile file
     ) {
         String key = s3Service.uploadFile(file, "covers");
-        String url = s3Service.getPresignedUrl(key);
-        return ResponseEntity.ok(new FileUploadResponse(key, url));
+        String permanentUrl = s3Service.getPermanentUrl(key);
+        String temporaryUrl = s3Service.getPresignedUrl(key);
+        return ResponseEntity.ok(new FileUploadResponse(key, temporaryUrl, permanentUrl));
     }
 
     @Operation(
@@ -130,6 +132,37 @@ public class FileController {
         @RequestParam("key") String key
     ) {
         String url = s3Service.getPresignedUrl(key);
+        return ResponseEntity.ok(url);
+    }
+
+    @Operation(
+        summary = "Получить постоянный URL для файла",
+        description = "Формирует постоянный URL для доступа к файлу в S3 хранилище."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "URL успешно сформирован",
+            content = @Content(
+                mediaType = MediaType.TEXT_PLAIN_VALUE,
+                schema = @Schema(type = "string", example = "https://s3.twcstorage.ru/bucket/avatars/filename.jpg")
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Некорректный ключ файла"
+        )
+    })
+    @GetMapping("/permanent")
+    public ResponseEntity<String> getPermanentUrl(
+        @Parameter(
+            description = "Ключ файла (например, 'avatars/uuid_filename.jpg')",
+            required = true,
+            example = "avatars/123e4567-e89b-12d3-a456-426614174000_avatar.jpg"
+        )
+        @RequestParam("key") String key
+    ) {
+        String url = s3Service.getPermanentUrl(key);
         return ResponseEntity.ok(url);
     }
 } 

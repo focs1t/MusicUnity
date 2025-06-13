@@ -6,21 +6,28 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.musicunity.backend.dto.ReleaseDTO;
+import ru.musicunity.backend.exception.AuthorCannotAddToFavoritesException;
+import ru.musicunity.backend.exception.AuthorCannotLikeOthersReviewsException;
 import ru.musicunity.backend.exception.ReleaseNotFoundException;
 import ru.musicunity.backend.exception.UserNotFoundException;
 import ru.musicunity.backend.mapper.ReleaseMapper;
+import ru.musicunity.backend.pojo.Author;
 import ru.musicunity.backend.pojo.Favorite;
 import ru.musicunity.backend.pojo.Release;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
+import ru.musicunity.backend.repository.AuthorRepository;
 import ru.musicunity.backend.repository.ReleaseRepository;
 import ru.musicunity.backend.repository.UserRepository;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class FavoriteService {
     private final ReleaseRepository releaseRepository;
     private final UserRepository userRepository;
+    private final AuthorRepository authorRepository;
     private final ReleaseMapper releaseMapper;
 
     public Page<ReleaseDTO> getFavoriteReleasesByUser(User user, Pageable pageable) {
@@ -30,6 +37,12 @@ public class FavoriteService {
 
     @Transactional
     public void addToFavorites(Long releaseId, Long userId) {
+        // Проверяем, является ли пользователь автором
+        Optional<Author> author = authorRepository.findByUserUserId(userId);
+        if (author.isPresent()) {
+            throw new AuthorCannotAddToFavoritesException();
+        }
+        
         Release release = releaseRepository.findById(releaseId)
                 .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
         
@@ -47,7 +60,13 @@ public class FavoriteService {
                     .user(user)
                     .build();
             release.getFavorites().add(favorite);
-            release.setFavoritesCount(release.getFavoritesCount() + 1);
+            
+            // Пересчитываем количество избранных, исключая удаленные релизы
+            long activeFavoritesCount = release.getFavorites().stream()
+                    .filter(f -> !f.getRelease().getIsDeleted())
+                    .count();
+            release.setFavoritesCount((int) activeFavoritesCount);
+            
             releaseRepository.save(release);
         }
     }
@@ -60,8 +79,33 @@ public class FavoriteService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         if (release.getFavorites().removeIf(f -> f.getUser().getUserId().equals(userId))) {
-            release.setFavoritesCount(release.getFavoritesCount() - 1);
+            // Пересчитываем количество избранных, исключая удаленные релизы
+            long activeFavoritesCount = release.getFavorites().stream()
+                    .filter(f -> !f.getRelease().getIsDeleted())
+                    .count();
+            release.setFavoritesCount((int) activeFavoritesCount);
+            
             releaseRepository.save(release);
         }
+    }
+
+    public boolean isFavorite(Long releaseId, Long userId) {
+        System.out.println("Проверяем статус избранного для релиза " + releaseId + " и пользователя " + userId);
+        
+        Release release = releaseRepository.findById(releaseId)
+                .orElseThrow(() -> new ReleaseNotFoundException(releaseId));
+        
+        // Проверяем, не удален ли релиз
+        if (release.getIsDeleted()) {
+            throw new ReleaseNotFoundException(releaseId);
+        }
+
+        boolean isFavorite = release.getFavorites().stream()
+                .anyMatch(f -> f.getUser().getUserId().equals(userId));
+        
+        System.out.println("Количество избранных для релиза: " + release.getFavorites().size());
+        System.out.println("Результат проверки избранного: " + isFavorite);
+        
+        return isFavorite;
     }
 } 

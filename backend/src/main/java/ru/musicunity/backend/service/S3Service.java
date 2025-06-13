@@ -37,6 +37,9 @@ public class S3Service {
     @Value("${s3.bucket}")
     private String bucketName;
 
+    @Value("${s3.endpoint}")
+    private String endpoint;
+
     public String uploadFile(MultipartFile file, String folder) {
         validateFile(file);
         
@@ -71,6 +74,19 @@ public class S3Service {
 
         PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
         return presignedRequest.url().toString();
+    }
+
+    public String getPermanentUrl(String key) {
+        if (key == null || key.trim().isEmpty()) {
+            throw new IllegalArgumentException("Ключ файла не может быть пустым");
+        }
+
+        if (!(key.startsWith("avatars/") || key.startsWith("covers/"))) {
+            throw new IllegalArgumentException("Недопустимый путь к файлу");
+        }
+
+        // Формируем постоянную ссылку без подписи
+        return String.format("%s/%s/%s", endpoint, bucketName, key);
     }
 
     private void validateFile(MultipartFile file) {

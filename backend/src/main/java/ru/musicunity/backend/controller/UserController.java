@@ -14,11 +14,19 @@ import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AuthorDTO;
 import ru.musicunity.backend.dto.ReleaseDTO;
 import ru.musicunity.backend.dto.UserDTO;
+import ru.musicunity.backend.dto.UserRatingDTO;
+import ru.musicunity.backend.dto.UserUpdateDTO;
+import ru.musicunity.backend.dto.PasswordUpdateDTO;
 import ru.musicunity.backend.pojo.enums.ReleaseType;
 import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.service.UserService;
+import ru.musicunity.backend.mapper.UserMapper;
+import ru.musicunity.backend.security.JwtService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Tag(name = "User", description = "API для работы с пользователями")
 @RestController
@@ -26,17 +34,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final UserMapper userMapper;
+    private final JwtService jwtService;
 
-    @Operation(summary = "Поиск пользователя по имени пользователя")
+    @Operation(summary = "Получение топ-100 пользователей")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Пользователь найден"),
-        @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+        @ApiResponse(responseCode = "200", description = "Список топ-100 пользователей")
     })
-    @GetMapping("/username/{username}")
-    public ResponseEntity<UserDTO> findByUsername(
-        @Parameter(description = "Имя пользователя") @PathVariable String username) {
-        UserDTO user = userService.findByUsername(username);
-        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
+    @GetMapping("/top-100")
+    public ResponseEntity<List<UserRatingDTO>> getTop100Users() {
+        return ResponseEntity.ok(userService.getTop100Users());
     }
 
     @Operation(summary = "Поиск пользователей по имени пользователя")
@@ -61,37 +68,18 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @Operation(summary = "Получение пользователей по роли")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Список пользователей")
-    })
-    @GetMapping("/role/{role}")
-    public ResponseEntity<Page<UserDTO>> findByRights(
-        @Parameter(description = "Роль пользователя") @PathVariable UserRole role,
-        @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(userService.findByRights(role, pageable));
-    }
-
-    @Operation(summary = "Получение пользователей по роли")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Список пользователей")
-    })
-    @GetMapping("/blocked")
-    public ResponseEntity<Page<UserDTO>> findBlockedUsers(
-            @Parameter(description = "Параметры пагинации") Pageable pageable) {
-        return ResponseEntity.ok(userService.findBlockedUsers(pageable));
-    }
-
     @Operation(summary = "Обновление пароля пользователя")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Пароль успешно обновлен"),
         @ApiResponse(responseCode = "400", description = "Неверный текущий пароль")
     })
     @PatchMapping("/password")
-    public ResponseEntity<Void> updateOwnPassword(
-        @Parameter(description = "Текущий пароль") @RequestParam String currentPassword,
-        @Parameter(description = "Новый пароль") @RequestParam String newPassword) {
-        userService.updateOwnPassword(currentPassword, newPassword);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> updateOwnPassword(@RequestBody PasswordUpdateDTO passwordUpdateDTO) {
+        userService.updateOwnPassword(
+            passwordUpdateDTO.getCurrentPassword(), 
+            passwordUpdateDTO.getNewPassword()
+        );
         return ResponseEntity.ok().build();
     }
 
@@ -100,10 +88,12 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Данные успешно обновлены")
     })
     @PatchMapping("/data")
-    public ResponseEntity<Void> updateOwnData(
-        @Parameter(description = "Биография пользователя") @RequestParam(required = false) String bio,
-        @Parameter(description = "URL аватара") @RequestParam(required = false) String avatarUrl) {
-        userService.updateOwnData(bio, avatarUrl);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> updateOwnData(@RequestBody UserUpdateDTO userUpdateDTO) {
+        userService.updateOwnData(
+            userUpdateDTO.getBio(), 
+            userUpdateDTO.getAvatarUrl()
+        );
         return ResponseEntity.ok().build();
     }
 
@@ -118,20 +108,6 @@ public class UserController {
     public ResponseEntity<Void> banUser(
         @Parameter(description = "ID пользователя") @PathVariable Long id) {
         userService.banUser(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Разблокировка пользователя")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Пользователь разблокирован"),
-            @ApiResponse(responseCode = "403", description = "Нет прав для разблокировки"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    })
-    @PatchMapping("/{id}/unban")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> unbanUser(
-            @Parameter(description = "ID пользователя") @PathVariable Long id) {
-        userService.unbanUser(id);
         return ResponseEntity.ok().build();
     }
 
@@ -166,5 +142,100 @@ public class UserController {
         @Parameter(description = "ID пользователя") @PathVariable Long userId,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
         return ResponseEntity.ok(userService.getReleasesFromFollowedAuthors(userId, pageable));
+    }
+
+    @Operation(summary = "Получение текущего пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Текущий пользователь найден"),
+        @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован")
+    })
+    @GetMapping("/current")
+    public ResponseEntity<UserDTO> getCurrentUser(HttpServletRequest request) {
+        try {
+            // Проверяем токен вручную
+            final String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).build();
+            }
+
+            final String jwt = authHeader.substring(7);
+            final String username = jwtService.extractUsername(jwt);
+            
+            if (username == null || !jwtService.isTokenValid(jwt)) {
+                return ResponseEntity.status(401).build();
+            }
+
+            // Получаем пользователя напрямую из базы
+            var user = userService.getUserByUsername(username);
+            if (user == null) {
+                return ResponseEntity.status(401).build();
+            }
+
+            // Если пользователь заблокирован, возвращаем 403
+            if (user.getIsBlocked() != null && user.getIsBlocked()) {
+                return ResponseEntity.status(403).build();
+            }
+
+            return ResponseEntity.ok(userMapper.toDTO(user));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @Operation(summary = "Проверка статуса текущего пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Статус пользователя получен"),
+        @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован"),
+        @ApiResponse(responseCode = "403", description = "Пользователь заблокирован")
+    })
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Boolean>> getUserStatus(HttpServletRequest request) {
+        try {
+            // Проверяем токен вручную
+            final String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                Map<String, Boolean> response = new HashMap<>();
+                response.put("isActive", false);
+                return ResponseEntity.status(401).body(response);
+            }
+
+            final String jwt = authHeader.substring(7);
+            final String username = jwtService.extractUsername(jwt);
+            
+            if (username == null || !jwtService.isTokenValid(jwt)) {
+                Map<String, Boolean> response = new HashMap<>();
+                response.put("isActive", false);
+                return ResponseEntity.status(401).body(response);
+            }
+
+            // Получаем пользователя напрямую из базы
+            var user = userService.getUserByUsername(username);
+            if (user == null) {
+                Map<String, Boolean> response = new HashMap<>();
+                response.put("isActive", false);
+                return ResponseEntity.status(401).body(response);
+            }
+
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("isActive", user.getIsBlocked() == null || !user.getIsBlocked());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("isActive", false);
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @Operation(summary = "Получение привязанного автора для пользователя")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор найден"),
+        @ApiResponse(responseCode = "404", description = "Автор не найден")
+    })
+    @GetMapping("/{userId}/linked-author")
+    public ResponseEntity<AuthorDTO> getLinkedAuthor(
+        @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        return userService.getLinkedAuthor(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 } 

@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.ReportDTO;
 import ru.musicunity.backend.pojo.enums.ReportStatus;
+import ru.musicunity.backend.pojo.enums.ReportType;
 import ru.musicunity.backend.service.ReportService;
 
 import java.time.LocalDateTime;
@@ -56,12 +57,29 @@ public class ReportController {
         @ApiResponse(responseCode = "401", description = "Требуется авторизация")
     })
     @PostMapping
-    @PreAuthorize("hasAnyRole('USER', 'AUTHOR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReportDTO> createReport(
         @Parameter(description = "ID отзыва") @RequestParam Long reviewId,
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
         @Parameter(description = "Причина жалобы") @RequestParam String reason) {
         return ResponseEntity.ok(reportService.createReport(reviewId, userId, reason));
+    }
+
+    @Operation(summary = "Создание универсальной жалобы")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Жалоба успешно создана"),
+        @ApiResponse(responseCode = "400", description = "Некорректные данные жалобы"),
+        @ApiResponse(responseCode = "401", description = "Требуется авторизация")
+    })
+    @PostMapping("/universal")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ReportDTO> createUniversalReport(
+        @Parameter(description = "Тип жалобы") @RequestParam String type,
+        @Parameter(description = "ID объекта") @RequestParam Long targetId,
+        @Parameter(description = "ID пользователя") @RequestParam Long userId,
+        @Parameter(description = "Причина жалобы") @RequestParam String reason) {
+        ReportType reportType = ReportType.valueOf(type);
+        return ResponseEntity.ok(reportService.createUniversalReport(reportType, targetId, userId, reason));
     }
 
     @Operation(summary = "Удаление отзыва по жалобе")
@@ -76,6 +94,34 @@ public class ReportController {
         @Parameter(description = "ID жалобы") @PathVariable Long reportId,
         @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
         return ResponseEntity.ok(reportService.deleteReview(reportId, moderatorId));
+    }
+
+    @Operation(summary = "Удаление релиза по жалобе")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Релиз успешно удален"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для удаления релиза"),
+        @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
+    })
+    @PatchMapping("/{reportId}/delete-release")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<ReportDTO> deleteRelease(
+        @Parameter(description = "ID жалобы") @PathVariable Long reportId,
+        @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
+        return ResponseEntity.ok(reportService.deleteRelease(reportId, moderatorId));
+    }
+
+    @Operation(summary = "Удаление автора по жалобе")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Автор успешно удален"),
+        @ApiResponse(responseCode = "403", description = "Нет прав для удаления автора"),
+        @ApiResponse(responseCode = "404", description = "Жалоба не найдена")
+    })
+    @PatchMapping("/{reportId}/delete-author")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<ReportDTO> deleteAuthor(
+        @Parameter(description = "ID жалобы") @PathVariable Long reportId,
+        @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
+        return ResponseEntity.ok(reportService.deleteAuthor(reportId, moderatorId));
     }
 
     @Operation(summary = "Блокировка пользователя по жалобе")
@@ -104,18 +150,6 @@ public class ReportController {
         @Parameter(description = "ID жалобы") @PathVariable Long reportId,
         @Parameter(description = "ID модератора") @RequestParam Long moderatorId) {
         return ResponseEntity.ok(reportService.rejectReport(reportId, moderatorId));
-    }
-
-    @Operation(summary = "Очистка обработанных жалоб")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Жалобы успешно очищены"),
-        @ApiResponse(responseCode = "403", description = "Нет прав для очистки жалоб")
-    })
-    @DeleteMapping("/resolved")
-    @PreAuthorize("hasRole('MODERATOR')")
-    public ResponseEntity<Void> clearResolvedReports() {
-        reportService.clearResolvedReports();
-        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Получение ожидающих жалоб")

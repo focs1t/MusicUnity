@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Управление жанрами - MusicUnity Admin</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .genre-card {
+            transition: all 0.3s ease;
+        }
+        
+        .genre-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .delete-btn {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .genre-card:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .delete-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/admin">
+                <i class="fas fa-music me-2"></i>MusicUnity Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin">Главная</a>
+                <a class="nav-link active" href="/admin/genres">Жанры</a>
+                <a class="nav-link" href="/admin/users">Пользователи</a>
+                <a class="nav-link" href="/admin/registration-requests">Заявки</a>
+                <a class="nav-link" href="/admin/audit">Аудит</a>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        Удаленные
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/deleted-releases">
+                            <i class="fas fa-compact-disc me-2"></i>Релизы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-authors">
+                            <i class="fas fa-microphone me-2"></i>Авторы
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deleted-reviews">
+                            <i class="fas fa-edit me-2"></i>Рецензии
+                        </a></li>
+                    </ul>
+                </div>
+                <a class="nav-link" href="/logout">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2><i class="fas fa-tags me-2"></i>Управление жанрами</h2>
+                <p class="text-muted">Создание и управление музыкальными жанрами</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#createGenreModal">
+                    <i class="fas fa-plus me-2"></i>Создать жанр
+                </button>
+                <a href="/admin" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Назад
+                </a>
+            </div>
+        </div>
+
+        <!-- Список жанров -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Список жанров
+                </h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${genres.empty}" class="text-center text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>Нет жанров</p>
+                </div>
+                
+                <div th:unless="${genres.empty}" id="genresGrid">
+                    <div class="row" id="genresRow">
+                        <div th:each="genre : ${genres.content}" class="col-md-4 mb-3">
+                            <div class="card genre-card">
+                                <div class="card-body text-center position-relative">
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 delete-btn" 
+                                            style="--bs-btn-padding-x: 0.375rem; --bs-btn-padding-y: 0.25rem;"
+                                            th:data-genre-id="${genre.genreId}"
+                                            th:data-genre-name="${genre.name}"
+                                            onclick="confirmDeleteGenre(this.dataset.genreId, this.dataset.genreName)"
+                                            title="Удалить жанр">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <h6 class="card-title" th:text="${genre.name}">Название жанра</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Пагинация -->
+                    <nav th:if="${genres.totalPages > 1}">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${genres.first} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/genres(page=${genres.number - 1})}">Предыдущая</a>
+                            </li>
+                            <li class="page-item" 
+                                th:each="page : ${#numbers.sequence(0, genres.totalPages - 1)}"
+                                th:classappend="${page == genres.number} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/genres(page=${page})}" th:text="${page + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${genres.last} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/genres(page=${genres.number + 1})}">Следующая</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для создания жанра -->
+    <div class="modal fade" id="createGenreModal" tabindex="-1" aria-labelledby="createGenreModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createGenreModalLabel">
+                        <i class="fas fa-plus me-2"></i>Создать новый жанр
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <form id="createGenreForm">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="modalGenreName" class="form-label">Название жанра:</label>
+                            <input type="text" class="form-control" id="modalGenreName" name="name" 
+                                   placeholder="Введите название жанра" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Создать жанр
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Получение CSRF токена
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        // Обработка формы создания жанра
+        document.getElementById('createGenreForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const genreName = formData.get('name');
+            
+            if (!genreName.trim()) {
+                alert('Введите название жанра');
+                return;
+            }
+            
+            // Отправка AJAX запроса
+            fetch('/admin/genres/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
+                body: new URLSearchParams(formData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Закрыть модальное окно
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createGenreModal'));
+                    modal.hide();
+                    
+                    // Очистить форму
+                    document.getElementById('createGenreForm').reset();
+                    
+                    // Показать уведомление
+                    showNotification('Жанр "' + genreName + '" успешно создан!', 'success');
+                    
+                    // Обновить список жанров
+                    updateGenresList();
+                } else {
+                    throw new Error('Ошибка при создании жанра');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Ошибка при создании жанра', 'error');
+            });
+        });
+
+        // Функция для показа уведомлений
+        function showNotification(message, type) {
+            // Создаем контейнер для toast уведомлений если его нет
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    max-width: 350px;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+            
+            const toastId = 'toast-' + Date.now();
+            const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            
+            const toastHtml = `
+                <div class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert" id="${toastId}">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas ${iconClass} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            // Добавляем toast в контейнер
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = toastHtml;
+            const toastElement = tempDiv.firstElementChild;
+            toastContainer.appendChild(toastElement);
+            
+            // Инициализируем и показываем toast
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 5000
+            });
+            toast.show();
+            
+                         // Удаляем элемент после скрытия
+             toastElement.addEventListener('hidden.bs.toast', function() {
+                 toastElement.remove();
+             });
+         }
+
+         // Функция для подтверждения удаления жанра
+         function confirmDeleteGenre(genreId, genreName) {
+             if (confirm('Вы уверены, что хотите удалить жанр "' + genreName + '"?\n\nВнимание: Жанр исчезнет из всех связанных релизов!')) {
+                 deleteGenre(genreId, genreName);
+             }
+         }
+
+         // Функция для удаления жанра
+         function deleteGenre(genreId, genreName) {
+             fetch('/admin/genres/' + genreId + '/delete', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                     [csrfHeader]: csrfToken
+                 }
+             })
+             .then(response => {
+                 if (response.ok) {
+                     // Показать уведомление об успешном удалении
+                     showNotification('Жанр "' + genreName + '" успешно удален!', 'success');
+                     
+                     // Обновить список жанров
+                     updateGenresList();
+                 } else {
+                     throw new Error('Ошибка при удалении жанра');
+                 }
+             })
+             .catch(error => {
+                 console.error('Error:', error);
+                 showNotification('Ошибка при удалении жанра', 'error');
+             });
+         }
+
+        // Функция для обновления списка жанров
+        function updateGenresList() {
+            fetch('/admin/genres', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Парсим HTML и извлекаем только список жанров
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newGenresGrid = doc.querySelector('#genresGrid');
+                const emptyMessage = doc.querySelector('.text-center.text-muted');
+                
+                if (newGenresGrid) {
+                    document.getElementById('genresGrid').outerHTML = newGenresGrid.outerHTML;
+                } else if (emptyMessage) {
+                    const currentGrid = document.getElementById('genresGrid');
+                    if (currentGrid) {
+                        currentGrid.outerHTML = emptyMessage.outerHTML;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error updating genres list:', error);
+                // В случае ошибки просто перезагружаем страницу
+                location.reload();
+            });
+        }
+    </script>
+</body>
+</html> 

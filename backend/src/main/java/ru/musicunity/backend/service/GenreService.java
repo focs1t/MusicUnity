@@ -10,7 +10,9 @@ import ru.musicunity.backend.dto.GenreDTO;
 import ru.musicunity.backend.exception.GenreNotFoundException;
 import ru.musicunity.backend.mapper.GenreMapper;
 import ru.musicunity.backend.pojo.Genre;
+import ru.musicunity.backend.pojo.Release;
 import ru.musicunity.backend.repository.GenreRepository;
+import ru.musicunity.backend.repository.ReleaseRepository;
 
 import java.util.List;
 
@@ -18,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GenreService {
     private final GenreRepository genreRepository;
+    private final ReleaseRepository releaseRepository;
     private final GenreMapper genreMapper;
 
     public Page<GenreDTO> getAllGenres(Pageable pageable) {
@@ -32,7 +35,7 @@ public class GenreService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public GenreDTO createGenre(String name) {
         Genre genre = Genre.builder()
                 .name(name)
@@ -41,8 +44,29 @@ public class GenreService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteGenre(Long id) {
+        Genre genre = genreRepository.findById(id)
+                .orElseThrow(() -> new GenreNotFoundException(id));
+        
+        // Найти все релизы, которые содержат этот жанр
+        List<Release> releasesWithGenre = releaseRepository.findAll().stream()
+                .filter(release -> release.getGenres().contains(genre))
+                .toList();
+        
+        // Убрать жанр из всех релизов
+        for (Release release : releasesWithGenre) {
+            release.getGenres().remove(genre);
+            releaseRepository.save(release);
+        }
+        
+        // Удалить жанр
+        genreRepository.delete(genre);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void hardDeleteGenre(Long id) {
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new GenreNotFoundException(id));
         genreRepository.delete(genre);

@@ -11,7 +11,16 @@ import ru.musicunity.backend.pojo.enums.AuditAction;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "audit")
+@Table(
+    name = "audit",
+    indexes = {
+        @Index(name = "idx_audit_moderator_id", columnList = "moderator_id"),
+        @Index(name = "idx_audit_action_type", columnList = "actionType"),
+        @Index(name = "idx_audit_target_id", columnList = "targetId"),
+        @Index(name = "idx_audit_performed_at", columnList = "performedAt"),
+        @Index(name = "idx_audit_is_rolled_back", columnList = "isRolledBack")
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -35,4 +44,11 @@ public class Audit {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime performedAt;
+    
+    @Column
+    @Builder.Default
+    private Boolean isRolledBack = false;
+    
+    @Column
+    private LocalDateTime rollbackAt;
 }

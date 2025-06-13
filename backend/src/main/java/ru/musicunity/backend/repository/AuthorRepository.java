@@ -25,6 +25,18 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
     @Query("SELECT a FROM Author a WHERE a.isProducer = true AND a.isDeleted = false")
     Page<Author> findByIsProducerTrue(Pageable pageable);
 
+    @Query("SELECT a FROM Author a WHERE a.isVerified = true AND a.isDeleted = false")
+    Page<Author> findByIsVerifiedTrue(Pageable pageable);
+
+    @Query("SELECT a FROM Author a WHERE a.isVerified = false AND a.isDeleted = false")
+    Page<Author> findByIsVerifiedFalse(Pageable pageable);
+
+    @Query("SELECT a FROM Author a WHERE a.isVerified = true AND a.isArtist = true AND a.isDeleted = false")
+    Page<Author> findByIsVerifiedTrueAndIsArtistTrue(Pageable pageable);
+
+    @Query("SELECT a FROM Author a WHERE a.isVerified = true AND a.isProducer = true AND a.isDeleted = false")
+    Page<Author> findByIsVerifiedTrueAndIsProducerTrue(Pageable pageable);
+
     @Query("SELECT a FROM Author a WHERE a.isDeleted = false")
     Page<Author> findAllSorted(Pageable pageable);
 
@@ -39,4 +51,26 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
 
     @Query("SELECT a FROM Author a JOIN a.followings f WHERE f.user.userId = :userId AND a.isDeleted = false")
     Page<Author> findByFollowingsUserUserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT AVG(rv.totalScore) " +
+           "FROM ReleaseAuthor ra JOIN ra.release r JOIN r.reviews rv " +
+           "WHERE ra.author.authorId = :authorId AND r.type = ru.musicunity.backend.pojo.enums.ReleaseType.ALBUM AND r.isDeleted = false AND rv.isDeleted = false AND rv.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED")
+    Double findAverageAlbumExtendedRating(@Param("authorId") Long authorId);
+
+    @Query("SELECT AVG(rv.totalScore) " +
+           "FROM ReleaseAuthor ra JOIN ra.release r JOIN r.reviews rv " +
+           "WHERE ra.author.authorId = :authorId AND r.type = ru.musicunity.backend.pojo.enums.ReleaseType.ALBUM AND r.isDeleted = false AND rv.isDeleted = false AND rv.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE")
+    Double findAverageAlbumSimpleRating(@Param("authorId") Long authorId);
+
+    @Query("SELECT AVG(rv.totalScore) " +
+           "FROM ReleaseAuthor ra JOIN ra.release r JOIN r.reviews rv " +
+           "WHERE ra.author.authorId = :authorId AND (r.type = ru.musicunity.backend.pojo.enums.ReleaseType.SINGLE OR r.type = ru.musicunity.backend.pojo.enums.ReleaseType.EP) AND r.isDeleted = false AND rv.isDeleted = false AND rv.type = ru.musicunity.backend.pojo.enums.ReviewType.EXTENDED")
+    Double findAverageSingleEpExtendedRating(@Param("authorId") Long authorId);
+
+    @Query("SELECT AVG(rv.totalScore) " +
+           "FROM ReleaseAuthor ra JOIN ra.release r JOIN r.reviews rv " +
+           "WHERE ra.author.authorId = :authorId AND (r.type = ru.musicunity.backend.pojo.enums.ReleaseType.SINGLE OR r.type = ru.musicunity.backend.pojo.enums.ReleaseType.EP) AND r.isDeleted = false AND rv.isDeleted = false AND rv.type = ru.musicunity.backend.pojo.enums.ReviewType.SIMPLE")
+    Double findAverageSingleEpSimpleRating(@Param("authorId") Long authorId);
+
+
 }

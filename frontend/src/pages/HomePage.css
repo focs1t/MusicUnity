@@ -1,0 +1,1451 @@
+/* HomePage.css - Стили для главной страницы в точном стиле сайта */
+
+.home-page-container {
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Container */
+.home-page-container .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 1024px) and (max-width: 1500px) {
+  .home-page-container .container {
+    padding: 0 1.5rem;
+  }
+}
+
+/* Hero Section */
+.home-page-container .hero-section {
+  text-align: center;
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .hero-section {
+    padding: 6rem 0;
+    margin-bottom: 5rem;
+  }
+}
+
+.home-page-container .hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.home-page-container .hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.home-page-container .gradient-text {
+  background: linear-gradient(135deg, #3a82f7 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .hero-title {
+    font-size: 3.5rem;
+  }
+}
+
+.home-page-container .hero-subtitle {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .hero-subtitle {
+    font-size: 1.25rem;
+  }
+}
+
+/* Section Styles */
+.home-page-container .section {
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .section {
+    margin-bottom: 5rem;
+  }
+}
+
+.home-page-container .section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+@media (min-width: 1280px) {
+  .home-page-container .section-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Loading States */
+.home-page-container .loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+}
+
+.home-page-container .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #3a82f7;
+  border-radius: 50%;
+  animation: home-page-spin 1s linear infinite;
+}
+
+@keyframes home-page-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Release Cards - точная копия из AuthorPage */
+.home-page-container .releases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.9375rem;
+  margin-top: 1.75rem;
+}
+
+.home-page-container .release-card {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+}
+
+.home-page-container .release-card-inner {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #27272a;
+  transition: all 0.3s;
+  min-height: 280px;
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .release-card-inner {
+    padding: 0.25rem;
+  }
+}
+
+.home-page-container .release-card-inner:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.home-page-container .release-link {
+  position: relative;
+  display: block;
+}
+
+.home-page-container .release-cover-container {
+  aspect-ratio: 1;
+  width: 100%;
+  display: block;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.home-page-container .release-cover {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  object-fit: cover;
+}
+
+.home-page-container .release-stats {
+  position: absolute;
+  bottom: 0.375rem;
+  left: 0.375rem;
+  background-color: #18181b;
+  border-radius: 9999px;
+  padding: 0 0.375rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.home-page-container .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.1875rem;
+}
+
+.home-page-container .stat-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .stat-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+}
+
+.home-page-container .release-type-icon {
+  position: absolute;
+  width: 1.5rem;
+  height: 1.5rem;
+  bottom: 0.375rem;
+  right: 0.375rem;
+  background-color: #18181b;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-page-container .type-icon {
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+}
+
+.home-page-container .release-info {
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 10;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-page-container .release-title {
+  font-size: 0.875rem;
+  width: 100%;
+  color: white;
+  line-height: 1.2;
+  margin-top: 0.375rem;
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.home-page-container .release-title:hover {
+  color: #3a82f7;
+}
+
+.home-page-container .release-authors {
+  display: flex;
+  flex-wrap: wrap;
+  line-height: 0.75;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+}
+
+.home-page-container .author-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.home-page-container .author-link:hover {
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.home-page-container .separator {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.home-page-container .release-ratings {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  margin-top: auto;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-bottom: 0.25rem;
+  justify-content: center;
+}
+
+.home-page-container .release-ratings .rating-circle {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.75rem;
+}
+
+/* Стили для кругов рейтинга релизов */
+.home-page-container .release-row-rating-circles {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.home-page-container .release-row-rating-circle {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: default;
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .release-row-rating-circle {
+    width: 1.875rem;
+    height: 1.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+.home-page-container .release-row-rating-circle.filled {
+  background-color: #3a82f7;
+  border-color: #3a82f7;
+  color: #ffffff;
+}
+
+.home-page-container .release-row-rating-circle.outlined {
+  background-color: transparent;
+  border-color: #3a82f7;
+  color: #ffffff;
+}
+
+.home-page-container .release-row-rating-circle.dashed {
+  background-color: transparent;
+  border-style: dashed;
+  border-color: #3a82f7;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Author Cards - точная копия из AuthorsPage */
+.home-page-container .authors-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .authors-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .authors-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .home-page-container .authors-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.home-page-container .author-card {
+  border: 1px solid rgba(39, 39, 42, 1);
+  color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  background-color: #18181b;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.home-page-container .author-card:hover {
+  background-color: rgba(39, 39, 42, 0.6);
+}
+
+.home-page-container .author-link {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-page-container .author-card-link {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Дублируем стили для authors-list */
+.home-page-container .authors-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .authors-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .authors-list {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .home-page-container .authors-list {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.home-page-container .author-avatar-container {
+  aspect-ratio: 1;
+  max-width: 120px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .author-avatar-container {
+    max-width: 180px;
+  }
+}
+
+.home-page-container .author-avatar {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+.home-page-container .author-name-container {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .author-name-container {
+    font-size: 1.25rem;
+  }
+}
+
+.home-page-container .author-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-page-container .verification-button {
+  background: none;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.home-page-container .verification-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.home-page-container .verification-icon.verified {
+  color: #3a82f7;
+}
+
+.home-page-container .verification-icon.unverified {
+  color: #6b7280;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .verification-icon {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+.home-page-container .followers-count {
+  margin-bottom: 0.5rem;
+}
+
+.home-page-container .followers-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.home-page-container .bookmark-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: #3a82f7;
+}
+
+.home-page-container .ratings-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  margin-top: auto;
+}
+
+.home-page-container .rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.home-page-container .rating-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #ffffff;
+}
+
+/* Rating Circles - точная копия из AuthorPage */
+.home-page-container .rating-circle {
+  width: 2rem;
+  height: 2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.home-page-container .rating-circle.filled {
+  background-color: #3a82f7;
+  color: white;
+}
+
+.home-page-container .rating-circle.outlined {
+  border: 2px solid #3a82f7;
+  color: white;
+  background: transparent;
+}
+
+.home-page-container .rating-circle.dashed {
+  border: 2px dashed rgba(58, 130, 247, 0.4);
+  color: transparent;
+  background: transparent;
+}
+
+/* User Cards */
+.home-page-container .users-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .users-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .users-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.home-page-container .user-card {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 1rem;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.home-page-container .user-card:hover {
+  background-color: rgba(39, 39, 42, 0.6);
+}
+
+.home-page-container .user-card-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-page-container .user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  object-fit: cover;
+}
+
+.home-page-container .user-info {
+  flex: 1;
+}
+
+.home-page-container .user-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.home-page-container .user-score {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+}
+
+/* Review Cards */
+.home-page-container .reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .reviews-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .reviews-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.home-page-container .review-card {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 1rem;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.home-page-container .review-card:hover {
+  background-color: rgba(39, 39, 42, 0.6);
+}
+
+.home-page-container .review-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.home-page-container .review-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  object-fit: cover;
+}
+
+.home-page-container .review-user-info {
+  flex: 1;
+}
+
+.home-page-container .review-user-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.125rem;
+}
+
+.home-page-container .review-date {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+}
+
+.home-page-container .review-release-cover {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.375rem;
+  object-fit: cover;
+}
+
+.home-page-container .review-content {
+  margin-bottom: 0.75rem;
+}
+
+.home-page-container .review-release-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.home-page-container .review-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.home-page-container .review-rating {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+/* Swiper Styles - точная копия из AuthorPage */
+.home-page-container .releases-swiper {
+  padding: 0;
+}
+
+.home-page-container .releases-swiper .swiper-slide {
+  height: auto;
+  display: flex;
+}
+
+.home-page-container .releases-swiper .release-card {
+  height: 100%;
+}
+
+.home-page-container .releases-swiper .release-card-inner {
+  height: 100%;
+  min-height: 280px;
+}
+
+.home-page-container .releases-swiper .swiper-button-next,
+.home-page-container .releases-swiper .swiper-button-prev {
+  color: #3a82f7;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+}
+
+.home-page-container .releases-swiper .swiper-button-next:after,
+.home-page-container .releases-swiper .swiper-button-prev:after {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.home-page-container .releases-swiper .swiper-button-next:hover,
+.home-page-container .releases-swiper .swiper-button-prev:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* No Data States */
+.home-page-container .no-data {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(24, 24, 27, 0.6);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .home-page-container .container {
+    padding: 0 0.5rem;
+  }
+  
+  .home-page-container .releases-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+  }
+  
+     .home-page-container .release-card {
+     width: 100%;
+   }
+ }
+
+/* Стили для карточек рецензий - точная копия из ReviewsPage */
+.home-page-container .review-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 280px; /* Минимальная высота для карточки */
+}
+
+.home-page-container .review-wrapper .mt-auto {
+  margin-top: auto; /* Прижимает элементы к низу */
+}
+
+.home-page-container .review-wrapper .items-end {
+  align-items: flex-end; /* Выравнивает элементы по нижнему краю */
+}
+
+.home-page-container .review-wrapper .pt-4 {
+  padding-top: 1rem; /* Отступ сверху для разделения */
+}
+
+/* Стили для кнопки лайка */
+.home-page-container .review-like-button {
+  transition: all 0.2s ease;
+}
+
+.home-page-container .review-like-button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.05);
+}
+
+/* Стили для hover-меню как в других страницах */
+.home-page-container .author-rating-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.home-page-container .author-hover-menu {
+  position: fixed;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+  margin-top: 8px;
+}
+
+.home-page-container .author-rating-wrapper:hover .author-hover-menu {
+  opacity: 1;
+  visibility: visible;
+}
+
+.home-page-container .author-hover-content {
+  background: rgba(15, 15, 15, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  min-width: 240px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  white-space: nowrap;
+}
+
+.home-page-container .author-hover-title {
+  color: var(--ratingText-color, #ffffff);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+/* Стрелочка для hover меню */
+.home-page-container .author-hover-content::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid rgba(255, 255, 255, 0.1);
+}
+
+.home-page-container .author-hover-content::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid rgba(15, 15, 15, 0.95);
+}
+
+/* Стили для рейтинговых компонентов */
+.home-page-container .text-ratingVibe {
+  color: #10b981;
+}
+
+.home-page-container .text-userColor {
+  color: #f5f5f5;
+}
+
+.home-page-container .text-golden {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.home-page-container .no-callout {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 767px) {
+  .home-page-container .review-wrapper {
+    min-height: 250px;
+  }
+  
+  .home-page-container .review-like-button {
+    height: 2rem !important;
+    padding: 0.25rem 0.75rem !important;
+  }
+}
+
+/* Стили для hover меню */
+.home-page-container .author-rating-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.home-page-container .author-hover-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease-in-out;
+  pointer-events: none;
+  margin-top: 5px;
+}
+
+.home-page-container .author-rating-wrapper:hover .author-hover-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.home-page-container .author-hover-content {
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  position: relative;
+}
+
+.home-page-container .author-hover-title {
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.home-page-container .author-hover-content::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid #222;
+}
+
+/* Стили для карточек рецензий */
+.home-page-container .review-wrapper {
+  height: 100%;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-page-container .review-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.home-page-container .review-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.home-page-container .review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.home-page-container .review-author-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.home-page-container .review-author-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.home-page-container .review-author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.home-page-container .review-author-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-page-container .review-author-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.home-page-container .review-author-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-page-container .review-author-name a:hover {
+  text-decoration: underline;
+}
+
+.home-page-container .review-content {
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.home-page-container .review-content .text-base {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.home-page-container .review-content .text-\[15px\] {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Стили для кнопки лайка */
+.home-page-container .review-like-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  height: 40px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  cursor: pointer;
+  gap: 6px;
+}
+
+.home-page-container .review-like-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .home-page-container .review-like-button {
+    height: 32px;
+    gap: 4px;
+  }
+}
+
+/* Стили для авторских лайков */
+.home-page-container .author-likes-section {
+  display: flex;
+  align-items: center;
+}
+
+.home-page-container .author-likes-avatars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.home-page-container .author-likes-avatars img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid #eab308;
+}
+
+/* Стили для даты и действий */
+.home-page-container .review-date {
+  font-size: 12px;
+  color: #a1a1aa;
+}
+
+/* Стили для авторов (точь в точь как на VerifiedAuthorsPage) */
+.home-page-container .authors-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .authors-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .authors-list {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .home-page-container .authors-list {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Карточка автора */
+.home-page-container .author-card {
+  border: 1px solid rgba(39, 39, 42, 1);
+  color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  background-color: #18181b;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.home-page-container .author-card:hover {
+  background-color: rgba(39, 39, 42, 0.6);
+}
+
+.home-page-container .author-link {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Аватар автора */
+.home-page-container .author-avatar-container {
+  aspect-ratio: 1;
+  max-width: 120px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .author-avatar-container {
+    max-width: 180px;
+  }
+}
+
+.home-page-container .author-avatar {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Имя автора и верификация */
+.home-page-container .author-name-container {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .author-name-container {
+    font-size: 1.25rem;
+  }
+}
+
+.home-page-container .author-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-page-container .verification-button {
+  background: none;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.home-page-container .verification-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.home-page-container .verification-icon.verified {
+  color: #3a82f7;
+}
+
+.home-page-container .verification-icon.unverified {
+  color: #6b7280;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .verification-icon {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+/* Количество подписчиков */
+.home-page-container .followers-count {
+  margin-bottom: 0.5rem;
+}
+
+.home-page-container .followers-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.home-page-container .bookmark-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: #3a82f7;
+}
+
+/* Сетка рейтингов */
+.home-page-container .ratings-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  margin-top: auto;
+}
+
+.home-page-container .rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.home-page-container .rating-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #ffffff;
+}
+
+/* Круги рейтинга */
+.home-page-container .rating-circle {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.home-page-container .rating-circle.filled {
+  background-color: #3a82f7;
+  color: #ffffff;
+}
+
+.home-page-container .rating-circle.outlined {
+  border: 2px solid #3a82f7;
+  color: #ffffff;
+  background: transparent;
+}
+
+.home-page-container .rating-circle.dashed {
+  border: 2px dashed rgba(58, 130, 247, 0.4);
+  color: transparent;
+  background: transparent;
+}
+
+/* Стили для запрета выделения текста */
+.home-page-container .no-callout {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+  .home-page-container .author-hover-content {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+  
+  .home-page-container .author-hover-title {
+    font-size: 11px;
+  }
+  
+  .home-page-container .review-wrapper {
+    min-height: 240px;
+  }
+  
+  .home-page-container .review-author-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .home-page-container .author-avatar {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .home-page-container .verified-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page-container .author-hover-menu {
+    position: fixed;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 1000;
+  }
+  
+  .home-page-container .author-hover-content {
+    max-width: 200px;
+    text-align: center;
+  }
+  
+  .home-page-container .author-hover-content::before,
+  .home-page-container .author-hover-content::after {
+    display: none;
+  }
+}
+
+/* Tailwind-подобные утилиты для авторов релизов */
+.home-page-container .flex {
+  display: flex;
+}
+
+.home-page-container .flex-wrap {
+  flex-wrap: wrap;
+}
+
+.home-page-container .leading-3 {
+  line-height: 0.75rem;
+}
+
+.home-page-container .mt-1 {
+  margin-top: 0.25rem;
+}
+
+.home-page-container .text-\[13px\] {
+  font-size: 13px;
+}
+
+.home-page-container .border-b {
+  border-bottom-width: 1px;
+}
+
+.home-page-container .border-b-white\/0 {
+  border-bottom-color: transparent;
+}
+
+.home-page-container .hover\:border-white\/30:hover {
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.home-page-container .opacity-70 {
+  opacity: 0.7;
+}
+
+.home-page-container .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.5);
+}

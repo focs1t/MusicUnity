@@ -12,7 +12,6 @@ public class CreateOwnReleaseRequest {
     private ReleaseType type;
     private LocalDate releaseDate;
     private String coverUrl;
-    private String releaseLink;
     private boolean isArtist;    // Роль исполнителя для текущего пользователя
     private boolean isProducer;  // Роль продюсера для текущего пользователя
     private Set<AuthorRoleRequest> otherAuthors;  // Другие авторы

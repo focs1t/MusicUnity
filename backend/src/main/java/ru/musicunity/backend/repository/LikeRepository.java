@@ -20,15 +20,19 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     @Query("SELECT l FROM Like l WHERE l.review.reviewId = :reviewId AND l.type = :type")
     List<Like> findAllByReviewIdAndType(@Param("reviewId") Long reviewId, @Param("type") LikeType type);
+    
+    @Query("SELECT DISTINCT r FROM Review r JOIN FETCH r.user JOIN FETCH r.release JOIN Like l ON l.review = r WHERE l.type = :type AND r.isDeleted = false ORDER BY r.createdAt DESC")
+    Page<Review> findAllReviewsWithAuthorLikes(@Param("type") LikeType type, Pageable pageable);
 
     Long countByReviewReviewId(Long reviewId);
 
-    @Query("SELECT COUNT(l) FROM Like l WHERE l.review.user.userId = :userId")
+    @Query("SELECT COUNT(l) FROM Like l WHERE l.review.user.userId = :userId AND l.review.isDeleted = false")
     Long countByReviewAuthorUserId(Long userId);
 
+    @Query("SELECT COUNT(l) FROM Like l WHERE l.user.userId = :userId AND l.review.isDeleted = false")
     Long countByUserUserId(Long userId);
 
-    @Query("SELECT COUNT(l) FROM Like l WHERE l.review.user.userId = :userId AND l.type = :type")
+    @Query("SELECT COUNT(l) FROM Like l WHERE l.review.user.userId = :userId AND l.type = :type AND l.review.isDeleted = false")
     Long countByReviewAuthorUserIdAndType(Long userId, LikeType type);
 
     boolean existsByReviewAndUser(Review review, User user);

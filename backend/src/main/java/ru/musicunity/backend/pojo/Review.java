@@ -14,7 +14,20 @@ import ru.musicunity.backend.pojo.enums.ReviewType;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reviews")
+@Table(
+    name = "reviews",
+    indexes = {
+        @Index(name = "idx_review_user_id", columnList = "user_id"),
+        @Index(name = "idx_review_release_id", columnList = "release_id"),
+        @Index(name = "idx_review_type", columnList = "type"),
+        @Index(name = "idx_review_total_score", columnList = "totalScore"),
+        @Index(name = "idx_review_is_deleted", columnList = "isDeleted"),
+        @Index(name = "idx_review_created_at", columnList = "createdAt")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_release", columnNames = {"user_id", "release_id"})
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor

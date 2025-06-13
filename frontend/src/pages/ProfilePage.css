@@ -1,0 +1,1412 @@
+/* Общие стили контейнеров */
+.site-content {
+  min-height: 100vh;
+  margin-bottom: 30px;
+  margin-top: 20px;
+}
+
+@media (min-width: 1024px) {
+  .site-content {
+    margin-bottom: 80px;
+    margin-top: 30px;
+    padding: 0 1.5rem;
+  }
+}
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: 3fr 7fr;
+  }
+}
+
+/* Левая колонка */
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Профиль пользователя */
+.profile-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #18181b;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 1280px) {
+  .profile-card {
+    border: none;
+    margin-top: -5rem;
+  }
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+@media (min-width: 1024px) {
+  .profile-avatar {
+    width: 130px;
+    height: 130px;
+  }
+}
+
+.profile-username {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .profile-username {
+    font-size: 1.5rem;
+  }
+}
+
+.profile-bio {
+  font-size: 0.875rem;
+  color: #d4d4d8;
+  text-align: center;
+  margin: 0.375rem 0 0.25rem 0;
+  line-height: 1.4;
+  max-width: 280px;
+  word-wrap: break-word;
+}
+
+.profile-date {
+  font-size: 0.875rem;
+  color: #a1a1aa;
+  font-weight: 500;
+}
+
+.social-links {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.social-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #27272a;
+  color: white;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  transition: background-color 0.2s;
+}
+
+.social-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.social-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Статистика пользователя */
+.stats-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #18181b;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gold-badge {
+  display: flex;
+  gap: 0.625rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.625rem;
+  margin-bottom: 0.5rem;
+}
+
+.gold-level {
+  display: none;
+}
+
+.points-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+
+.points-badge {
+  background-color: #713f12;
+  border: 1px solid #eab308;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  height: 21px;
+  padding: 0 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.points-text {
+  font-size: 0.8125rem;
+}
+
+.rank-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rank-badge {
+  background-color: #b91c1c;
+  border: 1px solid #ef4444;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: bold;
+  padding: 0 0.375rem;
+  height: 21px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3);
+}
+
+.rank-link {
+  font-size: 0.8125rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.rank-link:hover {
+  border-bottom: 1px solid white;
+}
+
+.divider {
+  height: 1px;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stats-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.stats-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.stats-value {
+  font-weight: bold;
+}
+
+.heart-full {
+  color: white;
+}
+
+.heart-outline {
+  color: white;
+}
+
+/* Правая колонка */
+.right-column {
+  flex: 1;
+}
+
+/* Новые стили для основных табов */
+.main-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+}
+
+.tab-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: transparent;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 9999px;
+  transition: all 0.2s;
+  color: white;
+}
+
+@media (max-width: 1024px) {
+  .tab-link {
+    font-size: 0.75rem;
+    height: 2rem;
+    padding: 0 0.75rem;
+  }
+}
+
+.tab-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.tab-link.active {
+  background-color: white;
+  color: black;
+}
+
+/* Контент разделов */
+.content-section {
+  padding-top: 1.25rem;
+}
+
+.content-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .content-grid {
+    gap: 2rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.category-block {
+  margin-bottom: 1rem;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.category-header::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  width: 100%;
+  background-color: #3f3f46;
+}
+
+.category-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  position: relative;
+  z-index: 10;
+  color: white;
+  text-decoration: none;
+  transition: color 0.2s;
+  padding-right: 2.5rem;
+  background: linear-gradient(to right, #18181b 80%, rgba(24, 24, 27, 0));
+}
+
+.category-title:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 1024px) {
+  .category-title {
+    font-size: 0.875rem;
+  }
+}
+
+.category-icon {
+  margin-right: 0.25rem;
+  color: #999;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.artist-item, .album-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.artist-link, .album-link {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 100%;
+}
+
+.artist-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.artist-image:hover {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.album-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  transition: all 0.3s;
+}
+
+.album-image:hover {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.artist-name, .album-name {
+  font-size: 0.75rem;
+  text-align: center;
+  width: 100%;
+  font-weight: 600;
+  display: block;
+  color: white !important;
+  text-decoration: none !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  overflow: visible;
+}
+
+@media (min-width: 768px) {
+  .artist-name, .album-name {
+    font-size: 0.875rem;
+  }
+}
+
+/* Пустые блоки */
+.no-items {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #71717a;
+  background: linear-gradient(to bottom right, #27272a, #18181b);
+  border: 1px solid #27272a;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+}
+
+/* Рецензии */
+.reviews-container {
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Обновленные стили для карточек рецензий */
+.review-card {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 15px;
+  overflow: hidden;
+  padding: 0.375rem;
+}
+
+@media (min-width: 1024px) {
+  .review-card {
+    border-radius: 20px;
+    padding: 5px;
+  }
+}
+
+.review-header {
+  background-color: rgba(24, 24, 27, 0.7);
+  border-radius: 12px;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.review-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.review-user-avatar {
+  position: relative;
+  display: block;
+}
+
+.review-user-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .review-user-avatar img {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+.review-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.review-username {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+  display: block;
+  line-height: 14px;
+}
+
+@media (min-width: 1024px) {
+  .review-username {
+    font-size: 1.125rem;
+  }
+}
+
+.review-user-rank {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.review-rank-badge {
+  background-color: #ef4444;
+  border-radius: 9999px;
+  padding: 0 0.375rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.review-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  height: 100%;
+  justify-content: center;
+}
+
+.review-rating {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 100%;
+}
+
+@media (min-width: 1024px) {
+  .review-rating {
+    font-size: 24px;
+    margin-top: 0.0625rem;
+  }
+}
+
+.review-rating-value {
+  text-decoration: none;
+  border: 0;
+  user-select: none;
+}
+
+.review-rating-details {
+  display: flex;
+  gap: 0.375rem;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .review-rating-details {
+    font-size: 0.875rem;
+  }
+}
+
+.review-rating-item {
+  user-select: none;
+  color: #6366f1;
+}
+
+.review-rating-vibe {
+  color: #ec4899;
+}
+
+.review-album-cover {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .review-album-cover {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.review-album-cover img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.375rem;
+  object-fit: cover;
+}
+
+.review-content-preview {
+  max-height: 120px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s;
+  margin-bottom: 1rem;
+  padding: 0 0.375rem;
+  display: block;
+}
+
+.review-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 1024px) {
+  .review-title {
+    font-size: 1.125rem;
+  }
+}
+
+.review-text {
+  margin-top: 0.5rem;
+  letter-spacing: -0.0125rem;
+  font-weight: 300;
+  font-size: 0.9375rem;
+  color: white;
+}
+
+@media (min-width: 1024px) {
+  .review-text {
+    font-size: 1rem;
+    line-height: 150%;
+  }
+}
+
+.review-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 0.375rem;
+  position: relative;
+}
+
+.review-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.review-like-button {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  height: 2.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 1rem;
+  transition: all 0.2s;
+}
+
+.review-like-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.review-like-button.active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.review-like-icon {
+  width: 1.25rem;
+  height: auto;
+}
+
+@media (min-width: 1024px) {
+  .review-like-icon {
+    width: 1.75rem;
+  }
+}
+
+.review-like-icon svg,
+.review-like-icon img {
+  width: 100%;
+  height: auto;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.review-like-button:hover .review-like-icon svg,
+.review-like-button:hover .review-like-icon img,
+.review-like-button.active .review-like-icon svg,
+.review-like-button.active .review-like-icon img {
+  opacity: 1;
+}
+
+.review-likes-count {
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.review-links {
+  display: flex;
+  align-items: center;
+  gap: 0.0625rem;
+}
+
+.review-permalink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  transition: background-color 0.2s;
+}
+
+.review-permalink:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.review-link-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: #71717a;
+  stroke: white;
+}
+
+.category-score-hidden {
+  display: none;
+}
+
+.no-reviews {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #71717a;
+  font-size: 0.875rem;
+}
+
+/* Пагинация */
+.pagination {
+  margin-top: 2.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.pagination-list {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pagination-item {
+  margin: 0;
+}
+
+.pagination-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: transparent;
+  color: white;
+  text-decoration: none;
+  height: 2.5rem;
+  width: 2.5rem;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+@media (max-width: 1024px) {
+  .pagination-link {
+    height: 1.75rem;
+    width: 1.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+.pagination-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.pagination-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Загрузка и ошибки */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 0.25rem solid rgba(255, 255, 255, 0.1);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-container {
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-message {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.review-like-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (min-width: 1024px) {
+  .review-like-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.review-category-scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 1rem;
+}
+
+.category-score {
+  font-size: 0.75rem;
+  color: #a3a3a3;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  cursor: help;
+}
+
+.category-score:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 640px) {
+  .review-category-scores {
+    display: none;
+  }
+}
+
+/* Дополнительные классы для компонента ReviewCard */
+.text-userColor {
+  color: #00c8ff;
+}
+
+.text-ratingVibe {
+  color: #ff5252;
+}
+
+.size-\[40px\] {
+  width: 40px;
+  height: 40px;
+}
+
+.size-\[45px\] {
+  width: 45px;
+  height: 45px;
+}
+
+.size-6 {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.size-8 {
+  width: 2rem;
+  height: 2rem;
+}
+
+.size-10 {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.size-11 {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.rounded-md {
+  border-radius: 0.375rem;
+}
+
+.bg-zinc-950\/70 {
+  background-color: rgba(9, 9, 11, 0.7);
+}
+
+.bg-red-500 {
+  background-color: #ef4444;
+}
+
+.bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.w-5 {
+  width: 1.25rem;
+}
+
+.w-7 {
+  width: 1.75rem;
+}
+
+.shrink-0 {
+  flex-shrink: 0;
+}
+
+.gap-1 {
+  gap: 0.25rem;
+}
+
+.gap-1\.5 {
+  gap: 0.375rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 0.75rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.gap-x-1 {
+  column-gap: 0.25rem;
+}
+
+.gap-x-1\.5 {
+  column-gap: 0.375rem;
+}
+
+.space-x-1\.5 > * + * {
+  margin-left: 0.375rem;
+}
+
+.space-x-2 > * + * {
+  margin-left: 0.5rem;
+}
+
+.space-x-3 > * + * {
+  margin-left: 0.75rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-\[12px\] {
+  font-size: 12px;
+}
+
+.text-\[20px\] {
+  font-size: 20px;
+}
+
+.text-\[24px\] {
+  font-size: 24px;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.leading-\[14px\] {
+  line-height: 14px;
+}
+
+.leading-\[100\%\] {
+  line-height: 100%;
+}
+
+.px-1\.5 {
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+}
+
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.h-10 {
+  height: 2.5rem;
+}
+
+.h-8 {
+  height: 2rem;
+}
+
+.max-lg\:h-8 {
+  max-height: 2rem;
+}
+
+.max-w-\[170px\] {
+  max-width: 170px;
+}
+
+.max-sm\:flex-wrap {
+  flex-wrap: wrap;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.text-ellipsis {
+  text-overflow: ellipsis;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.border {
+  border-width: 1px;
+}
+
+.border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.opacity-50 {
+  opacity: 0.5;
+}
+
+.text-zinc-400 {
+  color: #a1a1aa;
+}
+
+.stroke-white {
+  stroke: #ffffff;
+}
+
+.fill-zinc-400 {
+  fill: #a1a1aa;
+}
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.inline-flex {
+  display: inline-flex;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.no-callout {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Дополнительные стили для исправления проблем с отображением */
+.text-white {
+  color: #ffffff;
+}
+
+.no-underline {
+  text-decoration: none;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.rounded-\[12px\] {
+  border-radius: 12px;
+}
+
+.block {
+  display: block;
+}
+
+/* Стили для изображений */
+.artist-image,
+.album-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.artist-image {
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.album-image {
+  border-radius: 0.5rem;
+  transition: all 0.3s;
+}
+
+/* Стили для равного размера изображений в ReviewCard */
+.review-card .size-10 {
+  width: 40px;
+  height: 40px;
+}
+
+.review-card .lg\:size-10 {
+  width: 40px;
+  height: 40px;
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
+/* Принудительные стили для обложек релизов в рецензиях - ТОЛЬКО ДЛЯ ПРОФИЛЯ */
+.profile-page a.shrink-0.size-10.lg\:size-10.block,
+.profile-page a.shrink-0.size-10.block,
+.profile-page .shrink-0.size-10.lg\:size-10,
+.profile-page .shrink-0.size-10 {
+  width: 40px !important;
+  height: 40px !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.profile-page a.shrink-0.size-10.lg\:size-10.block img,
+.profile-page a.shrink-0.size-10.block img,
+.profile-page .shrink-0.size-10.lg\:size-10 img,
+.profile-page .shrink-0.size-10 img,
+.profile-page .size-10 img, 
+.profile-page .size-10 > img,
+.profile-page .lg\:size-10 img,
+.profile-page .lg\:size-10 > img,
+.profile-page img.rounded-md.w-full.h-full.object-cover,
+.profile-page img.object-cover {
+  object-fit: cover !important;
+  object-position: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+.h-full {
+  height: 100%;
+}
+
+/* Исправления для кнопки лайка */
+.review-like-button {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  height: 2.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 1rem;
+  transition: all 0.2s;
+}
+
+.review-like-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Исправление для карточки рецензии */
+.review-card {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 15px;
+  overflow: hidden;
+  padding: 0.375rem;
+}
+
+.items-start {
+  align-items: flex-start;
+}
+
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.leading-\[18px\] {
+  line-height: 18px;
+}
+
+.h-6 {
+  height: 1.5rem;
+}
+
+.w-6 {
+  width: 1.5rem;
+}
+
+/* Новые стили для исправления выравнивания и размеров */
+.equal-size {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Исправление высоты контейнеров для выравнивания */
+.artist-item, .album-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.artist-link, .album-link {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Убираем лишние отступы в сетке элементов */
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Стили для элементов с длинными именами */
+.artist-item, .album-item {
+  min-height: 150px;
+}
+
+/* Стиль для всплывающего сообщения */
+.tooltip-message {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: #222;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s, fadeOut 0.3s 1.7s;
+  pointer-events: none;
+}
+
+/* Добавляем треугольник внизу сообщения */
+.tooltip-message:after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #222;
+}
+
+/* Анимации для всплывающего сообщения */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+} 

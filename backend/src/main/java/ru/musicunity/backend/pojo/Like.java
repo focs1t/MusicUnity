@@ -11,7 +11,18 @@ import ru.musicunity.backend.pojo.enums.LikeType;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "likes")
+@Table(
+    name = "likes",
+    indexes = {
+        @Index(name = "idx_like_user_id", columnList = "user_id"),
+        @Index(name = "idx_like_review_id", columnList = "review_id"),
+        @Index(name = "idx_like_type", columnList = "type"),
+        @Index(name = "idx_like_created_at", columnList = "createdAt")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_review", columnNames = {"user_id", "review_id"})
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor

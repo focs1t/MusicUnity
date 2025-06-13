@@ -45,6 +45,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
             
             if (jwtService.isTokenValid(jwt)) {
+                if (userDetails instanceof UserDetailsImpl userDetailsImpl) {
+                    if (userDetailsImpl.getUser().getIsBlocked()) {
+                        jwtService.addToBlacklist(jwt);
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+                }
+                
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
