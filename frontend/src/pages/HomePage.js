@@ -180,10 +180,10 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
   // Строим карточку рецензии с использованием React.createElement вместо JSX
   return React.createElement('div', {
     key: review.id,
-    className: 'bg-zinc-900 relative overflow-hidden review-wrapper p-1.5 lg:p-[5px] flex flex-col mx-auto border border-zinc-800 rounded-[15px] lg:rounded-[20px] w-full'
+    className: 'bg-zinc-900 relative overflow-hidden review-wrapper p-1.5 lg:p-[5px] flex flex-col h-full mx-auto border border-zinc-800 rounded-[15px] lg:rounded-[20px] w-full'
   }, [
     // Верхняя часть с информацией о пользователе и рейтинге
-    React.createElement('div', { className: 'relative', key: 'header' }, 
+    React.createElement('div', { className: 'relative flex-shrink-0', key: 'header' }, 
       React.createElement('div', { className: 'bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3' }, [
         // Блок с аватаром и информацией о пользователе
         React.createElement('div', { className: 'flex items-start space-x-2 lg:space-x-3 w-full', key: 'user-info' }, [
@@ -295,107 +295,111 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
       ])
     ),
 
-    // Содержимое рецензии
-    React.createElement('div', { key: 'content' }, [
+    // Содержимое рецензии (блок с текстом)
+    React.createElement('div', { key: 'content', className: 'flex-1 flex flex-col', style: { minHeight: 0 } }, 
       React.createElement('div', { 
-        className: 'max-h-[120px] overflow-hidden relative transition-all duration-300 mb-4 px-1.5 block',
-        key: 'review-text'
+        className: 'overflow-hidden relative px-1.5 block mt-3',
+        key: 'review-text',
+        style: { maxHeight: '120px' }
       }, [
-        React.createElement('div', { className: 'text-base lg:text-lg mt-3 mb-2 font-semibold', key: 'review-title' }, review.title),
-        React.createElement('div', { className: 'mt-2 tracking-[-0.2px] font-light', key: 'review-content-wrapper' }, 
+        React.createElement('div', { className: 'text-base lg:text-lg mb-2 font-semibold', key: 'review-title' }, review.title),
+        React.createElement('div', { className: 'tracking-[-0.2px] font-light', key: 'review-content-wrapper' }, 
           React.createElement('div', { className: 'prose prose-invert text-[15px] text-white lg:text-base lg:leading-[150%]' }, 
             review.content && review.content.length > 100 ? review.content.substring(0, 100) + '...' : (review.content || 'Нет содержания')
           )
         )
       ]),
+      
+      // Пустой блок для заполнения пространства
+      React.createElement('div', { className: 'flex-grow' })
+    ),
 
-      // Нижняя часть с лайками и ссылкой на полную рецензию
-      React.createElement('div', { className: 'mt-auto flex justify-between items-center relative pr-1.5', key: 'actions' }, [
-        React.createElement('div', { className: 'flex gap-2 items-center', key: 'likes-container' }, [
-          React.createElement('button', {
-            className: `review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5`,
-            onClick: () => isOwnReview ? handleOwnReviewLikeClick() : onLikeToggle && onLikeToggle(review.id || review.reviewId)
-          }, [
-            React.createElement('div', { className: 'w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center', key: 'like-icon' }, 
-              isLiked 
-              ? React.createElement(FavoriteIcon, { style: { color: '#FF5252', fontSize: '22px' } }) 
-              : React.createElement(FavoriteBorderIcon, { style: { color: '#AAAAAA', fontSize: '22px' } })
-            ),
-            React.createElement('span', { className: 'font-bold text-base lg:text-base', key: 'likes-count' }, 
-              review.likesCount !== undefined ? review.likesCount : 0
-            )
-          ]),
-          
-          // Авторские лайки отдельно от кнопки
-          authorLikes.length > 0 && React.createElement('div', { 
-            className: 'author-likes-section ml-3',
-            key: 'author-likes-section'
-          }, 
-            React.createElement('div', { className: 'author-likes-avatars flex items-center gap-1' },
-              authorLikes.slice(0, 3).map((authorLike, index) => 
-                React.createElement('div', { className: 'author-rating-wrapper', key: `author-like-wrapper-${index}` }, [
-                  React.createElement(Link, {
-                    to: `/author/${authorLike.author?.authorId || authorLike.author?.id}`,
-                    key: `author-like-link-${index}`
-                  },
-                    React.createElement('img', {
-                      src: authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER,
-                      alt: authorLike.author?.username || 'Автор',
-                      className: 'w-6 h-6 rounded-full border border-yellow-500',
-                      onError: (e) => {
-                        e.target.onerror = null;
-                        e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
-                      }
-                    })
-                  ),
-                  React.createElement('div', { className: 'author-hover-menu' }, 
-                    React.createElement('div', { className: 'author-hover-content' }, 
-                      React.createElement('div', { className: 'author-hover-title' }, authorLike.author?.username || 'Автор')
-                    )
-                  )
-                ])
-              ),
-              authorLikes.length > 3 && React.createElement('span', {
-                className: 'text-xs text-yellow-500 ml-1',
-                key: 'more-likes'
-              }, `+${authorLikes.length - 3}`)
-            )
+    // Нижняя часть с лайками и ссылкой на полную рецензию
+    React.createElement('div', { className: 'flex-shrink-0 flex justify-between items-center relative pr-1.5 mt-2 pt-2 pb-1 border-t border-zinc-800/50 review-actions-block', key: 'actions' }, [
+      React.createElement('div', { className: 'flex gap-2 items-center', key: 'likes-container' }, [
+        React.createElement('button', {
+          className: `review-like-button justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 border group bg-white/5 max-lg:h-8 cursor-pointer flex items-center rounded-full gap-x-1 lg:gap-x-1.5`,
+          onClick: () => isOwnReview ? handleOwnReviewLikeClick() : onLikeToggle && onLikeToggle(review.id || review.reviewId)
+        }, [
+          React.createElement('div', { className: 'w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center', key: 'like-icon' }, 
+            isLiked 
+            ? React.createElement(FavoriteIcon, { style: { color: '#FF5252', fontSize: '22px' } }) 
+            : React.createElement(FavoriteBorderIcon, { style: { color: '#AAAAAA', fontSize: '22px' } })
           ),
-          
-          // Всплывающее сообщение
-          showMessage && React.createElement('div', { 
-            className: 'tooltip-message',
-            key: 'message'
-          }, 'Нельзя лайкать свои рецензии')
+          React.createElement('span', { className: 'font-bold text-base lg:text-base', key: 'likes-count' }, 
+            review.likesCount !== undefined ? review.likesCount : 0
+          )
         ]),
-
-        React.createElement('div', { className: 'relative flex items-center gap-x-0.5', key: 'link-container' }, [
-          React.createElement('div', { className: 'author-rating-wrapper' }, [
-            React.createElement(Link, {
-              className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground size-8 md:size-10 bg-transparent hover:bg-white/10',
-              'data-state': 'closed',
-              to: `/reviews/${review.id || review.reviewId}`
-            }, 
-              React.createElement(OpenInNewIcon, { 
-                className: 'size-6 text-zinc-400 stroke-white fill-zinc-400'
-              })
+        
+        // Авторские лайки отдельно от кнопки
+        authorLikes.length > 0 && React.createElement('div', { 
+          className: 'author-likes-section ml-3',
+          key: 'author-likes-section'
+        }, 
+          React.createElement('div', { className: 'author-likes-avatars flex items-center gap-1' },
+            authorLikes.slice(0, 3).map((authorLike, index) => 
+              React.createElement('div', { className: 'author-rating-wrapper', key: `author-like-wrapper-${index}` }, [
+                React.createElement(Link, {
+                  to: `/author/${authorLike.author?.authorId || authorLike.author?.id}`,
+                  key: `author-like-link-${index}`
+                },
+                  React.createElement('img', {
+                    src: authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER,
+                    alt: authorLike.author?.username || 'Автор',
+                    className: 'w-6 h-6 rounded-full border border-yellow-500',
+                    onError: (e) => {
+                      e.target.onerror = null;
+                      e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+                    }
+                  })
+                ),
+                React.createElement('div', { className: 'author-hover-menu' }, 
+                  React.createElement('div', { className: 'author-hover-content' }, 
+                    React.createElement('div', { className: 'author-hover-title' }, authorLike.author?.username || 'Автор')
+                  )
+                )
+              ])
             ),
-            React.createElement('div', { className: 'author-hover-menu' }, 
-              React.createElement('div', { className: 'author-hover-content' }, 
-                React.createElement('div', { className: 'author-hover-title' }, 'Перейти к рецензии')
-              )
+            authorLikes.length > 3 && React.createElement('span', {
+              className: 'text-xs text-yellow-500 ml-1',
+              key: 'more-likes'
+            }, `+${authorLikes.length - 3}`)
+          )
+        ),
+        
+        // Всплывающее сообщение
+        showMessage && React.createElement('div', { 
+          className: 'tooltip-message',
+          key: 'message'
+        }, 'Нельзя лайкать свои рецензии')
+      ]),
+
+      React.createElement('div', { className: 'relative flex items-center gap-x-0.5', key: 'link-container' }, [
+        React.createElement('div', { className: 'author-rating-wrapper' }, [
+          React.createElement(Link, {
+            className: 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground size-8 md:size-10 bg-transparent hover:bg-white/10',
+            'data-state': 'closed',
+            to: `/reviews/${review.id || review.reviewId}`
+          }, 
+            React.createElement(OpenInNewIcon, { 
+              className: 'size-6 text-zinc-400 stroke-white fill-zinc-400'
+            })
+          ),
+          React.createElement('div', { className: 'author-hover-menu' }, 
+            React.createElement('div', { className: 'author-hover-content' }, 
+              React.createElement('div', { className: 'author-hover-title' }, 'Перейти к рецензии')
             )
-          ]),
-          
-          // Кнопка репорта (только если не собственная рецензия)
-          !isOwnReview && React.createElement(ReportButton, {
-            type: ReportType.REVIEW,
-            targetId: review.id || review.reviewId,
-            size: 'small',
-            tooltip: 'Пожаловаться на рецензию',
-            key: 'report-button'
-          })
-        ])
+          )
+        ]),
+        
+        // Кнопка репорта (только если не собственная рецензия)
+        !isOwnReview && React.createElement(ReportButton, {
+          type: ReportType.REVIEW,
+          targetId: review.id || review.reviewId,
+          size: 'small',
+          tooltip: 'Пожаловаться на рецензию',
+          key: 'report-button'
+        })
       ])
     ])
   ]);

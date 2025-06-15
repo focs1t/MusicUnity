@@ -794,6 +794,26 @@
   display: flex;
   flex-direction: column;
   min-height: 280px; /* Минимальная высота для карточки */
+  height: 100%; /* Занимает всю доступную высоту */
+  justify-content: space-between; /* Распределяет пространство между элементами */
+}
+
+/* Стили для содержимого рецензии */
+.home-page-container .review-content-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Выравнивание содержимого сверху */
+  padding-bottom: 10px; /* Отступ снизу для отделения от кнопок */
+  overflow: hidden; /* Предотвращает выход содержимого за пределы блока */
+}
+
+/* Стили для текста рецензии */
+.home-page-container .prose {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 4; /* Ограничиваем количество строк */
+  -webkit-box-orient: vertical;
 }
 
 .home-page-container .review-wrapper .mt-auto {
@@ -1426,4 +1446,32 @@
 
 .home-page-container .text-muted-foreground {
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* Стили для блока с действиями (кнопки лайка и т.д.) */
+.home-page-container .review-actions-block {
+  margin-top: auto;
+  border-top: 1px solid rgba(39, 39, 42, 0.5);
+  padding-top: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Стили для карточек рецензий */
+.home-page-container .reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .reviews-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .reviews-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
