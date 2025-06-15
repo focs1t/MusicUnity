@@ -96,29 +96,7 @@
   }
 }
 
-/* Loading States */
-.home-page-container .loading-spinner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  gap: 1rem;
-}
-
-.home-page-container .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid #3a82f7;
-  border-radius: 50%;
-  animation: home-page-spin 1s linear infinite;
-}
-
-@keyframes home-page-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* Loading States removed - using shared component */
 
 /* Release Cards - точная копия из AuthorPage */
 .home-page-container .releases-grid {

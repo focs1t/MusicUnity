@@ -14,7 +14,7 @@ const AuthGuard = ({ children }) => {
     return (
       <LoadingSpinner 
         text="Проверка авторизации..." 
-        className="loading-container--center"
+        fullScreen={true}
       />
     );
   }
