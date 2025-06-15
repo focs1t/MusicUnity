@@ -109,8 +109,15 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
 
   const getTrackData = () => {
     const track = review.track || review.release || {};
+    
+    // Выводим полную структуру данных для отладки
+    console.log("HomePage ReviewCard - полная структура данных рецензии:", JSON.stringify(review, null, 2));
+    
+    // Логируем информацию для отладки
+    console.log(`HomePage ReviewCard: данные релиза:`, track);
+    
     return {
-      id: track.id || 0,
+      id: review.releaseId || (track && track.id) || (track && track.releaseId) || 1,
       title: track.title || track.name || 'Неизвестный трек',
       cover: track.cover || track.coverUrl || DEFAULT_COVER_PLACEHOLDER
     };
@@ -189,7 +196,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
         React.createElement('div', { className: 'flex items-start space-x-2 lg:space-x-3 w-full', key: 'user-info' }, [
           React.createElement(Link, {
             className: 'relative', 
-            to: `/profile/${user.id}`,
+            to: `/profile/${review.userId || user.id}`,
             key: 'user-avatar-link'
           }, 
             React.createElement('img', {
@@ -210,7 +217,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
             }, 
               React.createElement(Link, {
                 className: 'text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline',
-                to: `/profile/${user.id}`
+                to: `/profile/${review.userId || user.id}`
               }, user.name)
             ),
             user.rank && React.createElement('div', { 
@@ -269,7 +276,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
             React.createElement(Link, {
               className: 'shrink-0 size-10 lg:size-10 block',
               'data-state': 'closed',
-              to: `/release/${track.id}`,
+              to: `/release/${review.releaseId || (review.release && review.release.id) || track.id}`,
               key: 'track-cover-link',
               style: { width: '40px', height: '40px', overflow: 'hidden', display: 'block', flexShrink: 0 }
             }, 
@@ -340,7 +347,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
             authorLikes.slice(0, 3).map((authorLike, index) => 
               React.createElement('div', { className: 'author-rating-wrapper', key: `author-like-wrapper-${index}` }, [
                 React.createElement(Link, {
-                  to: `/author/${authorLike.author?.authorId || authorLike.author?.id}`,
+                  to: `/author/${authorLike.author?.authorId || authorLike.author?.id || (authorLike.author ? authorLike.author.id : 0)}`,
                   key: `author-like-link-${index}`
                 },
                   React.createElement('img', {
@@ -983,7 +990,7 @@ const HomePage = () => {
                         <div className="flex flex-wrap leading-3 mt-1 text-[13px]">
                           {release.authors && release.authors.map((author, index) => (
                             <span key={author.authorId || index}>
-                              <a href={`/author/${author.authorId}`} className="border-b border-b-white/0 hover:border-white/30 opacity-70">
+                              <a href={`/author/${author.authorId || author.id || 0}`} className="border-b border-b-white/0 hover:border-white/30 opacity-70">
                                 {author.authorName}
                               </a>
                               {index < release.authors.length - 1 && <span className="text-muted-foreground">,&nbsp;</span>}
@@ -1100,7 +1107,7 @@ const HomePage = () => {
                         <div className="flex flex-wrap leading-3 mt-1 text-[13px]">
                           {release.authors && release.authors.map((author, index) => (
                             <span key={author.authorId || index}>
-                              <a href={`/author/${author.authorId}`} className="border-b border-b-white/0 hover:border-white/30 opacity-70">
+                              <a href={`/author/${author.authorId || author.id || 0}`} className="border-b border-b-white/0 hover:border-white/30 opacity-70">
                                 {author.authorName}
                               </a>
                               {index < release.authors.length - 1 && <span className="text-muted-foreground">,&nbsp;</span>}
@@ -1142,7 +1149,7 @@ const HomePage = () => {
             <div className="authors-list">
               {verifiedAuthors.map((author) => (
                 <div key={author.authorId} className="author-card">
-                  <a href={`/author/${author.authorId}`} className="author-link">
+                  <a href={`/author/${author.authorId || author.id || 0}`} className="author-link">
                     <div className="author-avatar-container">
                       <img 
                         src={author.avatarUrl || DEFAULT_AVATAR_PLACEHOLDER} 

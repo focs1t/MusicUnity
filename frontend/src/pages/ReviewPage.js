@@ -398,7 +398,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [], getReview
                 <div className="author-likes-avatars flex items-center gap-1">
                   {authorLikes.slice(0, 3).map((authorLike, index) => (
                     <div className="author-rating-wrapper" key={`author-like-wrapper-${index}`}>
-                      <a href={`/author/${authorLike.author?.authorId || authorLike.author?.id}`}>
+                      <a href={`/author/${authorLike.author?.authorId || authorLike.author?.id || 0}`}>
                         <img
                           src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
                           alt={authorLike.author?.username || 'Автор'}

@@ -111,11 +111,13 @@ const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAv
     return review.release.coverUrl ? review.release.coverUrl : DEFAULT_COVER_PLACEHOLDER;
   };
   
+  // Безопасное получение ID релиза
   const getReleaseId = () => {
-    if (!review || !review.release) {
-      return review.releaseId || 0;
-    }
-    return review.release.releaseId || review.release.id || 0;
+    // Выводим полную структуру данных для отладки
+    console.log("ProfilePage SimpleReviewCard - данные рецензии:", review);
+    
+    // Напрямую используем ID релиза из данных рецензии
+    return review.releaseId || (review.release && review.release.id) || 1;
   };
   
   const getReleaseTitle = () => {
@@ -345,10 +347,11 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
   
   // Безопасное получение ID релиза
   const getReleaseId = () => {
-    if (!review || !review.release) {
-      return review.releaseId || 0; // Пытаемся использовать ID из самой рецензии, если есть
-    }
-    return review.release.releaseId || review.release.id || 0;
+    // Выводим полную структуру данных для отладки
+    console.log("ProfilePage ReviewCard - данные рецензии:", review);
+    
+    // Напрямую используем ID релиза из данных рецензии
+    return review.releaseId || (review.release && review.release.id) || 1;
   };
   
   // Безопасное получение заголовка релиза
@@ -506,26 +509,32 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
           {authorLikes && authorLikes[review.reviewId] && authorLikes[review.reviewId].length > 0 && (
             <div className="author-likes-section ml-3">
               <div className="author-likes-avatars flex items-center gap-1">
-                {authorLikes[review.reviewId].slice(0, 3).map((authorLike, index) => (
-                  <div className="author-rating-wrapper" key={`author-like-wrapper-${index}`}>
-                    <Link to={`/author/${authorLike.author?.authorId || authorLike.author?.id}`}>
-                      <img
-                        src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
-                        alt={authorLike.author?.username || 'Автор'}
-                        className="w-6 h-6 rounded-full border border-yellow-500"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
-                        }}
-                      />
-                    </Link>
-                    <div className="author-hover-menu">
-                      <div className="author-hover-content">
-                        <div className="author-hover-title">{authorLike.author?.username || 'Автор'}</div>
+                {authorLikes[review.reviewId].slice(0, 3).map((authorLike, index) => {
+                  // Получаем ID автора с проверкой на undefined
+                  const authorId = authorLike.author?.authorId || authorLike.author?.id || 0;
+                  console.log(`ProfilePage: authorLike ID=${authorId}, данные:`, authorLike);
+                  
+                  return (
+                    <div className="author-rating-wrapper" key={`author-like-wrapper-${index}`}>
+                      <Link to={`/author/${authorId}`}>
+                        <img
+                          src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
+                          alt={authorLike.author?.username || 'Автор'}
+                          className="w-6 h-6 rounded-full border border-yellow-500"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+                          }}
+                        />
+                      </Link>
+                      <div className="author-hover-menu">
+                        <div className="author-hover-content">
+                          <div className="author-hover-title">{authorLike.author?.username || 'Автор'}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {authorLikes[review.reviewId].length > 3 && (
                   <span className="text-xs text-yellow-500 ml-1">
                     +{authorLikes[review.reviewId].length - 3}
