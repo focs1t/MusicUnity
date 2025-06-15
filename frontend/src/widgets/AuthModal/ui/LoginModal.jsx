@@ -3,6 +3,7 @@ import { Dialog, DialogContent, Button, TextField, Box, Typography, Checkbox, Fo
 import { useDispatch, useSelector } from 'react-redux';
 import { authModel } from '../../../entities/auth';
 import { modalStyles } from './styles';
+import { isValidEmail } from '../../../shared/utils/validation';
 
 const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPassword }) => {
   const dispatch = useDispatch();
@@ -15,6 +16,9 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
     password: '',
     rememberMe: false  // Флаг "Запомнить меня" - по умолчанию выключен
   });
+  
+  // Локальные состояния для валидации
+  const [emailError, setEmailError] = useState('');
 
   // Локальное состояние для отслеживания успешной авторизации
   const [loginAttempted, setLoginAttempted] = useState(false);
@@ -37,6 +41,7 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
         rememberMe: false
       });
       setLoginAttempted(false);
+      setEmailError('');
     }
   }, [open]);
 
@@ -46,10 +51,32 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
       ...prev,
       [name]: name === 'rememberMe' ? checked : value
     }));
+    
+    // Сбрасываем ошибку email при изменении поля
+    if (name === 'username' && emailError) {
+      setEmailError('');
+    }
+  };
+  
+  // Проверка на корректность email, если это email
+  const validateEmail = () => {
+    // Проверяем, похоже ли значение на email
+    if (loginData.username.includes('@')) {
+      if (!isValidEmail(loginData.username)) {
+        setEmailError('Некорректный формат email');
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Проверяем валидацию email
+    if (!validateEmail()) {
+      return;
+    }
     
     // Убедимся, что поля не пустые
     if (!loginData.username.trim() || !loginData.password.trim()) {
@@ -74,6 +101,11 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
      */
     dispatch(authModel.login(loginData.username, loginData.password, loginData.rememberMe));
   };
+  
+  // Обработчик потери фокуса для поля username
+  const handleUsernameBlur = () => {
+    validateEmail();
+  };
 
   const handleModalClose = () => {
     // Сбрасываем форму при закрытии
@@ -83,6 +115,7 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
       rememberMe: false
     });
     setLoginAttempted(false);
+    setEmailError('');
     onClose();
   };
 
@@ -119,17 +152,21 @@ const LoginModal = ({ open, onClose, onSwitchToRegister, onSwitchToForgotPasswor
             required
             fullWidth
             id="username"
-            label="Имя пользователя"
+            label="Имя пользователя или Email"
             name="username"
             autoComplete="username"
             autoFocus
             value={loginData.username}
             onChange={handleChange}
+            onBlur={handleUsernameBlur}
+            error={!!emailError}
+            helperText={emailError}
             variant="outlined"
             InputLabelProps={{ 
               sx: modalStyles.inputLabel,
               required: true
             }}
+            FormHelperTextProps={{ sx: modalStyles.helperText }}
             sx={modalStyles.textField}
           />
           <TextField

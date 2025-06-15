@@ -6,6 +6,7 @@ import { authModel } from '../../../entities/auth';
 import { modalStyles } from './styles';
 import httpClient from '../../../shared/api/httpClient';
 import { ROUTES } from '../../../shared/config/routes';
+import { isValidEmail, validatePassword, doPasswordsMatch, getPasswordErrorMessage } from '../../../shared/utils/validation';
 
 const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
   const dispatch = useDispatch();
@@ -91,17 +92,20 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     
     if (!registerData.email) {
       newErrors.email = 'Email обязателен';
-    } else if (!/\S+@\S+\.\S+/.test(registerData.email)) {
-      newErrors.email = 'Некорректный email';
+    } else if (!isValidEmail(registerData.email)) {
+      newErrors.email = 'Некорректный формат email';
     }
     
     if (!registerData.password) {
       newErrors.password = 'Пароль обязателен';
-    } else if (registerData.password.length < 6) {
-      newErrors.password = 'Пароль должен быть не менее 6 символов';
+    } else {
+      const passwordValidation = validatePassword(registerData.password);
+      if (!passwordValidation.isValid) {
+        newErrors.password = getPasswordErrorMessage(passwordValidation);
+      }
     }
     
-    if (registerData.password !== registerData.confirmPassword) {
+    if (!doPasswordsMatch(registerData.password, registerData.confirmPassword)) {
       newErrors.confirmPassword = 'Пароли не совпадают';
     }
     
@@ -122,6 +126,54 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Валидация по мере ввода пароля
+  const handlePasswordBlur = () => {
+    if (registerData.password) {
+      const passwordValidation = validatePassword(registerData.password);
+      if (!passwordValidation.isValid) {
+        setErrors(prev => ({
+          ...prev,
+          password: getPasswordErrorMessage(passwordValidation)
+        }));
+      } else {
+        setErrors(prev => ({
+          ...prev,
+          password: ''
+        }));
+      }
+    }
+  };
+
+  // Проверка подтверждения пароля при потере фокуса
+  const handleConfirmPasswordBlur = () => {
+    if (registerData.confirmPassword && registerData.password !== registerData.confirmPassword) {
+      setErrors(prev => ({
+        ...prev,
+        confirmPassword: 'Пароли не совпадают'
+      }));
+    } else {
+      setErrors(prev => ({
+        ...prev,
+        confirmPassword: ''
+      }));
+    }
+  };
+
+  // Проверка формата email при потере фокуса
+  const handleEmailBlur = () => {
+    if (registerData.email && !isValidEmail(registerData.email)) {
+      setErrors(prev => ({
+        ...prev,
+        email: 'Некорректный формат email'
+      }));
+    } else {
+      setErrors(prev => ({
+        ...prev, 
+        email: ''
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -294,6 +346,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               }}
               FormHelperTextProps={{ sx: modalStyles.helperText }}
               sx={modalStyles.textField}
+              onBlur={handleEmailBlur}
             />
             <TextField
               margin="dense"
@@ -316,6 +369,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               }}
               FormHelperTextProps={{ sx: modalStyles.helperText }}
               sx={modalStyles.textField}
+              onBlur={handlePasswordBlur}
             />
             <TextField
               margin="dense"
@@ -338,6 +392,7 @@ const RegisterModal = ({ open, onClose, onSwitchToLogin }) => {
               }}
               FormHelperTextProps={{ sx: modalStyles.helperText }}
               sx={modalStyles.textField}
+              onBlur={handleConfirmPasswordBlur}
             />
 
             {/* Выбор типа регистрации */}

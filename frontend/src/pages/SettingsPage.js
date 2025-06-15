@@ -31,6 +31,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Link as RouterLink } from 'react-router-dom';
 import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
+import { validatePassword, getPasswordErrorMessage } from '../shared/utils/validation';
 
 // Стилизованные компоненты
 const MainContainer = styled(Box)(({ theme }) => ({
@@ -434,10 +435,12 @@ const SettingsPage = () => {
       return;
     }
     
-    if (newPassword.length < 6) {
+    // Проверка пароля на соответствие требованиям
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
       setNotification({
         open: true,
-        message: 'Новый пароль должен содержать не менее 6 символов',
+        message: getPasswordErrorMessage(passwordValidation),
         severity: 'error'
       });
       return;
@@ -864,7 +867,7 @@ const SettingsPage = () => {
                       }}
                     />
                     <Typography variant="caption" sx={{ color: 'rgba(161, 161, 170, 0.8)', mt: 0.5, display: 'block' }}>
-                      Минимум 6 символов
+                      Пароль должен содержать минимум 8 символов, включать заглавные и строчные буквы, а также цифры.
                     </Typography>
                   </Box>
                   
