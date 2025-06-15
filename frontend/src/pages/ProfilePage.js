@@ -136,18 +136,16 @@ const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAv
                 loading="lazy" 
                 width="40" 
                 height="40" 
-                className="shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full"
+                className="shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full object-cover object-center"
                 src={getAvatarUrl()} 
                 onError={(e) => handleReviewImageError(e, 'аватара')}
               />
             </Link>
             
-            <div className="flex flex-col gap-1 items-start">
-              <div className="flex items-center gap-1 md:gap-2 max-sm:flex-wrap">
-                <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
-                  {getUserName()}
-                </Link>
-              </div>
+            <div className="flex flex-col gap-1 items-start mt-0 pt-0">
+              <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-none block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
+                {getUserName()}
+              </Link>
               <div className="text-[12px] flex items-center space-x-1.5">
                 {((review.user && review.user.rank) || userDetails?.rank) && (
                   <div className="inline-flex items-center text-center bg-red-500 rounded-full font-semibold px-1.5">
@@ -372,22 +370,20 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
                 loading="lazy" 
                 width="40" 
                 height="40" 
-                className="shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full"
+                className="shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full object-cover object-center"
                 src={getAvatarUrl()} 
                 onError={(e) => handleReviewImageError(e, 'аватара')}
               />
             </Link>
             
-            <div className="flex flex-col gap-1 items-start">
-              <div className="flex items-center gap-1 md:gap-2 max-sm:flex-wrap">
-                <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
-                  {getUserName()}
-                </Link>
-              </div>
+            <div className="flex flex-col gap-1 items-start mt-0 pt-0">
+              <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-none block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
+                {getUserName()}
+              </Link>
               <div className="text-[12px] flex items-center space-x-1.5">
-                {(userDetails?.rank || (review.user && review.user.rank)) && (
+                {((review.user && review.user.rank) || userDetails?.rank) && (
                   <div className="inline-flex items-center text-center bg-red-500 rounded-full font-semibold px-1.5">
-                    ТОП-{userDetails?.rank || review.user?.rank}
+                    ТОП-{review.user?.rank || userDetails?.rank}
                   </div>
                 )}
               </div>

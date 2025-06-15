@@ -267,15 +267,11 @@
 }
 
 .author-avatar {
-  position: absolute;
-  height: 100%;
   width: 100%;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  height: 100%;
   object-fit: cover;
   object-position: center;
+  border-radius: 50%;
 }
 
 /* Имя автора и верификация */
@@ -285,7 +281,7 @@
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 0.25rem;
 }

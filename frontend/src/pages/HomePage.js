@@ -195,7 +195,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
             React.createElement('img', {
               alt: user.name,
               src: user.avatar,
-              className: 'shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full',
+              className: 'shrink-0 size-[40px] lg:size-[40px] border border-white/10 rounded-full object-cover object-center',
               loading: 'lazy',
               width: '40',
               height: '40',
@@ -203,16 +203,12 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
               onError: (e) => handleImageError(e, DEFAULT_AVATAR_PLACEHOLDER)
             })
           ),
-          React.createElement('div', { className: 'flex flex-col gap-1 items-start', key: 'user-details' }, [
-            React.createElement('div', { 
-              className: 'flex items-center gap-1 md:gap-2 max-sm:flex-wrap',
-              key: 'user-name-container'
-            }, 
-              React.createElement(Link, {
-                className: 'text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline',
-                to: `/profile/${user.id}`
-              }, user.name)
-            ),
+          React.createElement('div', { className: 'flex flex-col gap-1 items-start mt-0 pt-0', key: 'user-details' }, [
+            React.createElement('a', { 
+              href: `/profile/${user.id}`,
+              className: 'text-base lg:text-xl font-semibold leading-none block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline',
+              key: 'user-name'
+            }, user.name),
             user.rank && React.createElement('div', { 
               className: 'text-[12px] flex items-center space-x-1.5',
               key: 'user-rank'
@@ -346,7 +342,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
                   React.createElement('img', {
                     src: authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER,
                     alt: authorLike.author?.username || 'Автор',
-                    className: 'w-6 h-6 rounded-full border border-yellow-500',
+                    className: 'w-6 h-6 rounded-full border border-yellow-500 object-cover object-center',
                     onError: (e) => {
                       e.target.onerror = null;
                       e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
