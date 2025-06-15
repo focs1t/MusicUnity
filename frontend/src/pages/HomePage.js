@@ -502,6 +502,9 @@ const HomePage = () => {
       setTopUsers(topUsersData || []);
       setRecentReviews(recentReviewsData.content || []);
 
+      // Загружаем лайкнутые рецензии сразу после получения рецензий
+      fetchLikedReviewsByCurrentUser();
+
     } catch (err) {
       console.error('Ошибка загрузки данных:', err);
       setError('Не удалось загрузить данные. Пожалуйста, попробуйте позже.');
@@ -520,9 +523,17 @@ const HomePage = () => {
     if (!userId) return;
     
     try {
-      const likedReviewsData = await likeApi.getLikesByUser(userId);
-      const likedReviewIds = new Set(likedReviewsData.map(like => like.reviewId));
-      setLikedReviews(likedReviewIds);
+      const response = await likeApi.getLikedReviewsByUser(userId);
+      
+      if (response && response.content) {
+        const likedIds = new Set(
+          response.content
+            .map(review => review.reviewId || review.id || 0)
+            .filter(id => id > 0)
+        );
+        console.log(`Получено ${likedIds.size} лайкнутых рецензий для пользователя ${userId}:`, Array.from(likedIds));
+        setLikedReviews(likedIds);
+      }
     } catch (error) {
       console.error('Ошибка при загрузке лайкнутых рецензий:', error);
     }
