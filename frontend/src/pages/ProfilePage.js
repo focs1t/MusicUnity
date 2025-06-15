@@ -129,8 +129,8 @@ const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAv
     <div className="review-card simple-review" data-review-id={review.reviewId}>
       <div className="relative">
         <div className="bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3">
-          <div className="flex items-start space-x-2 lg:space-x-3 w-full">
-            <Link to={`/profile/${review.userId}`} className="relative">
+          <div className="flex items-start space-x-4 lg:space-x-4 w-full align-top">
+            <Link to={`/profile/${review.userId}`} className="relative align-top mt-0">
               <img 
                 alt={getUserName()} 
                 loading="lazy" 
@@ -143,7 +143,7 @@ const SimpleReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAv
             </Link>
             
             <div className="flex flex-col gap-1 items-start mt-0 pt-0">
-              <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-none block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
+              <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-none block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline" style={{lineHeight: '1', paddingTop: 0, marginTop: 0}}>
                 {getUserName()}
               </Link>
               <div className="text-[12px] flex items-center space-x-1.5">
@@ -363,8 +363,8 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
     <div className="review-card" data-review-id={review.reviewId}>
       <div className="relative">
         <div className="bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3">
-          <div className="flex items-start space-x-2 lg:space-x-3 w-full">
-            <Link to={`/profile/${review.userId}`} className="relative">
+          <div className="flex items-start space-x-4 lg:space-x-4 w-full align-top">
+            <Link to={`/profile/${review.userId}`} className="relative align-top mt-0">
               <img 
                 alt={getUserName()} 
                 loading="lazy" 
@@ -377,7 +377,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
             </Link>
             
             <div className="flex flex-col gap-1 items-start mt-0 pt-0">
-              <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-none block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline">
+              <Link to={`/profile/${review.userId}`} className="text-base lg:text-xl font-semibold leading-none block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline" style={{lineHeight: '1', paddingTop: 0, marginTop: 0}}>
                 {getUserName()}
               </Link>
               <div className="text-[12px] flex items-center space-x-1.5">

@@ -469,6 +469,7 @@
   border-radius: 15px;
   overflow: hidden;
   padding: 0.375rem;
+  margin-bottom: 1rem;
 }
 
 @media (min-width: 1024px) {
@@ -478,167 +479,17 @@
   }
 }
 
-.review-header {
-  background-color: rgba(24, 24, 27, 0.7);
+.review-card .bg-zinc-950\/70 {
+  width: 100%;
   border-radius: 12px;
-  padding: 0.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  position: relative;
-}
-
-.review-user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.review-user-avatar {
-  position: relative;
-  display: block;
-}
-
-.review-user-avatar img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
-  object-fit: cover;
-  object-position: center;
-}
-
-@media (min-width: 1024px) {
-  .review-user-avatar img {
-    width: 45px;
-    height: 45px;
-  }
-}
-
-.review-user-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-top: 0;
-}
-
-.review-username {
-  font-size: 1rem;
-  font-weight: 600;
-  color: white;
-  text-decoration: none;
-  margin: 0;
-  line-height: 1.2;
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@media (min-width: 1024px) {
-  .review-username {
-    font-size: 1.125rem;
-  }
-}
-
-.review-user-rank {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.75rem;
-}
-
-.review-rank-badge {
-  background-color: #ef4444;
-  border-radius: 9999px;
-  padding: 0 0.375rem;
-  font-weight: 600;
-  font-size: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-}
-
-.review-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-  height: 100%;
-  justify-content: center;
-}
-
-.review-rating {
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 100%;
-}
-
-@media (min-width: 1024px) {
-  .review-rating {
-    font-size: 24px;
-    margin-top: 0.0625rem;
-  }
-}
-
-.review-rating-value {
-  text-decoration: none;
-  border: 0;
-  user-select: none;
-}
-
-.review-rating-details {
-  display: flex;
-  gap: 0.375rem;
-  font-weight: bold;
-  font-size: 0.75rem;
-}
-
-@media (min-width: 1024px) {
-  .review-rating-details {
-    font-size: 0.875rem;
-  }
-}
-
-.review-rating-item {
-  user-select: none;
-  color: #6366f1;
-}
-
-.review-rating-vibe {
-  color: #ec4899;
-}
-
-.review-album-cover {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  display: block;
-}
-
-@media (min-width: 1024px) {
-  .review-album-cover {
-    width: 44px;
-    height: 44px;
-  }
-}
-
-.review-album-cover img {
-  width: 100%;
-  height: 100%;
-  border-radius: 0.375rem;
-  object-fit: cover;
-  object-position: center;
+  background-color: rgba(9, 9, 11, 0.7);
 }
 
 .review-content-preview {
   max-height: 120px;
   overflow: hidden;
   position: relative;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   margin-bottom: 1rem;
   padding: 0 0.375rem;
   display: block;
@@ -646,23 +497,26 @@
 
 .review-title {
   font-size: 1rem;
-  font-weight: 600;
+  line-height: 1.5rem;
   margin-top: 0.75rem;
   margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 @media (min-width: 1024px) {
   .review-title {
     font-size: 1.125rem;
+    line-height: 1.75rem;
   }
 }
 
 .review-text {
   margin-top: 0.5rem;
-  letter-spacing: -0.0125rem;
+  letter-spacing: -0.2px;
   font-weight: 300;
   font-size: 0.9375rem;
   color: white;
+  line-height: 1.5;
 }
 
 @media (min-width: 1024px) {
@@ -677,13 +531,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-right: 0.375rem;
   position: relative;
+  padding-right: 0.375rem;
 }
 
 .review-actions {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
+}
+
+.review-links {
+  display: flex;
   align-items: center;
 }
 
@@ -736,12 +595,6 @@
 .review-likes-count {
   font-weight: 700;
   font-size: 1.125rem;
-}
-
-.review-links {
-  display: flex;
-  align-items: center;
-  gap: 0.0625rem;
 }
 
 .review-permalink {
@@ -895,11 +748,11 @@
 
 /* Дополнительные классы для компонента ReviewCard */
 .text-userColor {
-  color: #00c8ff;
+  color: var(--ratingText-color) !important;
 }
 
 .text-ratingVibe {
-  color: #ff5252;
+  color: var(--ratingVibe-color) !important;
 }
 
 .size-\[40px\] {
@@ -1263,7 +1116,6 @@
   width: 40px !important;
   height: 40px !important;
   display: block !important;
-  position: absolute !important;
   top: 0 !important;
   left: 0 !important;
 }
@@ -1296,32 +1148,94 @@
   border-radius: 15px;
   overflow: hidden;
   padding: 0.375rem;
+  margin-bottom: 1rem;
 }
 
-.items-start {
-  align-items: flex-start;
+@media (min-width: 1024px) {
+  .review-card {
+    border-radius: 20px;
+    padding: 5px;
+  }
 }
 
-.text-base {
-  font-size: 1rem;
-  line-height: 1.5rem;
+/* Исправление отступов между аватаркой и именем */
+.review-card .flex.items-start.space-x-4 > div:nth-child(2) {
+  margin-left: 1rem !important;
 }
 
-.text-xl {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
+.review-card .space-x-4 > * + * {
+  margin-left: 1rem !important;
 }
 
-.leading-\[18px\] {
-  line-height: 18px;
+/* Переопределение стилей для пространства между элементами */
+.review-card .space-x-4 {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse))) !important;
 }
 
-.h-6 {
-  height: 1.5rem;
+/* Дополнительные стили для карточек рецензий в профиле */
+.profile-page .review-card {
+  width: 100%;
+  max-width: 100%;
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 15px;
+  overflow: hidden;
+  padding: 0.375rem;
+  margin-bottom: 1.5rem;
 }
 
-.w-6 {
-  width: 1.5rem;
+@media (min-width: 1024px) {
+  .profile-page .review-card {
+    border-radius: 20px;
+    padding: 5px;
+  }
+}
+
+.profile-page .review-card .bg-zinc-950\/70 {
+  width: 100%;
+  border-radius: 12px;
+  background-color: rgba(9, 9, 11, 0.7);
+}
+
+/* Исправление отступов между аватаркой и именем в профиле */
+.profile-page .review-card .flex.items-start.space-x-4 > div:nth-child(2) {
+  margin-left: 1rem !important;
+}
+
+.profile-page .review-card .space-x-4 > * + * {
+  margin-left: 1rem !important;
+}
+
+/* Переопределение стилей для пространства между элементами в профиле */
+.profile-page .review-card .space-x-4 {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse))) !important;
+}
+
+/* Стили для соответствия странице рецензий */
+.profile-page .reviews-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.profile-page .reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* Цвета для параметров рецензий */
+.profile-page .text-userColor {
+  color: var(--ratingText-color, #ffffff) !important;
+}
+
+.profile-page .text-ratingVibe {
+  color: var(--ratingVibe-color, #10b981) !important;
 }
 
 /* Новые стили для исправления выравнивания и размеров */
@@ -1420,4 +1334,391 @@
   line-height: 1.2;
   margin-top: 0;
   padding-top: 0;
+}
+
+.review-card .flex.items-start.space-x-4 {
+  margin-left: 0;
+}
+
+.review-card .flex.items-start.space-x-4 > div {
+  margin-left: 8px;
+}
+
+.review-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 0;
+  margin-left: 8px;
+}
+
+/* Исправление выравнивания аватарки и текста */
+.review-card .flex.items-start.space-x-4 {
+  align-items: flex-start !important;
+}
+
+.review-card .flex.items-start.space-x-4 > div:first-child {
+  margin-top: 0;
+}
+
+.review-card .flex.items-start.space-x-4 > div:nth-child(2) {
+  margin-left: 1rem !important;
+  padding-top: 0;
+}
+
+.review-card .text-base.lg\:text-xl {
+  line-height: 1.2;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Дополнительные стили для выравнивания */
+.align-top {
+  vertical-align: top !important;
+}
+
+.review-card .space-x-4 > * + * {
+  margin-left: 1rem !important;
+}
+
+/* Переопределение стилей для пространства между элементами */
+.review-card .space-x-4 {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse))) !important;
+}
+
+/* Фиксированные цвета для параметров */
+.text-userColor {
+  color: var(--ratingText-color) !important;
+}
+
+.text-ratingVibe {
+  color: var(--ratingVibe-color) !important;
+}
+
+/* Исправление отступов для имени пользователя */
+.review-card .flex.flex-col.gap-1.items-start {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.review-card .text-base.lg\:text-xl.font-semibold.leading-none {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  line-height: 1 !important;
+}
+
+/* Дополнительное исправление для аватарок */
+.review-card .relative.align-top.mt-0 {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  vertical-align: top !important;
+}
+
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.leading-\[18px\] {
+  line-height: 18px;
+}
+
+.h-6 {
+  height: 1.5rem;
+}
+
+.w-6 {
+  width: 1.5rem;
+}
+
+/* Дополнительные стили для карточек рецензий в профиле */
+.profile-page .review-content-preview {
+  max-height: 120px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+  padding: 0 0.375rem;
+  display: block;
+}
+
+.profile-page .review-title {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+@media (min-width: 1024px) {
+  .profile-page .review-title {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+
+.profile-page .review-text {
+  margin-top: 0.5rem;
+  letter-spacing: -0.2px;
+  font-weight: 300;
+  font-size: 0.9375rem;
+  color: white;
+  line-height: 1.5;
+}
+
+@media (min-width: 1024px) {
+  .profile-page .review-text {
+    font-size: 1rem;
+    line-height: 150%;
+  }
+}
+
+.profile-page .review-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding-right: 0.375rem;
+}
+
+.profile-page .review-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.profile-page .review-links {
+  display: flex;
+  align-items: center;
+}
+
+/* Стили для соответствия странице рецензий */
+.profile-page .reviews-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.profile-page .reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* Цвета для параметров рецензий */
+.profile-page .text-userColor {
+  color: var(--ratingText-color, #ffffff) !important;
+}
+
+.profile-page .text-ratingVibe {
+  color: var(--ratingVibe-color, #10b981) !important;
+}
+
+/* Новые стили для исправления выравнивания и размеров */
+.equal-size {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Исправление высоты контейнеров для выравнивания */
+.artist-item, .album-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.artist-link, .album-link {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Убираем лишние отступы в сетке элементов */
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Стили для элементов с длинными именами */
+.artist-item, .album-item {
+  min-height: 150px;
+}
+
+/* Стиль для всплывающего сообщения */
+.tooltip-message {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: #222;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s, fadeOut 0.3s 1.7s;
+  pointer-events: none;
+}
+
+/* Добавляем треугольник внизу сообщения */
+.tooltip-message:after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #222;
+}
+
+/* Анимации для всплывающего сообщения */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+.flex.items-start.space-x-2 {
+  align-items: flex-start !important;
+}
+
+.flex.items-start.space-x-2 > div:first-of-type {
+  margin-top: 0 !important;
+}
+
+.flex.items-start.space-x-2 > div:nth-of-type(2) {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.flex.items-start.space-x-2 .text-base.lg\:text-xl {
+  line-height: 1.2;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.review-card .flex.items-start.space-x-4 {
+  margin-left: 0;
+}
+
+.review-card .flex.items-start.space-x-4 > div {
+  margin-left: 8px;
+}
+
+.review-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 0;
+  margin-left: 8px;
+}
+
+/* Исправление выравнивания аватарки и текста */
+.review-card .flex.items-start.space-x-4 {
+  align-items: flex-start !important;
+}
+
+.review-card .flex.items-start.space-x-4 > div:first-child {
+  margin-top: 0;
+}
+
+.review-card .flex.items-start.space-x-4 > div:nth-child(2) {
+  margin-left: 1rem !important;
+  padding-top: 0;
+}
+
+.review-card .text-base.lg\:text-xl {
+  line-height: 1.2;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Дополнительные стили для выравнивания */
+.align-top {
+  vertical-align: top !important;
+}
+
+.review-card .space-x-4 > * + * {
+  margin-left: 1rem !important;
+}
+
+/* Переопределение стилей для пространства между элементами */
+.review-card .space-x-4 {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse))) !important;
+}
+
+/* Фиксированные цвета для параметров */
+.text-userColor {
+  color: var(--ratingText-color) !important;
+}
+
+.text-ratingVibe {
+  color: var(--ratingVibe-color) !important;
+}
+
+/* Исправление отступов для имени пользователя */
+.review-card .flex.flex-col.gap-1.items-start {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.review-card .text-base.lg\:text-xl.font-semibold.leading-none {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  line-height: 1 !important;
+}
+
+/* Дополнительное исправление для аватарок */
+.review-card .relative.align-top.mt-0 {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  vertical-align: top !important;
+}
+
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.leading-\[18px\] {
+  line-height: 18px;
+}
+
+.h-6 {
+  height: 1.5rem;
+}
+
+.w-6 {
+  width: 1.5rem;
 } 

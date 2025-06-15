@@ -187,7 +187,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
       React.createElement('div', { className: 'bg-zinc-950/70 px-2 lg:px-2 py-2 rounded-[12px] flex gap-3' }, [
         // Блок с аватаром и информацией о пользователе
         React.createElement('div', { className: 'flex items-start space-x-2 lg:space-x-3 w-full', key: 'user-info' }, [
-          React.createElement(Link, { 
+          React.createElement(Link, {
             className: 'relative', 
             to: `/profile/${user.id}`,
             key: 'user-avatar-link'
@@ -203,12 +203,16 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
               onError: (e) => handleImageError(e, DEFAULT_AVATAR_PLACEHOLDER)
             })
           ),
-          React.createElement('div', { className: 'flex flex-col gap-1 items-start mt-0 pt-0', key: 'user-details' }, [
-            React.createElement('a', { 
-              href: `/profile/${user.id}`,
-              className: 'text-base lg:text-xl font-semibold leading-none block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline',
-              key: 'user-name'
-            }, user.name),
+          React.createElement('div', { className: 'flex flex-col gap-1 items-start', key: 'user-details' }, [
+            React.createElement('div', { 
+              className: 'flex items-center gap-1 md:gap-2 max-sm:flex-wrap',
+              key: 'user-name-container'
+            }, 
+              React.createElement(Link, {
+                className: 'text-base lg:text-xl font-semibold leading-[18px] block items-center max-w-[170px] text-ellipsis whitespace-nowrap overflow-hidden text-white no-underline',
+                to: `/profile/${user.id}`
+              }, user.name)
+            ),
             user.rank && React.createElement('div', { 
               className: 'text-[12px] flex items-center space-x-1.5',
               key: 'user-rank'
