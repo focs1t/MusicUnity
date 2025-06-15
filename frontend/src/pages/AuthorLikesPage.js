@@ -875,18 +875,15 @@ const AuthorLikesPage = () => {
         })
       );
       
-      let response;
       if (isCurrentlyLiked) {
         // Дизлайк
         console.log(`Убираем лайк с рецензии ${reviewId}`);
-        response = await likeApi.unlikeReview(reviewId);
+        await likeApi.removeLike(reviewId, currentUserId);
       } else {
         // Лайк
         console.log(`Ставим лайк рецензии ${reviewId}`);
-        response = await likeApi.likeReview(reviewId);
+        await likeApi.createLike(reviewId, currentUserId, 'REGULAR');
       }
-      
-      console.log('Ответ API:', response);
       
       // Показываем уведомление об успехе
       setNotification({
@@ -894,8 +891,24 @@ const AuthorLikesPage = () => {
         type: 'success'
       });
       
-      // Обновляем авторские лайки, если действие выполнил автор
-      await updateAuthorLikesForReview(reviewId);
+      // Получаем актуальное количество лайков с сервера
+      try {
+        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+        
+        // Обновляем точное количество лайков после получения от сервера
+        setReviews(prevReviews => 
+          prevReviews.map(r => 
+            (r.id === reviewId || r.reviewId === reviewId) 
+              ? {...r, likesCount: updatedLikesCount} 
+              : r
+          )
+        );
+        
+        // Обновляем авторские лайки
+        await updateAuthorLikesForReview(reviewId);
+      } catch (countError) {
+        console.error('Ошибка при получении количества лайков:', countError);
+      }
       
     } catch (error) {
       console.error('Ошибка при обновлении лайка:', error);
