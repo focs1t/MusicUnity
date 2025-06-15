@@ -516,7 +516,7 @@ const ReviewCard = ({ review, userDetails, isLiked, onLikeToggle, cachedAvatarUr
                   
                   return (
                     <div className="author-rating-wrapper" key={`author-like-wrapper-${index}`}>
-                      <Link to={`/author/${authorId}`}>
+                      <Link to={`/author/${authorId || 0}`}>
                         <img
                           src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
                           alt={authorLike.author?.username || 'Автор'}
@@ -1882,7 +1882,32 @@ const ProfilePage = () => {
             const authorLikesForReview = await likeApi.getAuthorLikesByReview(reviewId);
             console.log(`Получены авторские лайки для рецензии ${reviewId}:`, authorLikesForReview);
             if (authorLikesForReview && authorLikesForReview.length > 0) {
-              authorLikesData[reviewId] = authorLikesForReview;
+              // Исправляем отсутствующие authorId у авторов
+              const fixedAuthorLikes = authorLikesForReview.map(like => {
+                if (like.author) {
+                  // Если у автора есть userId, но нет authorId, используем userId как authorId
+                  if (like.author.userId && !like.author.authorId) {
+                    return {
+                      ...like,
+                      author: {
+                        ...like.author,
+                        authorId: like.author.userId || like.author.id || 0
+                      }
+                    };
+                  }
+                  // Добавляем резервное значение для authorId
+                  return {
+                    ...like,
+                    author: {
+                      ...like.author,
+                      authorId: like.author.authorId || like.author.id || like.author.userId || 0
+                    }
+                  };
+                }
+                return like;
+              });
+              
+              authorLikesData[reviewId] = fixedAuthorLikes;
             }
           }
         })
@@ -2304,7 +2329,7 @@ const ProfilePage = () => {
                                 
                                 return (
                                   <div key={author.authorId} className="artist-item">
-                                    <Link className="artist-link" to={`/author/${author.authorId}`}>
+                                    <Link className="artist-link" to={`/author/${author.authorId || author.id || 0}`}>
                                       <img 
                                         alt={author.name || "Автор"} 
                                         loading="lazy" 
@@ -2313,7 +2338,7 @@ const ProfilePage = () => {
                                         onError={(e) => handleAuthorImageError(e, author)}
                                       />
                                     </Link>
-                                    <Link className="artist-name text-white no-underline" to={`/author/${author.authorId}`}>
+                                    <Link className="artist-name text-white no-underline" to={`/author/${author.authorId || author.id || 0}`}>
                                       {author.name || "Автор"}
                                     </Link>
                                   </div>

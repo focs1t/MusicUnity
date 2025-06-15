@@ -676,18 +676,67 @@ function ReviewPage() {
     }
   };
 
-  // Обновление авторских лайков для конкретной рецензии
-  const updateAuthorLikesForReview = async (reviewId) => {
+  // Загрузка авторских лайков
+  const fetchAuthorLikes = async (reviewData) => {
+    if (!reviewData) return;
+    
     try {
+      const reviewId = reviewData.id || reviewData.reviewId;
       const authorLikesData = await likeApi.getAuthorLikesByReview(reviewId);
       console.log(`Получены авторские лайки для рецензии ${reviewId}:`, authorLikesData);
       
-      setAuthorLikes(prev => ({
-        ...prev,
-        [reviewId]: authorLikesData || []
-      }));
+      // Отладка структуры авторских лайков
+      console.log(`DEBUG: Структура авторских лайков для рецензии ${reviewId}:`, 
+        JSON.stringify(authorLikesData, null, 2));
+      
+      // Исправление отсутствующего authorId
+      const fixedAuthorLikes = authorLikesData.map(like => {
+        if (like.author) {
+          // Если у автора есть userId, но нет authorId, используем userId как authorId
+          if (like.author.userId && !like.author.authorId) {
+            like.author.authorId = like.author.userId;
+          }
+        }
+        return like;
+      });
+      
+      setAuthorLikes({
+        [reviewId]: fixedAuthorLikes || []
+      });
     } catch (error) {
-      console.error(`Ошибка при получении авторских лайков для рецензии ${reviewId}:`, error);
+      console.error('Ошибка при загрузке авторских лайков:', error);
+    }
+  };
+  
+  // Функция для обновления авторских лайков для конкретной рецензии
+  const updateAuthorLikesForReview = async (reviewId) => {
+    try {
+      const updatedAuthorLikes = await likeApi.getAuthorLikesByReview(reviewId);
+      if (updatedAuthorLikes && updatedAuthorLikes.length > 0) {
+        // Исправление отсутствующего authorId
+        const fixedAuthorLikes = updatedAuthorLikes.map(like => {
+          if (like.author) {
+            // Если у автора есть userId, но нет authorId, используем userId как authorId
+            if (like.author.userId && !like.author.authorId) {
+              like.author.authorId = like.author.userId;
+            }
+          }
+          return like;
+        });
+        
+        setAuthorLikes(prev => ({
+          ...prev,
+          [reviewId]: fixedAuthorLikes
+        }));
+      } else {
+        setAuthorLikes(prev => {
+          const newAuthorLikes = { ...prev };
+          delete newAuthorLikes[reviewId];
+          return newAuthorLikes;
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении авторских лайков:', error);
     }
   };
 
@@ -732,23 +781,6 @@ function ReviewPage() {
       });
     } catch (error) {
       console.error('Ошибка при загрузке лайкнутых рецензий:', error);
-    }
-  };
-
-  // Загрузка авторских лайков
-  const fetchAuthorLikes = async (reviewData) => {
-    if (!reviewData) return;
-    
-    try {
-      const reviewId = reviewData.id || reviewData.reviewId;
-      const authorLikesData = await likeApi.getAuthorLikesByReview(reviewId);
-      console.log(`Получены авторские лайки для рецензии ${reviewId}:`, authorLikesData);
-      
-      setAuthorLikes({
-        [reviewId]: authorLikesData || []
-      });
-    } catch (error) {
-      console.error('Ошибка при загрузке авторских лайков:', error);
     }
   };
 

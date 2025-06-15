@@ -497,7 +497,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
               authorLikes.slice(0, 3).map((authorLike, index) => 
                 React.createElement('div', { className: 'author-rating-wrapper', key: `author-like-wrapper-${index}` }, [
                   React.createElement(Link, {
-                    to: `/author/${authorLike.author?.authorId || authorLike.author?.id}`,
+                    to: `/author/${authorLike.author?.authorId || authorLike.author?.id || 0}`,
                     key: `author-like-link-${index}`
                   },
                     React.createElement('img', {
@@ -737,7 +737,22 @@ const ReviewsPage = () => {
           if (reviewId) {
             const authorLikesForReview = await likeApi.getAuthorLikesByReview(reviewId);
             if (authorLikesForReview && authorLikesForReview.length > 0) {
-              authorLikesData[reviewId] = authorLikesForReview;
+              // Отладка структуры авторских лайков
+              console.log(`DEBUG: Структура авторских лайков для рецензии ${reviewId}:`, 
+                JSON.stringify(authorLikesForReview, null, 2));
+              
+              // Исправление отсутствующего authorId
+              const fixedAuthorLikes = authorLikesForReview.map(like => {
+                if (like.author) {
+                  // Если у автора есть userId, но нет authorId, используем userId как authorId
+                  if (like.author.userId && !like.author.authorId) {
+                    like.author.authorId = like.author.userId;
+                  }
+                }
+                return like;
+              });
+              
+              authorLikesData[reviewId] = fixedAuthorLikes;
             }
           }
         })
@@ -748,15 +763,26 @@ const ReviewsPage = () => {
       console.error('Ошибка при загрузке авторских лайков:', error);
     }
   };
-  
+
   // Функция для обновления авторских лайков для конкретной рецензии
   const updateAuthorLikesForReview = async (reviewId) => {
     try {
       const updatedAuthorLikes = await likeApi.getAuthorLikesByReview(reviewId);
       if (updatedAuthorLikes && updatedAuthorLikes.length > 0) {
+        // Исправление отсутствующего authorId
+        const fixedAuthorLikes = updatedAuthorLikes.map(like => {
+          if (like.author) {
+            // Если у автора есть userId, но нет authorId, используем userId как authorId
+            if (like.author.userId && !like.author.authorId) {
+              like.author.authorId = like.author.userId;
+            }
+          }
+          return like;
+        });
+        
         setAuthorLikes(prev => ({
           ...prev,
-          [reviewId]: updatedAuthorLikes
+          [reviewId]: fixedAuthorLikes
         }));
       } else {
         setAuthorLikes(prev => {

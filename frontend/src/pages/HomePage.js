@@ -691,7 +691,22 @@ const HomePage = () => {
             try {
               const authorLikesForReview = await likeApi.getAuthorLikesByReview(reviewId);
               if (authorLikesForReview && authorLikesForReview.length > 0) {
-                authorLikesData[reviewId] = authorLikesForReview;
+                // Отладка структуры авторских лайков
+                console.log(`DEBUG: Структура авторских лайков для рецензии ${reviewId}:`, 
+                  JSON.stringify(authorLikesForReview, null, 2));
+                
+                // Исправление отсутствующего authorId
+                const fixedAuthorLikes = authorLikesForReview.map(like => {
+                  if (like.author) {
+                    // Если у автора есть userId, но нет authorId, используем userId как authorId
+                    if (like.author.userId && !like.author.authorId) {
+                      like.author.authorId = like.author.userId;
+                    }
+                  }
+                  return like;
+                });
+                
+                authorLikesData[reviewId] = fixedAuthorLikes;
               }
             } catch (error) {
               console.error(`Ошибка при загрузке авторских лайков для рецензии ${reviewId}:`, error);
