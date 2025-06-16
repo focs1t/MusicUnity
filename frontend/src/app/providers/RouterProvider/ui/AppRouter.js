@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGuard } from '../../AuthProvider';
 import HomePage from '../../../../pages/HomePage';
@@ -34,6 +34,7 @@ import ContactPage from '../../../../pages/ContactPage';
 import FAQPage from '../../../../pages/FAQPage';
 import { useSelector } from 'react-redux';
 import { Navigate as ReactNavigate, useLocation } from 'react-router-dom';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -47,18 +48,85 @@ const ProtectedRoute = ({ element }) => {
 
 // Компонент для маршрутов, требующих роли модератора
 const ModeratorRoute = ({ element }) => {
-  const { user } = useSelector(state => state.auth);
+  const { user, isAuthenticated, authChecked } = useSelector(state => state.auth);
   const location = useLocation();
+  const [userDetails, setUserDetails] = useState(null);
 
-  // Проверяем, авторизован ли пользователь и имеет ли роль модератора
-  if (!user) {
+  // Загрузка полных данных пользователя
+  useEffect(() => {
+    const getUserDetails = async () => {
+      try {
+        if (isAuthenticated && user) {
+          const userApi = (await import('../../../../shared/api/user')).userApi;
+          const userData = await userApi.getCurrentUser();
+          console.log('ModeratorRoute: Загружены данные пользователя', userData);
+          setUserDetails(userData);
+        }
+      } catch (error) {
+        console.error('ModeratorRoute: Ошибка при получении данных пользователя', error);
+      }
+    };
+
+    getUserDetails();
+  }, [isAuthenticated, user]);
+
+  // Ждем, пока не закончится проверка аутентификации
+  if (!authChecked) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        bgcolor: '#09090b',
+        color: 'white'
+      }}>
+        <CircularProgress color="inherit" size={40} />
+        <Typography sx={{ mt: 2 }}>Проверка авторизации...</Typography>
+      </Box>
+    );
+  }
+
+  // Проверяем, авторизован ли пользователь
+  if (!isAuthenticated || !user) {
+    // Сохраняем текущий путь для перенаправления после авторизации
+    localStorage.setItem('redirectAfterAuth', location.pathname);
     return <ReactNavigate to="/" state={{ from: location, requireAuth: true }} replace />;
   }
 
-  if (user.rights !== 'MODERATOR') {
+  // Ждем загрузки данных пользователя
+  if (!userDetails) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        bgcolor: '#09090b',
+        color: 'white'
+      }}>
+        <CircularProgress color="inherit" size={40} />
+        <Typography sx={{ mt: 2 }}>Загрузка данных...</Typography>
+      </Box>
+    );
+  }
+
+  console.log('ModeratorRoute: проверка прав доступа', { 
+    user, 
+    userDetails,
+    userRights: userDetails?.rights 
+  });
+
+  // Проверяем права модератора
+  if (userDetails.rights !== 'MODERATOR' && userDetails.rights !== 'ADMIN') {
+    console.log('ModeratorRoute: недостаточно прав для доступа к странице модератора');
     return <ReactNavigate to="/" replace />;
   }
 
+  // Пользователь аутентифицирован и имеет права модератора
+  console.log('ModeratorRoute: доступ к странице модератора разрешен');
   return element;
 };
 

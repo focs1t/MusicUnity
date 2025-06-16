@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.musicunity.backend.pojo.Report;
 import ru.musicunity.backend.pojo.enums.ReportStatus;
+import ru.musicunity.backend.pojo.enums.ReportType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,4 +36,8 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     
     @Query("SELECT r FROM Report r WHERE r.moderator.userId = :moderatorId AND r.status != ru.musicunity.backend.pojo.enums.ReportStatus.PENDING")
     List<Report> findAllResolvedByModerator(Long moderatorId);
+    
+    // Найти все жалобы с таким же типом и целевым объектом
+    @Query("SELECT r FROM Report r WHERE r.type = :type AND r.targetId = :targetId AND r.status = :status")
+    List<Report> findAllByTypeAndTargetIdAndStatus(ReportType type, Long targetId, ReportStatus status);
 }

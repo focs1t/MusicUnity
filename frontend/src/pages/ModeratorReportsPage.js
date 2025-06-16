@@ -57,6 +57,42 @@ const ModeratorReportsPage = () => {
   const [reasonDialog, setReasonDialog] = useState({ open: false, reason: '' });
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
+  // Проверка прав доступа
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        if (user) {
+          // Получаем полные данные пользователя
+          const userData = await userApi.getCurrentUser();
+          console.log('ModeratorReportsPage: Данные пользователя', userData);
+          
+          if (userData.rights === 'MODERATOR' || userData.rights === 'ADMIN') {
+            console.log('ModeratorReportsPage: Права модератора подтверждены');
+            // Загружаем данные репортов
+            loadReports();
+          } else {
+            console.log('ModeratorReportsPage: Недостаточно прав', userData.rights);
+            setError('У вас недостаточно прав для доступа к этой странице');
+            // Опционально: перенаправление
+            // navigate('/');
+          }
+        } else {
+          console.log('ModeratorReportsPage: Пользователь не авторизован');
+          setError('Для доступа к этой странице необходимо войти в систему');
+          // Опционально: перенаправление
+          // navigate('/');
+        }
+      } catch (err) {
+        console.error('Ошибка при проверке прав:', err);
+        setError('Ошибка при проверке прав доступа');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAccess();
+  }, [user, navigate]);
+
   // Загрузка репортов
   const loadReports = async (pageNumber = 0) => {
     try {

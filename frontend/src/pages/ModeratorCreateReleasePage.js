@@ -230,38 +230,76 @@ const ModeratorCreateReleasePage = () => {
   const [newAuthorIsArtist, setNewAuthorIsArtist] = useState(false);
   const [newAuthorIsProducer, setNewAuthorIsProducer] = useState(false);
 
-  // Загрузка данных при монтировании
+  // Функция загрузки данных для страницы
+  const fetchData = async () => {
+    try {
+      setDataLoading(true);
+      console.log('Загружаем жанры и авторов...');
+      
+      const [genresResponse, authorsResponse] = await Promise.all([
+        genreApi.getAllGenres(),
+        authorApi.getAllAuthorsForAutocomplete()
+      ]);
+      
+      console.log('Жанры загружены:', genresResponse);
+      console.log('Авторы загружены:', authorsResponse);
+      
+      // Обрабатываем ответ от API - может быть Page или Array
+      const genresList = genresResponse?.content || genresResponse || [];
+      const authorsList = authorsResponse?.content || authorsResponse || [];
+      
+      setGenres(genresList);
+      setAuthors(authorsList);
+      
+      setError(''); // Очищаем ошибки при успешной загрузке
+    } catch (err) {
+      console.error('Ошибка загрузки данных:', err);
+      setError('Ошибка при загрузке данных: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  // Проверка прав доступа
   useEffect(() => {
-    const loadData = async () => {
+    const checkAccess = async () => {
       try {
-        setDataLoading(true);
-        console.log('Загружаем жанры и авторов...');
-        
-        const [genresResponse, authorsResponse] = await Promise.all([
-          genreApi.getAllGenres(),
-          authorApi.getAllAuthorsForAutocomplete()
-        ]);
-        
-        console.log('Жанры загружены:', genresResponse);
-        console.log('Авторы загружены:', authorsResponse);
-        
-        // Обрабатываем ответ от API - может быть Page или Array
-        const genresList = genresResponse?.content || genresResponse || [];
-        const authorsList = authorsResponse?.content || authorsResponse || [];
-        
-        setGenres(genresList);
-        setAuthors(authorsList);
-        
-        setError(''); // Очищаем ошибки при успешной загрузке
+        if (user) {
+          // Получаем полные данные пользователя
+          const userData = await userApi.getCurrentUser();
+          console.log('ModeratorCreateReleasePage: Данные пользователя', userData);
+          
+          if (userData.rights === 'MODERATOR' || userData.rights === 'ADMIN') {
+            console.log('ModeratorCreateReleasePage: Права модератора подтверждены');
+            // Загружаем данные для страницы
+            fetchData();
+          } else {
+            console.log('ModeratorCreateReleasePage: Недостаточно прав', userData.rights);
+            setError('У вас недостаточно прав для доступа к этой странице');
+            setLoading(false);
+            // Опционально: перенаправление
+            // navigate('/');
+          }
+        } else {
+          console.log('ModeratorCreateReleasePage: Пользователь не авторизован');
+          setError('Для доступа к этой странице необходимо войти в систему');
+          setLoading(false);
+          // Опционально: перенаправление
+          // navigate('/');
+        }
       } catch (err) {
-        console.error('Ошибка загрузки данных:', err);
-        setError('Ошибка при загрузке данных: ' + (err.response?.data?.message || err.message));
-      } finally {
-        setDataLoading(false);
+        console.error('Ошибка при проверке прав:', err);
+        setError('Ошибка при проверке прав доступа');
+        setLoading(false);
       }
     };
+    
+    checkAccess();
+  }, [user, navigate]);
 
-    loadData();
+  // Загрузка данных при монтировании (если проверка прав не требуется)
+  useEffect(() => {
+    // Загрузку данных перенесли в функцию fetchData, которую вызываем после проверки прав
   }, []);
 
   // Обработчики изменений

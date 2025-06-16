@@ -6,7 +6,8 @@ import authReducer, {
   registerSuccess, 
   registerFailure, 
   logout,
-  setUser
+  setUser,
+  setAuthChecked
 } from './authStore';
 
 import {
@@ -28,6 +29,7 @@ export {
   registerFailure, 
   logout,
   setUser,
+  setAuthChecked,
   login,
   register,
   logoutOperation,

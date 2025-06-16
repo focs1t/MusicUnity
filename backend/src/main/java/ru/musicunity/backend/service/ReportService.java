@@ -24,6 +24,7 @@ import ru.musicunity.backend.repository.ReportRepository;
 import ru.musicunity.backend.service.SessionManager;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -142,21 +143,31 @@ public class ReportService {
         if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.REVIEW) {
             reviewService.softDeleteReview(report.getTargetId());
         }
-
-        report.setStatus(ReportStatus.RESOLVED);
-        report.setModerator(moderator);
-        report.setResolvedAt(LocalDateTime.now());
         
-        // Создаем запись аудита
+        // Находим все жалобы с таким же типом и targetId
+        List<Report> relatedReports = reportRepository.findAllByTypeAndTargetIdAndStatus(
+            report.getType(), report.getTargetId(), ReportStatus.PENDING
+        );
+        
+        // Обновляем статус для всех связанных жалоб
+        LocalDateTime now = LocalDateTime.now();
+        for (Report relatedReport : relatedReports) {
+            relatedReport.setStatus(ReportStatus.RESOLVED);
+            relatedReport.setModerator(moderator);
+            relatedReport.setResolvedAt(now);
+        }
+        reportRepository.saveAll(relatedReports);
+        
+        // Создаем запись аудита (только одну для всех связанных жалоб)
         Audit audit = Audit.builder()
                 .moderator(moderator)
                 .actionType(AuditAction.REVIEW_DELETE)
                 .targetId(report.getTargetId()) // ID самой рецензии, а не репорта
-                .performedAt(LocalDateTime.now())
+                .performedAt(now)
                 .build();
         auditRepository.save(audit);
 
-        return reportMapper.toDTO(reportRepository.save(report));
+        return reportMapper.toDTO(report);
     }
 
     @Transactional
@@ -171,35 +182,41 @@ public class ReportService {
         User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
         
         // Для репортов типа REVIEW получаем пользователя через reviewService
+        Long userIdToBan = null;
         if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.REVIEW) {
             Review review = reviewService.getReviewEntityById(report.getTargetId());
             User userToBan = review.getUser();
             userService.banUser(userToBan.getUserId());
+            userIdToBan = userToBan.getUserId();
             
             // Принудительно выходим пользователя из всех сессий
             sessionManager.invalidateUserSessions(userToBan.getUserId());
         }
-
-        report.setStatus(ReportStatus.RESOLVED);
-        report.setModerator(moderator);
-        report.setResolvedAt(LocalDateTime.now());
         
-        // Создаем запись аудита - получаем пользователя которого заблокировали
-        Long userIdToBan = null;
-        if (report.getType() == ru.musicunity.backend.pojo.enums.ReportType.REVIEW) {
-            Review review = reviewService.getReviewEntityById(report.getTargetId());
-            userIdToBan = review.getUser().getUserId();
+        // Находим все жалобы с таким же типом и targetId
+        List<Report> relatedReports = reportRepository.findAllByTypeAndTargetIdAndStatus(
+            report.getType(), report.getTargetId(), ReportStatus.PENDING
+        );
+        
+        // Обновляем статус для всех связанных жалоб
+        LocalDateTime now = LocalDateTime.now();
+        for (Report relatedReport : relatedReports) {
+            relatedReport.setStatus(ReportStatus.RESOLVED);
+            relatedReport.setModerator(moderator);
+            relatedReport.setResolvedAt(now);
         }
+        reportRepository.saveAll(relatedReports);
         
+        // Создаем запись аудита (только одну для всех связанных жалоб)
         Audit audit = Audit.builder()
                 .moderator(moderator)
                 .actionType(AuditAction.USER_BLOCK)
                 .targetId(userIdToBan != null ? userIdToBan : report.getTargetId())
-                .performedAt(LocalDateTime.now())
+                .performedAt(now)
                 .build();
         auditRepository.save(audit);
 
-        return reportMapper.toDTO(reportRepository.save(report));
+        return reportMapper.toDTO(report);
     }
 
     @Transactional
@@ -213,15 +230,21 @@ public class ReportService {
 
         User moderator = userMapper.toEntity(userService.getUserById(moderatorId));
 
-        report.setStatus(ReportStatus.REJECTED);
-        report.setModerator(moderator);
-        report.setResolvedAt(LocalDateTime.now());
+        // Находим все жалобы с таким же типом и targetId
+        List<Report> relatedReports = reportRepository.findAllByTypeAndTargetIdAndStatus(
+            report.getType(), report.getTargetId(), ReportStatus.PENDING
+        );
         
-        // Создаем запись аудита - отклонение репорта больше не записывается в аудит
-        // Или заменяем на общее действие
-        // Пока убираем аудит для отклонения репортов
-
-        return reportMapper.toDTO(reportRepository.save(report));
+        // Обновляем статус для всех связанных жалоб
+        LocalDateTime now = LocalDateTime.now();
+        for (Report relatedReport : relatedReports) {
+            relatedReport.setStatus(ReportStatus.REJECTED);
+            relatedReport.setModerator(moderator);
+            relatedReport.setResolvedAt(now);
+        }
+        reportRepository.saveAll(relatedReports);
+        
+        return reportMapper.toDTO(report);
     }
 
     @Transactional
@@ -268,20 +291,30 @@ public class ReportService {
             releaseService.softDeleteRelease(report.getTargetId());
         }
 
-        report.setStatus(ReportStatus.RESOLVED);
-        report.setModerator(moderator);
-        report.setResolvedAt(LocalDateTime.now());
+        // Находим все жалобы с таким же типом и targetId
+        List<Report> relatedReports = reportRepository.findAllByTypeAndTargetIdAndStatus(
+            report.getType(), report.getTargetId(), ReportStatus.PENDING
+        );
         
-        // Создаем запись аудита
+        // Обновляем статус для всех связанных жалоб
+        LocalDateTime now = LocalDateTime.now();
+        for (Report relatedReport : relatedReports) {
+            relatedReport.setStatus(ReportStatus.RESOLVED);
+            relatedReport.setModerator(moderator);
+            relatedReport.setResolvedAt(now);
+        }
+        reportRepository.saveAll(relatedReports);
+        
+        // Создаем запись аудита (только одну для всех связанных жалоб)
         Audit audit = Audit.builder()
                 .moderator(moderator)
                 .actionType(AuditAction.RELEASE_DELETE)
                 .targetId(report.getTargetId()) // ID самого релиза, а не репорта
-                .performedAt(LocalDateTime.now())
+                .performedAt(now)
                 .build();
         auditRepository.save(audit);
 
-        return reportMapper.toDTO(reportRepository.save(report));
+        return reportMapper.toDTO(report);
     }
 
     @Transactional
@@ -300,19 +333,29 @@ public class ReportService {
             authorService.softDeleteAuthor(report.getTargetId());
         }
 
-        report.setStatus(ReportStatus.RESOLVED);
-        report.setModerator(moderator);
-        report.setResolvedAt(LocalDateTime.now());
+        // Находим все жалобы с таким же типом и targetId
+        List<Report> relatedReports = reportRepository.findAllByTypeAndTargetIdAndStatus(
+            report.getType(), report.getTargetId(), ReportStatus.PENDING
+        );
         
-        // Создаем запись аудита
+        // Обновляем статус для всех связанных жалоб
+        LocalDateTime now = LocalDateTime.now();
+        for (Report relatedReport : relatedReports) {
+            relatedReport.setStatus(ReportStatus.RESOLVED);
+            relatedReport.setModerator(moderator);
+            relatedReport.setResolvedAt(now);
+        }
+        reportRepository.saveAll(relatedReports);
+        
+        // Создаем запись аудита (только одну для всех связанных жалоб)
         Audit audit = Audit.builder()
                 .moderator(moderator)
                 .actionType(AuditAction.AUTHOR_DELETE)
                 .targetId(report.getTargetId()) // ID самого автора, а не репорта
-                .performedAt(LocalDateTime.now())
+                .performedAt(now)
                 .build();
         auditRepository.save(audit);
 
-        return reportMapper.toDTO(reportRepository.save(report));
+        return reportMapper.toDTO(report);
     }
 }
