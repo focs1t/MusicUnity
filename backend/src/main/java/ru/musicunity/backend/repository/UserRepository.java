@@ -45,4 +45,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                      @Param("roleEnum") UserRole roleEnum,
                                      @Param("status") String status, 
                                      Pageable pageable);
+
+    List<User> findByRights(UserRole rights);
 }

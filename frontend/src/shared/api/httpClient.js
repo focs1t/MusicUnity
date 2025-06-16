@@ -12,8 +12,19 @@ const httpClient = axios.create({
 // Интерцептор для добавления токена авторизации в заголовки запросов
 httpClient.interceptors.request.use(
   (config) => {
-    // Проверяем оба хранилища
+    // Проверяем оба хранилища для токена
     let token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    
+    // Проверяем наличие пользовательских данных
+    const userDataLS = localStorage.getItem('user');
+    const userDataSS = sessionStorage.getItem('user');
+    
+    // Логирование для отладки авторизации
+    console.log('httpClient: Проверка авторизации');
+    console.log('httpClient: Токен в localStorage:', localStorage.getItem('token') ? 'Есть' : 'Нет');
+    console.log('httpClient: Токен в sessionStorage:', sessionStorage.getItem('token') ? 'Есть' : 'Нет');
+    console.log('httpClient: Данные пользователя в localStorage:', userDataLS ? 'Есть' : 'Нет');
+    console.log('httpClient: Данные пользователя в sessionStorage:', userDataSS ? 'Есть' : 'Нет');
     
     if (token) {
       // Убираем префикс Bearer если он есть
@@ -21,10 +32,36 @@ httpClient.interceptors.request.use(
       // Проверяем что токен валидный
       if (cleanToken.includes('.')) {
         config.headers.Authorization = `Bearer ${cleanToken}`;
+        console.log('httpClient: Токен добавлен в заголовок запроса');
+        
+        // Декодируем токен для проверки
+        try {
+          const base64Url = cleanToken.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const payload = JSON.parse(jsonPayload);
+          console.log('httpClient: Декодированный токен:', {
+            userId: payload.id || payload.sub,
+            username: payload.sub,
+            exp: new Date(payload.exp * 1000).toLocaleString()
+          });
+        } catch (e) {
+          console.error('httpClient: Ошибка при декодировании токена:', e);
+        }
       } else {
-        console.error('Недействительный формат токена в хранилище');
+        console.error('httpClient: Недействительный формат токена в хранилище');
         localStorage.removeItem('token');
         sessionStorage.removeItem('token');
+      }
+    } else {
+      console.warn('httpClient: Токен не найден в хранилище');
+      
+      // Если нет токена, но есть данные пользователя, пробуем восстановить сессию
+      if (userDataLS || userDataSS) {
+        console.warn('httpClient: Найдены данные пользователя без токена, возможно сессия истекла');
       }
     }
     

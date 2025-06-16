@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-import java.util.Arrays;
 import java.util.Collections;
 
 @Configuration
@@ -27,36 +26,8 @@ public class CorsConfig {
         // Разрешаем все заголовки
         config.addAllowedHeader("*");
         
-        // Добавляем все стандартные заголовки в exposed headers
-        config.setExposedHeaders(Arrays.asList(
-            "Authorization", 
-            "Content-Type", 
-            "Content-Disposition", 
-            "Content-Length", 
-            "X-Requested-With",
-            "Access-Control-Allow-Origin", 
-            "Access-Control-Allow-Headers", 
-            "Access-Control-Allow-Methods",
-            "Access-Control-Allow-Credentials",
-            "Access-Control-Max-Age",
-            "Cache-Control", 
-            "Pragma", 
-            "Expires",
-            "Location",
-            "Accept",
-            "Accept-Encoding",
-            "Accept-Language",
-            "Host",
-            "Origin",
-            "Referer",
-            "Connection",
-            "User-Agent",
-            "X-CSRF-Token",
-            "X-Total-Count",
-            "X-Total-Pages",
-            "X-Current-Page",
-            "X-Page-Size"
-        ));
+        // Разрешаем все заголовки в ответах
+        config.setExposedHeaders(Collections.singletonList("*"));
         
         // Разрешаем передачу учетных данных (cookies, authorization headers)
         config.setAllowCredentials(true);

@@ -18,6 +18,58 @@ export const reviewApi = {
   },
 
   /**
+   * Проверка, есть ли у пользователя рецензия на данный релиз
+   * @param {number} userId - ID пользователя
+   * @param {number} releaseId - ID релиза
+   * @returns {Promise<boolean>} - true, если у пользователя есть рецензия на данный релиз
+   */
+  hasUserReviewed: async (userId, releaseId) => {
+    try {
+      console.log(`Проверка наличия рецензии: userId=${userId}, releaseId=${releaseId}`);
+      
+      if (!userId || !releaseId) {
+        console.error('Отсутствуют обязательные параметры userId или releaseId');
+        return false;
+      }
+      
+      // Получаем данные текущего пользователя из localStorage
+      let currentUserId = userId;
+      try {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          currentUserId = user.id || user.userId || userId;
+          console.log(`Используем ID текущего пользователя: ${currentUserId}`);
+        }
+      } catch (e) {
+        console.error('Ошибка при получении ID из localStorage:', e);
+      }
+      
+      const response = await httpClient.get(`${API_URL}/check`, {
+        params: { userId: currentUserId, releaseId }
+      });
+      
+      console.log('Полный ответ API о наличии рецензии:', response);
+      
+      // Проверяем структуру ответа
+      if (response && response.data) {
+        console.log('Данные ответа API:', response.data);
+        return response.data.hasReviewed === true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Ошибка при проверке наличия рецензии:', error);
+      console.error('Детали запроса:', { userId, releaseId });
+      if (error.response) {
+        console.error('Статус ответа:', error.response.status);
+        console.error('Данные ответа:', error.response.data);
+      }
+      return false;
+    }
+  },
+
+  /**
    * Создание простой оценки
    * @param {number} userId - ID пользователя
    * @param {number} releaseId - ID релиза
@@ -261,10 +313,32 @@ export const reviewApi = {
    */
   getReviewsCountByUser: async (userId) => {
     try {
-      const response = await httpClient.get(`${API_URL}/user/${userId}/count`);
-      return response.data;
+      console.log(`Запрос количества рецензий для пользователя ${userId}`);
+      const response = await httpClient.get(`${API_URL}/user/${userId}/reviews/count`);
+      console.log(`Ответ API о количестве рецензий:`, response.data);
+      
+      // Проверяем формат ответа
+      if (response.data && typeof response.data === 'object') {
+        if (response.data.total !== undefined) {
+          return response.data.total;
+        } else {
+          // Если ответ - объект, но без поля total, возвращаем первое числовое значение
+          const firstNumericValue = Object.values(response.data).find(value => typeof value === 'number');
+          return firstNumericValue !== undefined ? firstNumericValue : 0;
+        }
+      } else if (typeof response.data === 'number') {
+        return response.data;
+      }
+      
+      return 0;
     } catch (error) {
-      throw error;
+      console.error('Ошибка при получении количества рецензий пользователя:', error);
+      console.error('Детали запроса:', { userId });
+      if (error.response) {
+        console.error('Статус ответа:', error.response.status);
+        console.error('Данные ответа:', error.response.data);
+      }
+      return 0;
     }
   },
   
@@ -275,10 +349,18 @@ export const reviewApi = {
    */
   getExtendedReviewsCountByUser: async (userId) => {
     try {
-      const response = await httpClient.get(`${API_URL}/user/${userId}/extended/count`);
-      return response.data;
+      console.log(`Запрос количества полных рецензий для пользователя ${userId}`);
+      const response = await httpClient.get(`${API_URL}/user/${userId}/reviews/extended/count`);
+      console.log(`Ответ API о количестве полных рецензий:`, response.data);
+      return typeof response.data === 'number' ? response.data : 0;
     } catch (error) {
-      throw error;
+      console.error('Ошибка при получении количества полных рецензий пользователя:', error);
+      console.error('Детали запроса:', { userId });
+      if (error.response) {
+        console.error('Статус ответа:', error.response.status);
+        console.error('Данные ответа:', error.response.data);
+      }
+      return 0;
     }
   },
   
@@ -289,10 +371,18 @@ export const reviewApi = {
    */
   getSimpleReviewsCountByUser: async (userId) => {
     try {
-      const response = await httpClient.get(`${API_URL}/user/${userId}/simple/count`);
-      return response.data;
+      console.log(`Запрос количества простых рецензий для пользователя ${userId}`);
+      const response = await httpClient.get(`${API_URL}/user/${userId}/reviews/simple/count`);
+      console.log(`Ответ API о количестве простых рецензий:`, response.data);
+      return typeof response.data === 'number' ? response.data : 0;
     } catch (error) {
-      throw error;
+      console.error('Ошибка при получении количества простых рецензий пользователя:', error);
+      console.error('Детали запроса:', { userId });
+      if (error.response) {
+        console.error('Статус ответа:', error.response.status);
+        console.error('Данные ответа:', error.response.data);
+      }
+      return 0;
     }
   },
 

@@ -44,46 +44,7 @@ import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 const ModeratorReportsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [userDetails, setUserDetails] = useState(null);
-  const [accessLoading, setAccessLoading] = useState(true);
   
-  // Загружаем полные данные пользователя
-  useEffect(() => {
-    const checkAccess = async () => {
-      if (!user) {
-        setAccessLoading(false);
-        return;
-      }
-
-      // Если у пользователя уже есть поле rights, используем его
-      if (user.rights) {
-        setUserDetails(user);
-        setAccessLoading(false);
-        if (user.rights !== 'MODERATOR') {
-          navigate('/');
-        }
-        return;
-      }
-
-      // Иначе загружаем через API
-      try {
-        const userData = await userApi.getCurrentUser();
-        setUserDetails(userData);
-        setAccessLoading(false);
-        
-        if (userData.rights !== 'MODERATOR') {
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки данных пользователя:', error);
-        setAccessLoading(false);
-        navigate('/');
-      }
-    };
-
-    checkAccess();
-  }, [user, navigate]);
-
   // Состояния
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,33 +84,33 @@ const ModeratorReportsPage = () => {
       setSuccess('');
 
       // Проверяем, что у нас есть данные пользователя
-      console.log('Данные пользователя:', userDetails);
-      if (!userDetails || !userDetails.userId) {
-        console.error('Нет данных пользователя:', { userDetails, userId: userDetails?.userId });
+      console.log('Данные пользователя:', user);
+      if (!user || !user.userId) {
+        console.error('Нет данных пользователя:', { user, userId: user?.userId });
         throw new Error('Не удалось получить данные пользователя');
       }
 
-      console.log('Выполняется действие:', actionType, 'для репорта:', reportId, 'модератором:', userDetails.userId);
+      console.log('Выполняется действие:', actionType, 'для репорта:', reportId, 'модератором:', user.userId);
 
       switch (actionType) {
         case 'delete-review':
-          await reportApi.deleteReview(reportId, userDetails.userId);
+          await reportApi.deleteReview(reportId, user.userId);
           setSuccess('Рецензия успешно удалена');
           break;
         case 'delete-author':
-          await reportApi.deleteAuthor(reportId, userDetails.userId);
+          await reportApi.deleteAuthor(reportId, user.userId);
           setSuccess('Автор успешно удален');
           break;
         case 'delete-release':
-          await reportApi.deleteRelease(reportId, userDetails.userId);
+          await reportApi.deleteRelease(reportId, user.userId);
           setSuccess('Релиз успешно удален');
           break;
         case 'ban-user':
-          await reportApi.banUser(reportId, userDetails.userId);
+          await reportApi.banUser(reportId, user.userId);
           setSuccess('Пользователь заблокирован');
           break;
         case 'reject':
-          await reportApi.rejectReport(reportId, userDetails.userId);
+          await reportApi.rejectReport(reportId, user.userId);
           setSuccess('Жалоба отклонена');
           break;
         default:
@@ -400,31 +361,6 @@ const ModeratorReportsPage = () => {
     return (
       <Box sx={{ minHeight: '100vh', bgcolor: '#111', color: 'white', py: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <Typography>Загрузка...</Typography>
-      </Box>
-    );
-  }
-
-  // Если данные еще загружаются, показываем загрузку
-  if (accessLoading || !userDetails) {
-    return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#111', color: 'white', py: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Typography>Проверка прав доступа...</Typography>
-      </Box>
-    );
-  }
-
-  // Если нет прав модератора, показываем ошибку
-  if (userDetails.rights !== 'MODERATOR') {
-    return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#111', color: 'white', py: 4 }}>
-        <Box sx={{ maxWidth: 600, mx: 'auto', px: 3, textAlign: 'center' }}>
-          <Typography variant="h4" gutterBottom>
-            Доступ запрещен
-          </Typography>
-          <Typography>
-            У вас нет прав для просмотра этой страницы.
-          </Typography>
-        </Box>
       </Box>
     );
   }

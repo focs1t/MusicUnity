@@ -9,6 +9,7 @@ import { releaseApi } from '../shared/api/release';
 import { genreApi } from '../shared/api/genre';
 import { authorApi } from '../shared/api/author';
 import { fileApi } from '../shared/api/file';
+import Notification from '../components/Notification';
 
 // Стилизованные компоненты
 const MainContainer = styled(Box)(({ theme }) => ({
@@ -218,6 +219,7 @@ const CreateReleasePage = () => {
   const [genres, setGenres] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [coverPreview, setCoverPreview] = useState(null);
+  const [notification, setNotification] = useState(null);
   
   // Поля для добавления соавторов
   const [authorInput, setAuthorInput] = useState('');
@@ -333,27 +335,37 @@ const CreateReleasePage = () => {
   // Отправка формы
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
+    
     // Валидация
     if (!formData.title.trim()) {
-      setError('Введите название релиза');
+      setNotification({
+        type: 'error',
+        message: 'Введите название релиза'
+      });
       return;
     }
 
     if (!formData.type) {
-      setError('Выберите тип релиза');
-      return;
-    }
-
-    if (!formData.isArtist && !formData.isProducer) {
-      setError('Выберите хотя бы одну роль для себя');
+      setNotification({
+        type: 'error',
+        message: 'Выберите тип релиза'
+      });
       return;
     }
 
     if (formData.genreIds.length === 0) {
-      setError('Выберите хотя бы один жанр');
+      setNotification({
+        type: 'error',
+        message: 'Выберите хотя бы один жанр'
+      });
+      return;
+    }
+
+    if (!formData.isArtist && !formData.isProducer) {
+      setNotification({
+        type: 'error',
+        message: 'Выберите хотя бы одну роль (исполнитель или продюсер)'
+      });
       return;
     }
 
@@ -404,29 +416,46 @@ const CreateReleasePage = () => {
       console.log('Полный объект requestData:', JSON.stringify(requestData, null, 2));
       console.log('==========================');
 
-      const result = await releaseApi.createOwnRelease(requestData);
-      setSuccess('Релиз успешно создан!');
+      // Отправляем данные на сервер
+      const response = await releaseApi.createOwnRelease(requestData);
+      console.log('Релиз создан успешно:', response);
       
-      // Перенаправляем на страницу созданного релиза через 2 секунды
+      // Показываем уведомление об успешном создании
+      setNotification({
+        type: 'success',
+        message: `Релиз "${requestData.title}" успешно создан и ожидает проверки модератором`
+      });
+      
+      // Очищаем форму
+      setFormData({
+        title: '',
+        type: '',
+        releaseDate: new Date().toISOString().split('T')[0],
+        coverFile: null,
+        isArtist: false,
+        isProducer: false,
+        genreIds: [],
+        otherAuthors: []
+      });
+      setCoverPreview(null);
+      
+      // Устанавливаем флаг успеха
+      setSuccess('Релиз успешно создан');
+      
+      // Перенаправляем на страницу релизов через 2 секунды
       setTimeout(() => {
-        navigate(`/release/${result.releaseId}`);
+        navigate('/releases');
       }, 2000);
-
     } catch (err) {
-      console.error('=== ОШИБКА ===');
-      console.error('Полная ошибка:', err);
-      console.error('Response:', err.response);
-      console.error('Response data:', err.response?.data);
-      console.error('Response status:', err.response?.status);
-      console.error('==============');
+      console.error('Ошибка при создании релиза:', err);
       
-      if (err.response?.status === 500) {
-        setError('Внутренняя ошибка сервера. Проверьте корректность данных.');
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError('Произошла ошибка при создании релиза');
-      }
+      // Показываем уведомление об ошибке
+      setNotification({
+        type: 'error',
+        message: 'Ошибка при создании релиза: ' + (err.response?.data?.message || err.message)
+      });
+      
+      setError('Ошибка при создании релиза: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -434,6 +463,14 @@ const CreateReleasePage = () => {
 
   return (
     <MainContainer>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      
       <ContentContainer>
         <Typography variant="h3" sx={{ fontWeight: 600, fontSize: '1.5rem', mb: 2, color: 'white' }}>
           Создать релиз

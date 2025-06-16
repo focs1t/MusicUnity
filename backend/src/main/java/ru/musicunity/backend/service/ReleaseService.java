@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,6 +21,7 @@ import ru.musicunity.backend.mapper.UserMapper;
 import ru.musicunity.backend.pojo.*;
 import ru.musicunity.backend.pojo.enums.AuditAction;
 import ru.musicunity.backend.pojo.enums.ReviewType;
+import ru.musicunity.backend.pojo.enums.UserRole;
 import ru.musicunity.backend.repository.*;
 import ru.musicunity.backend.repository.LikeRepository;
 
@@ -121,18 +123,18 @@ public class ReleaseService {
     @Transactional
     @PreAuthorize("hasRole('AUTHOR')")
     public ReleaseDTO createOwnRelease(CreateOwnReleaseRequest request) {
-        // Получаем текущего пользователя
+        // Получаем текущего пользователя (автора)
         User currentUser = userService.getCurrentUser();
         
-        // Проверяем, что пользователь является автором
-        Author userAuthor = authorRepository.findByUserUserId(currentUser.getUserId())
-                .orElseThrow(UserIsNotAuthorException::new);
-
-        // Проверяем, что выбрана хотя бы одна роль
-        if (!request.isArtist() && !request.isProducer()) {
-            throw new NoRoleSelectedException();
+        // Проверяем, что пользователь имеет роль AUTHOR
+        if (currentUser.getRights() != UserRole.AUTHOR) {
+            throw new AccessDeniedException("Только авторы могут создавать релизы");
         }
-
+        
+        // Получаем профиль автора
+        Author author = authorRepository.findByUserUserId(currentUser.getUserId())
+                .orElseThrow(() -> new RuntimeException("Профиль автора не найден для пользователя"));
+        
         // Создаем релиз
         Release release = Release.builder()
                 .title(request.getTitle())
@@ -144,68 +146,18 @@ public class ReleaseService {
                 .build();
         
         release = releaseRepository.save(release);
-
-        // Обновляем роли текущего автора если необходимо
-        if (request.isArtist() && !userAuthor.getIsArtist()) {
-            userAuthor.setIsArtist(true);
-        }
-        if (request.isProducer() && !userAuthor.getIsProducer()) {
-            userAuthor.setIsProducer(true);
-        }
-        userAuthor = authorRepository.save(userAuthor);
         
-        // Добавляем текущего пользователя как автора
-        ReleaseAuthor userReleaseAuthor = ReleaseAuthor.builder()
-                .id(new ReleaseAuthor.ReleaseAuthorId(release.getReleaseId(), userAuthor.getAuthorId()))
-                .release(release)
-                .author(userAuthor)
-                .isArtist(request.isArtist())
-                .isProducer(request.isProducer())
-                .build();
-        release.getAuthors().add(userReleaseAuthor);
-
-        // Добавляем других авторов
-        if (request.getOtherAuthors() != null) {
-            for (CreateOwnReleaseRequest.AuthorRoleRequest authorRequest : request.getOtherAuthors()) {
-                // Проверяем существует ли автор
-                Optional<Author> existingAuthor = authorRepository.findByAuthorName(authorRequest.getAuthorName());
-                Author author;
-
-                if (existingAuthor.isPresent()) {
-                    author = existingAuthor.get();
-                    // Обновляем роли автора если необходимо
-                    if (authorRequest.isArtist() && !author.getIsArtist()) {
-                        author.setIsArtist(true);
-                    }
-                    if (authorRequest.isProducer() && !author.getIsProducer()) {
-                        author.setIsProducer(true);
-                    }
-                    author = authorRepository.save(author);
-                } else {
-                    // Создаем нового автора
-                    author = Author.builder()
-                            .authorName(authorRequest.getAuthorName())
-                            .isArtist(authorRequest.isArtist())
-                            .isProducer(authorRequest.isProducer())
-                            .isVerified(false)
-                            .followingCount(0)
-                            .isDeleted(false)
-                            .build();
-                    author = authorRepository.save(author);
-                }
-
-                // Создаем связь автора с релизом
-                ReleaseAuthor releaseAuthor = ReleaseAuthor.builder()
-                        .id(new ReleaseAuthor.ReleaseAuthorId(release.getReleaseId(), author.getAuthorId()))
-                        .release(release)
-                        .author(author)
-                        .isArtist(authorRequest.isArtist())
-                        .isProducer(authorRequest.isProducer())
-                        .build();
-                release.getAuthors().add(releaseAuthor);
-            }
-        }
-
+        // Добавляем автора как основного исполнителя и продюсера
+        ReleaseAuthor releaseAuthor = new ReleaseAuthor();
+        releaseAuthor.setRelease(release);
+        releaseAuthor.setAuthor(author);
+        releaseAuthor.setIsArtist(true);
+        releaseAuthor.setIsProducer(true);
+        
+        // Создаем ID для связи
+        releaseAuthor.setId(new ReleaseAuthor.ReleaseAuthorId(release.getReleaseId(), author.getAuthorId()));
+        release.getAuthors().add(releaseAuthor);
+        
         // Добавляем жанры
         for (Long genreId : request.getGenreIds()) {
             Genre genre = genreRepository.findById(genreId)
@@ -216,13 +168,13 @@ public class ReleaseService {
         // Создаем запись аудита
         Audit audit = Audit.builder()
                 .moderator(currentUser)
-                .actionType(AuditAction.RELEASE_CREATE_OWN)
+                .actionType(AuditAction.RELEASE_ADD)
                 .targetId(release.getReleaseId())
                 .performedAt(LocalDateTime.now())
                 .build();
         auditRepository.save(audit);
-
-        return releaseMapper.toDTO(releaseRepository.save(release));
+        
+        return releaseMapper.toDTO(release);
     }
 
     @Transactional

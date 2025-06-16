@@ -960,234 +960,257 @@ const ProfilePage = () => {
         }
         
         // Получение статистики
-        const [
-          receivedLikes,
-          givenLikes,
-          authorLikes,
-          reviewsCount,
-          extendedReviewsCount,
-          simpleReviewsCount,
-          followedAuthorsData,
-          favoritesData,
-          likedReviewsData
-        ] = await Promise.all([
-          likeApi.getReceivedLikesCountByUser(userData.userId),
-          likeApi.getGivenLikesCountByUser(userData.userId),
-          likeApi.getReceivedAuthorLikesCountByUser(userData.userId),
-          reviewApi.getReviewsCountByUser(userData.userId),
-          reviewApi.getExtendedReviewsCountByUser(userData.userId),
-          reviewApi.getSimpleReviewsCountByUser(userData.userId),
-          userApi.getUserFollowedAuthors(userData.userId, 0, 5),
-          userApi.getUserFavorites(userData.userId, 0, 5),
-          likeApi.getLikedReviewsByUser(userData.userId, 0, 100)
-        ]);
-        
-        // Обновление статистики
-        setStats({
-          receivedLikes,
-          givenLikes,
-          receivedAuthorLikes: authorLikes,
-          totalReviews: reviewsCount,
-          extendedReviews: extendedReviewsCount,
-          simpleReviews: simpleReviewsCount,
-          followedAuthors: followedAuthorsData.totalElements || 0,
-          favorites: favoritesData.totalElements || 0
-        });
-        
-        // Получаем список ID рецензий, которые пользователь лайкнул
-        if (likedReviewsData && likedReviewsData.content) {
-          const reviewIds = likedReviewsData.content.map(review => review.reviewId || review.id);
-          console.log('Получены ID лайкнутых рецензий:', reviewIds);
-          setLikedReviewIds(reviewIds.filter(id => id)); // Отфильтровываем undefined и null
+        try {
+          console.log('Начинаем загрузку статистики для пользователя:', userData.userId);
           
-          // Загружаем также полные данные о лайкнутых рецензиях для вкладки "Понравилось"
-          if (likedReviewsData.content.length > 0) {
-            const updatedLikedReviews = await Promise.all(
-              likedReviewsData.content.slice(0, 5).map(async (review) => {
-                try {
-                  const likesCount = await likeApi.getLikesCountByReview(review.reviewId);
-                  
-                  // Проверяем и дополняем данные пользователя, если они отсутствуют или неполные
-                  let updatedUser = review.user;
-                  if (!updatedUser || !updatedUser.username) {
-                    if (review.userId) {
-                      try {
-                        const userData = await userApi.getUserById(review.userId);
-                        if (userData) {
-                          updatedUser = userData;
-                        }
-                      } catch (userError) {
-                        console.error(`Не удалось загрузить данные пользователя для рецензии ID ${review.reviewId}:`, userError);
-                      }
-                    }
-                  }
-                  
-                  // Проверяем и дополняем данные релиза, если они отсутствуют или неполные
-                  let updatedRelease = review.release;
-                  if (!updatedRelease || !updatedRelease.coverUrl) {
-                    if (review.releaseId) {
-                      try {
-                        const releaseData = await releaseApi.getReleaseById(review.releaseId);
-                        if (releaseData) {
-                          updatedRelease = releaseData;
-                        }
-                      } catch (releaseError) {
-                        console.error(`Не удалось загрузить данные релиза для рецензии ID ${review.reviewId}:`, releaseError);
-                      }
-                    }
-                  }
-                  
-                  return {
-                    ...review,
-                    likesCount,
-                    user: updatedUser,
-                    release: updatedRelease
-                  };
-                } catch (error) {
-                  console.error(`Ошибка при обновлении данных для лайкнутой рецензии ID ${review.reviewId}:`, error);
-                  return review;
-                }
-              })
-            );
+          // Используем Promise.allSettled вместо Promise.all для обработки частичных ошибок
+          const results = await Promise.allSettled([
+            likeApi.getReceivedLikesCountByUser(userData.userId),
+            likeApi.getGivenLikesCountByUser(userData.userId),
+            likeApi.getReceivedAuthorLikesCountByUser(userData.userId),
+            reviewApi.getReviewsCountByUser(userData.userId),
+            reviewApi.getExtendedReviewsCountByUser(userData.userId),
+            reviewApi.getSimpleReviewsCountByUser(userData.userId),
+            userApi.getUserFollowedAuthors(userData.userId, 0, 5),
+            userApi.getUserFavorites(userData.userId, 0, 5),
+            likeApi.getLikedReviewsByUser(userData.userId, 0, 100)
+          ]);
+          
+          console.log('Результаты загрузки статистики:', results);
+          
+          // Извлекаем значения или устанавливаем значения по умолчанию
+          const [
+            receivedLikes,
+            givenLikes,
+            authorLikes,
+            reviewsCount,
+            extendedReviewsCount,
+            simpleReviewsCount,
+            followedAuthorsData,
+            favoritesData,
+            likedReviewsData
+          ] = results.map(result => result.status === 'fulfilled' ? result.value : null);
+          
+          // Обновление статистики с проверками на null
+          setStats({
+            receivedLikes: receivedLikes || 0,
+            givenLikes: givenLikes || 0,
+            receivedAuthorLikes: authorLikes || 0,
+            totalReviews: reviewsCount || 0,
+            extendedReviews: extendedReviewsCount || 0,
+            simpleReviews: simpleReviewsCount || 0,
+            followedAuthors: followedAuthorsData?.totalElements || 0,
+            favorites: favoritesData?.totalElements || 0
+          });
+          
+          // Получаем список ID рецензий, которые пользователь лайкнул
+          if (likedReviewsData && likedReviewsData.content) {
+            const reviewIds = likedReviewsData.content.map(review => review.reviewId || review.id);
+            console.log('Получены ID лайкнутых рецензий:', reviewIds);
+            setLikedReviewIds(reviewIds.filter(id => id)); // Отфильтровываем undefined и null
             
-            setLikedReviews(updatedLikedReviews);
+            // Загружаем также полные данные о лайкнутых рецензиях для вкладки "Понравилось"
+            if (likedReviewsData.content.length > 0) {
+              const updatedLikedReviews = await Promise.all(
+                likedReviewsData.content.slice(0, 5).map(async (review) => {
+                  try {
+                    const likesCount = await likeApi.getLikesCountByReview(review.reviewId);
+                    
+                    // Проверяем и дополняем данные пользователя, если они отсутствуют или неполные
+                    let updatedUser = review.user;
+                    if (!updatedUser || !updatedUser.username) {
+                      if (review.userId) {
+                        try {
+                          const userData = await userApi.getUserById(review.userId);
+                          if (userData) {
+                            updatedUser = userData;
+                          }
+                        } catch (userError) {
+                          console.error(`Не удалось загрузить данные пользователя для рецензии ID ${review.reviewId}:`, userError);
+                        }
+                      }
+                    }
+                    
+                    // Проверяем и дополняем данные релиза, если они отсутствуют или неполные
+                    let updatedRelease = review.release;
+                    if (!updatedRelease || !updatedRelease.coverUrl) {
+                      if (review.releaseId) {
+                        try {
+                          const releaseData = await releaseApi.getReleaseById(review.releaseId);
+                          if (releaseData) {
+                            updatedRelease = releaseData;
+                          }
+                        } catch (releaseError) {
+                          console.error(`Не удалось загрузить данные релиза для рецензии ID ${review.reviewId}:`, releaseError);
+                        }
+                      }
+                    }
+                    
+                    return {
+                      ...review,
+                      likesCount,
+                      user: updatedUser,
+                      release: updatedRelease
+                    };
+                  } catch (error) {
+                    console.error(`Ошибка при обновлении данных для лайкнутой рецензии ID ${review.reviewId}:`, error);
+                    return review;
+                  }
+                })
+              );
+              
+              setLikedReviews(updatedLikedReviews);
+            }
+          } else {
+            setLikedReviewIds([]);
+            setLikedReviews([]);
           }
-        } else {
-          setLikedReviewIds([]);
-          setLikedReviews([]);
-        }
-        
-        // Второй вызов setStats удален, чтобы не перезаписывать значения полей extendedReviews и simpleReviews
-        
-        // Детальное логирование данных
-        console.log('Авторы (оригинальные данные):', followedAuthorsData);
-        console.log('Релизы (оригинальные данные):', favoritesData);
-        
-        // Обработка и нормализация данных авторов
-        let processedAuthors = [];
-        let newAuthorAvatarUrls = {};
-        
-        if (followedAuthorsData && followedAuthorsData.content) {
-          processedAuthors = followedAuthorsData.content.map(author => {
-            console.log('Обрабатываем автора:', author);
-            
-            // Сохраняем URL аватара автора в кеш
-            if (author.authorId && author.avatarUrl) {
-              // Обрабатываем URL аватара перед сохранением
-              try {
-                // Пытаемся декодировать URL, если он содержит закодированные символы
-                let processedUrl = safeDecodeUrl(author.avatarUrl);
-                
-                // Проверяем является ли строка URL валидным URL
-                new URL(processedUrl);
-                
-                // Обрезаем URL, если он содержит параметры запроса
-                if (processedUrl.includes('?')) {
-                  processedUrl = processedUrl.split('?')[0];
-                  console.log(`URL аватара для автора ${author.name} слишком длинный, используем базовый URL:`, processedUrl);
+          
+          // Детальное логирование данных
+          console.log('Авторы (оригинальные данные):', followedAuthorsData);
+          console.log('Релизы (оригинальные данные):', favoritesData);
+          
+          // Обработка и нормализация данных авторов
+          let processedAuthors = [];
+          let newAuthorAvatarUrls = {};
+          
+          if (followedAuthorsData && followedAuthorsData.content) {
+            processedAuthors = followedAuthorsData.content.map(author => {
+              console.log('Обрабатываем автора:', author);
+              
+              // Сохраняем URL аватара автора в кеш
+              if (author.authorId && author.avatarUrl) {
+                // Обрабатываем URL аватара перед сохранением
+                try {
+                  // Пытаемся декодировать URL, если он содержит закодированные символы
+                  let processedUrl = safeDecodeUrl(author.avatarUrl);
+                  
+                  // Проверяем является ли строка URL валидным URL
+                  new URL(processedUrl);
+                  
+                  // Обрезаем URL, если он содержит параметры запроса
+                  if (processedUrl.includes('?')) {
+                    processedUrl = processedUrl.split('?')[0];
+                    console.log(`URL аватара для автора ${author.name} слишком длинный, используем базовый URL:`, processedUrl);
+                  }
+                  
+                  newAuthorAvatarUrls[author.authorId] = processedUrl;
+                } catch (e) {
+                  console.error(`Некорректный URL аватара для автора ${author.name || author.authorId}:`, author.avatarUrl);
+                  newAuthorAvatarUrls[author.authorId] = DEFAULT_AVATAR_PLACEHOLDER;
                 }
-                
-                newAuthorAvatarUrls[author.authorId] = processedUrl;
-              } catch (e) {
-                console.error(`Некорректный URL аватара для автора ${author.name || author.authorId}:`, author.avatarUrl);
-                newAuthorAvatarUrls[author.authorId] = DEFAULT_AVATAR_PLACEHOLDER;
+              }
+              
+              // Проверяем, что автор имеет все необходимые поля
+              return {
+                authorId: author.authorId || 0,
+                name: author.name || author.authorName || "Неизвестный автор",
+                avatarUrl: author.avatarUrl || null,
+                isArtist: author.isArtist || false,
+                isProducer: author.isProducer || false
+              };
+            });
+            
+            // Обновляем кеш URL аватаров авторов
+            setAuthorAvatarUrls(prev => ({...prev, ...newAuthorAvatarUrls}));
+          }
+          
+          // Обработка и нормализация данных релизов
+          let processedReleasesData = [];
+          if (favoritesData && favoritesData.content) {
+            processedReleasesData = favoritesData.content.map(release => {
+              console.log('Обрабатываем релиз:', release);
+              
+              // Определяем тип релиза, учитывая разные форматы данных
+              let releaseType = 'UNKNOWN';
+              if (release.releaseType) {
+                releaseType = release.releaseType;
+              } else if (release.type) {
+                releaseType = release.type;
+              } else if (typeof release.isSingle !== 'undefined') {
+                releaseType = release.isSingle ? 'SINGLE' : 'ALBUM';
+              }
+              
+              // Нормализуем тип релиза к верхнему регистру для единообразия
+              releaseType = typeof releaseType === 'string' ? releaseType.toUpperCase() : 'UNKNOWN';
+              
+              console.log(`Определен тип релиза "${release.title}": ${releaseType}`);
+              
+              // Проверяем, что релиз имеет все необходимые поля
+              return {
+                releaseId: release.releaseId || 0,
+                title: release.title || "Неизвестный релиз",
+                coverUrl: release.coverUrl || null,
+                releaseDate: release.releaseDate || null,
+                authors: release.authors || [],
+                releaseType: releaseType
+              };
+            });
+          }
+          
+          console.log('Авторы (обработанные):', processedAuthors);
+          console.log('Релизы (обработанные):', processedReleasesData);
+          
+          // Дополнительно группируем релизы по типам
+          const albums = processedReleasesData.filter(r => r.releaseType === 'ALBUM');
+          const singlesAndEps = processedReleasesData.filter(r => r.releaseType === 'SINGLE' || r.releaseType === 'EP');
+          const unknownReleases = processedReleasesData.filter(r => 
+            !['ALBUM', 'SINGLE', 'EP'].includes(r.releaseType)
+          );
+          
+          console.log('Разбивка релизов по типам:');
+          console.log('Альбомы:', albums.length);
+          console.log('Синглы и EP:', singlesAndEps.length);
+          console.log('Неизвестные:', unknownReleases.length);
+          
+          setFollowedAuthors(processedAuthors);
+          setFavoriteReleases(favoritesData.content || []);
+          setProcessedReleases(processedReleasesData);
+          setAlbumReleases(albums);
+          setSingleReleases(singlesAndEps);
+          setEpReleases([]);  // Больше не используем отдельно
+          setOtherReleases(unknownReleases);
+          setTotalPages(Math.max(
+            followedAuthorsData?.totalPages || 1,
+            favoritesData?.totalPages || 1
+          ));
+          
+          setError(null);
+          
+          // Всегда получаем лайкнутые рецензии текущего пользователя для отображения статуса лайков
+          // даже когда просматриваем чужой профиль
+          try {
+            // Определяем ID текущего пользователя
+            const currentUserId = getCurrentUserId();
+            if (currentUserId) {
+              const currentUserLikedReviews = await likeApi.getLikedReviewsByUser(currentUserId, 0, 100);
+              if (currentUserLikedReviews && currentUserLikedReviews.content) {
+                const likedIds = currentUserLikedReviews.content
+                  .map(review => review.reviewId || review.id)
+                  .filter(id => id);
+                  
+                console.log('Лайкнутые рецензии текущего пользователя:', likedIds);
+                setLikedReviewIds(likedIds);
               }
             }
-            
-            // Проверяем, что автор имеет все необходимые поля
-            return {
-              authorId: author.authorId || 0,
-              name: author.name || author.authorName || "Неизвестный автор",
-              avatarUrl: author.avatarUrl || null,
-              isArtist: author.isArtist || false,
-              isProducer: author.isProducer || false
-            };
-          });
-          
-          // Обновляем кеш URL аватаров авторов
-          setAuthorAvatarUrls(prev => ({...prev, ...newAuthorAvatarUrls}));
-        }
-        
-        // Обработка и нормализация данных релизов
-        let processedReleasesData = [];
-        if (favoritesData && favoritesData.content) {
-          processedReleasesData = favoritesData.content.map(release => {
-            console.log('Обрабатываем релиз:', release);
-            
-            // Определяем тип релиза, учитывая разные форматы данных
-            let releaseType = 'UNKNOWN';
-            if (release.releaseType) {
-              releaseType = release.releaseType;
-            } else if (release.type) {
-              releaseType = release.type;
-            } else if (typeof release.isSingle !== 'undefined') {
-              releaseType = release.isSingle ? 'SINGLE' : 'ALBUM';
-            }
-            
-            // Нормализуем тип релиза к верхнему регистру для единообразия
-            releaseType = typeof releaseType === 'string' ? releaseType.toUpperCase() : 'UNKNOWN';
-            
-            console.log(`Определен тип релиза "${release.title}": ${releaseType}`);
-            
-            // Проверяем, что релиз имеет все необходимые поля
-            return {
-              releaseId: release.releaseId || 0,
-              title: release.title || "Неизвестный релиз",
-              coverUrl: release.coverUrl || null,
-              releaseDate: release.releaseDate || null,
-              authors: release.authors || [],
-              releaseType: releaseType
-            };
-          });
-        }
-        
-        console.log('Авторы (обработанные):', processedAuthors);
-        console.log('Релизы (обработанные):', processedReleasesData);
-        
-        // Дополнительно группируем релизы по типам
-        const albums = processedReleasesData.filter(r => r.releaseType === 'ALBUM');
-        const singlesAndEps = processedReleasesData.filter(r => r.releaseType === 'SINGLE' || r.releaseType === 'EP');
-        const unknownReleases = processedReleasesData.filter(r => 
-          !['ALBUM', 'SINGLE', 'EP'].includes(r.releaseType)
-        );
-        
-        console.log('Разбивка релизов по типам:');
-        console.log('Альбомы:', albums.length);
-        console.log('Синглы и EP:', singlesAndEps.length);
-        console.log('Неизвестные:', unknownReleases.length);
-        
-        setFollowedAuthors(processedAuthors);
-        setFavoriteReleases(favoritesData.content || []);
-        setProcessedReleases(processedReleasesData);
-        setAlbumReleases(albums);
-        setSingleReleases(singlesAndEps);
-        setEpReleases([]);  // Больше не используем отдельно
-        setOtherReleases(unknownReleases);
-        setTotalPages(Math.max(
-          followedAuthorsData.totalPages || 1,
-          favoritesData.totalPages || 1
-        ));
-        
-        setError(null);
-        
-        // Всегда получаем лайкнутые рецензии текущего пользователя для отображения статуса лайков
-        // даже когда просматриваем чужой профиль
-        try {
-          // Определяем ID текущего пользователя
-          const currentUserId = getCurrentUserId();
-          if (currentUserId) {
-            const currentUserLikedReviews = await likeApi.getLikedReviewsByUser(currentUserId, 0, 100);
-            if (currentUserLikedReviews && currentUserLikedReviews.content) {
-              const likedIds = currentUserLikedReviews.content
-                .map(review => review.reviewId || review.id)
-                .filter(id => id);
-                
-              console.log('Лайкнутые рецензии текущего пользователя:', likedIds);
-              setLikedReviewIds(likedIds);
-            }
+          } catch (likedError) {
+            console.error('Ошибка при получении лайкнутых рецензий текущего пользователя:', likedError);
           }
-        } catch (likedError) {
-          console.error('Ошибка при получении лайкнутых рецензий текущего пользователя:', likedError);
+        } catch (statsError) {
+          console.error('Ошибка при загрузке статистики пользователя:', statsError);
+          // Устанавливаем дефолтные значения для статистики
+          setStats({
+            receivedLikes: 0,
+            givenLikes: 0,
+            receivedAuthorLikes: 0,
+            totalReviews: 0,
+            extendedReviews: 0,
+            simpleReviews: 0,
+            followedAuthors: 0,
+            favorites: 0
+          });
+          setLikedReviewIds([]);
+          setLikedReviews([]);
         }
       } catch (err) {
         console.error('Ошибка при загрузке данных пользователя:', err);

@@ -284,4 +284,26 @@ public class ReviewService {
                 .simple(simpleRatings)
                 .build();
     }
+
+    /**
+     * Проверка существования рецензии от пользователя на конкретный релиз
+     * @param userId ID пользователя
+     * @param releaseId ID релиза
+     * @return true, если рецензия существует и не удалена
+     */
+    public boolean hasUserReviewedRelease(Long userId, Long releaseId) {
+        System.out.println("DEBUG: Проверка наличия рецензии в сервисе - userId: " + userId + ", releaseId: " + releaseId);
+        
+        try {
+            // Используем более надежный метод с подсчетом количества рецензий
+            long count = reviewRepository.countDetailedByUserAndRelease(userId, releaseId);
+            System.out.println("DEBUG: Количество найденных рецензий: " + count);
+            return count > 0;
+        } catch (Exception e) {
+            System.err.println("ERROR: Ошибка при проверке наличия рецензии: " + e.getMessage());
+            e.printStackTrace();
+            // В случае ошибки возвращаем false для безопасности
+            return false;
+        }
+    }
 }

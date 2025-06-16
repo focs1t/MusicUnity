@@ -27,35 +27,51 @@ const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjA
 // Функция для получения текущего ID пользователя из localStorage
 const getCurrentUserId = () => {
   try {
-    const userDataFromStorage = localStorage.getItem('userData');
-    if (userDataFromStorage) {
-      const userData = JSON.parse(userDataFromStorage);
+    // Проверяем localStorage и sessionStorage на наличие данных пользователя
+    const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
       const userId = userData?.id || userData?.userId;
       if (userId) {
-        console.log('ID пользователя из localStorage:', userId);
+        console.log('ID пользователя из хранилища данных:', userId);
         return parseInt(userId, 10) || null;
       }
     }
-  } catch (error) {
-    console.error('Ошибка при парсинге userData из localStorage:', error);
-  }
-  
-  // Пытаемся получить из токена
-  try {
-    const tokenFromStorage = localStorage.getItem('authToken') || localStorage.getItem('token');
-    if (tokenFromStorage) {
-      const tokenParts = tokenFromStorage.split('.');
-      if (tokenParts.length === 3) {
-        const payload = JSON.parse(atob(tokenParts[1]));
-        const userIdFromToken = payload?.userId || payload?.id || payload?.sub;
-        if (userIdFromToken) {
-          console.log('ID пользователя из токена:', userIdFromToken);
-          return parseInt(userIdFromToken, 10) || null;
+    
+    // Если данные пользователя не найдены, пробуем получить из токена
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      try {
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          const base64Url = tokenParts[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const payload = JSON.parse(jsonPayload);
+          const userIdFromToken = payload?.id || payload?.sub;
+          if (userIdFromToken) {
+            console.log('ID пользователя из токена:', userIdFromToken);
+            
+            // Сохраняем данные пользователя для будущих обращений
+            const user = {
+              userId: userIdFromToken,
+              username: payload.sub,
+              role: payload.role
+            };
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            return parseInt(userIdFromToken, 10) || null;
+          }
         }
+      } catch (tokenError) {
+        console.error('Ошибка при декодировании токена:', tokenError);
       }
     }
   } catch (error) {
-    console.error('Ошибка при декодинге токена:', error);
+    console.error('Ошибка при получении ID пользователя:', error);
   }
   
   console.log('ID пользователя не найден');

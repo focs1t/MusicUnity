@@ -32,6 +32,8 @@ import PrivacyPolicyPage from '../../../../pages/PrivacyPolicyPage';
 import AboutPage from '../../../../pages/AboutPage';
 import ContactPage from '../../../../pages/ContactPage';
 import FAQPage from '../../../../pages/FAQPage';
+import { useSelector } from 'react-redux';
+import { Navigate as ReactNavigate, useLocation } from 'react-router-dom';
 
 // Компонент для публичных маршрутов
 const PublicRoute = ({ element }) => {
@@ -41,6 +43,23 @@ const PublicRoute = ({ element }) => {
 // Компонент для защищенных маршрутов
 const ProtectedRoute = ({ element }) => {
   return <AuthGuard>{element}</AuthGuard>;
+};
+
+// Компонент для маршрутов, требующих роли модератора
+const ModeratorRoute = ({ element }) => {
+  const { user } = useSelector(state => state.auth);
+  const location = useLocation();
+
+  // Проверяем, авторизован ли пользователь и имеет ли роль модератора
+  if (!user) {
+    return <ReactNavigate to="/" state={{ from: location, requireAuth: true }} replace />;
+  }
+
+  if (user.rights !== 'MODERATOR') {
+    return <ReactNavigate to="/" replace />;
+  }
+
+  return element;
 };
 
 const AppRouter = () => {
@@ -64,8 +83,8 @@ const AppRouter = () => {
       <Route path={ROUTES.CREATE_RELEASE} element={<ProtectedRoute element={<CreateReleasePage />} />} />
       
       {/* Роуты для модератора */}
-      <Route path={ROUTES.MODERATOR_CREATE_RELEASE} element={<ProtectedRoute element={<ModeratorCreateReleasePage />} />} />
-      <Route path={ROUTES.MODERATOR_REPORTS} element={<ProtectedRoute element={<ModeratorReportsPage />} />} />
+      <Route path={ROUTES.MODERATOR_CREATE_RELEASE} element={<ModeratorRoute element={<ModeratorCreateReleasePage />} />} />
+      <Route path={ROUTES.MODERATOR_REPORTS} element={<ModeratorRoute element={<ModeratorReportsPage />} />} />
       
       {/* Общедоступные страницы */}
       <Route path={ROUTES.RELEASES} element={<PublicRoute element={<ReleasesPage />} />} />

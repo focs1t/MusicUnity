@@ -6,58 +6,106 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.records.AuthResponse;
+import ru.musicunity.backend.pojo.records.JwtResponse;
 import ru.musicunity.backend.pojo.records.LoginRequest;
 import ru.musicunity.backend.pojo.records.RegisterRequest;
+import ru.musicunity.backend.repository.UserRepository;
+import ru.musicunity.backend.security.JwtService;
+import ru.musicunity.backend.security.UserDetailsImpl;
 import ru.musicunity.backend.service.AuthService;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Аутентификация", description = "API для аутентификации и регистрации пользователей")
+@Tag(name = "Аутентификация", description = "API для регистрации, входа и управления аутентификацией")
+@Slf4j
 public class AuthController {
     private final AuthService authService;
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
 
     @Operation(summary = "Вход в систему", description = "Аутентификация пользователя и получение JWT токена")
-    @ApiResponses(value = {
+    @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Успешная аутентификация"),
         @ApiResponse(responseCode = "401", description = "Неверные учетные данные"),
         @ApiResponse(responseCode = "403", description = "Аккаунт заблокирован")
     })
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<JwtResponse> login(@RequestParam String username, @RequestParam String password) {
+        log.info("Попытка входа пользователя: {}", username);
+        
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    request.username(),
-                    request.password()
-                )
-            );
-            return ResponseEntity.ok(authService.generateToken(authentication));
+            // Проверяем, является ли username email-адресом
+            boolean isEmail = username.contains("@");
+            
+            Authentication authentication;
+            if (isEmail) {
+                // Если username - это email, найдем пользователя по email и используем его имя пользователя
+                Optional<User> userOpt = userRepository.findByEmail(username);
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+                    authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(user.getUsername(), password)
+                    );
+                } else {
+                    throw new UsernameNotFoundException("Пользователь с email " + username + " не найден");
+                }
+            } else {
+                // Обычная аутентификация по имени пользователя
+                authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+                );
+            }
+            
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userDetails.getUser();
+            
+            // Проверяем, не заблокирован ли пользователь
+            if (user.getIsBlocked()) {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new JwtResponse(null, "Аккаунт заблокирован"));
+            }
+            
+            // Генерируем токен
+            String token = jwtService.generateToken(user);
+            
+            log.info("Успешный вход пользователя: {}", username);
+            return ResponseEntity.ok(new JwtResponse(token, "Авторизация успешна"));
         } catch (BadCredentialsException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Неверное имя пользователя или пароль");
-            return ResponseEntity.status(401).body(error);
-        } catch (LockedException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Аккаунт заблокирован");
-            return ResponseEntity.status(403).body(error);
-        } catch (AuthenticationException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Ошибка аутентификации");
-            return ResponseEntity.status(401).body(error);
+            log.warn("Неверные учетные данные для пользователя: {}", username);
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new JwtResponse(null, "Неверное имя пользователя или пароль"));
+        } catch (UsernameNotFoundException e) {
+            log.warn("Пользователь не найден: {}", username);
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new JwtResponse(null, "Неверное имя пользователя или пароль"));
+        } catch (Exception e) {
+            log.error("Ошибка при авторизации пользователя {}: {}", username, e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new JwtResponse(null, "Внутренняя ошибка сервера"));
         }
     }
 
