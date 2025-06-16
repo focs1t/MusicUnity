@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Возвращаем полный URL к API серверу, так как прокси не работает
 const httpClient = axios.create({
-  baseURL: 'http://192.168.31.31:8080',
+  baseURL: 'http://26.179.22.134:8080',
   headers: {
     'Content-Type': 'application/json'
   },
