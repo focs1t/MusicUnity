@@ -56,6 +56,8 @@ const ModeratorReportsPage = () => {
   const [actionDialog, setActionDialog] = useState({ open: false, type: '', report: null });
   const [reasonDialog, setReasonDialog] = useState({ open: false, reason: '' });
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [allReports, setAllReports] = useState([]);
+  const [duplicateReports, setDuplicateReports] = useState([]);
 
   // Проверка прав доступа
   useEffect(() => {
@@ -101,6 +103,18 @@ const ModeratorReportsPage = () => {
       setReports(response.content || []);
       setTotalPages(response.totalPages || 0);
       setPage(pageNumber);
+      
+      // Загружаем все репорты для сортировки
+      if (sortConfig.key) {
+        const allData = [];
+        for (let i = 0; i < response.totalPages; i++) {
+          const pageData = await reportApi.getPendingReports(i, 10);
+          if (pageData.content) {
+            allData.push(...pageData.content);
+          }
+        }
+        setAllReports(allData);
+      }
     } catch (err) {
       console.error('Ошибка загрузки репортов:', err);
       setError('Ошибка при загрузке репортов: ' + (err.response?.data?.message || err.message));
@@ -121,36 +135,72 @@ const ModeratorReportsPage = () => {
 
       // Проверяем, что у нас есть данные пользователя
       console.log('Данные пользователя:', user);
-      if (!user || !user.userId) {
-        console.error('Нет данных пользователя:', { user, userId: user?.userId });
+      if (!user || !user.id) {
+        console.error('Нет данных пользователя:', { user });
         throw new Error('Не удалось получить данные пользователя');
       }
 
-      console.log('Выполняется действие:', actionType, 'для репорта:', reportId, 'модератором:', user.userId);
+      const moderatorId = user.id;
+      console.log('Выполняется действие:', actionType, 'для репорта:', reportId, 'модератором:', moderatorId);
+
+      let targetId = null;
+      let targetType = null;
+      
+      // Получаем информацию о текущей жалобе
+      const currentReport = reports.find(r => r.reportId === reportId);
+      if (currentReport) {
+        targetId = currentReport.targetId;
+        targetType = currentReport.type;
+      }
 
       switch (actionType) {
         case 'delete-review':
-          await reportApi.deleteReview(reportId, user.userId);
+          await reportApi.deleteReview(reportId, moderatorId);
           setSuccess('Рецензия успешно удалена');
           break;
         case 'delete-author':
-          await reportApi.deleteAuthor(reportId, user.userId);
+          await reportApi.deleteAuthor(reportId, moderatorId);
           setSuccess('Автор успешно удален');
           break;
         case 'delete-release':
-          await reportApi.deleteRelease(reportId, user.userId);
+          await reportApi.deleteRelease(reportId, moderatorId);
           setSuccess('Релиз успешно удален');
           break;
         case 'ban-user':
-          await reportApi.banUser(reportId, user.userId);
+          await reportApi.banUser(reportId, moderatorId);
           setSuccess('Пользователь заблокирован');
           break;
         case 'reject':
-          await reportApi.rejectReport(reportId, user.userId);
+          await reportApi.rejectReport(reportId, moderatorId);
           setSuccess('Жалоба отклонена');
           break;
         default:
           throw new Error('Неизвестное действие');
+      }
+
+      // Обновляем статус всех жалоб с тем же targetId и типом
+      if (targetId && targetType && actionType !== 'reject') {
+        // Для всех действий кроме отклонения обновляем статус всех жалоб на тот же объект
+        const allReportsForSameTarget = await reportApi.getAllReports(0, 1000);
+        if (allReportsForSameTarget && allReportsForSameTarget.content) {
+          const duplicateReports = allReportsForSameTarget.content.filter(
+            r => r.reportId !== reportId && r.targetId === targetId && r.type === targetType && r.status === 'PENDING'
+          );
+          
+          console.log(`Найдено ${duplicateReports.length} дубликатов жалоб на тот же объект`);
+          
+          for (const report of duplicateReports) {
+            try {
+              // Обновляем статус дубликатов в зависимости от выполненного действия
+              if (actionType.startsWith('delete') || actionType === 'ban-user') {
+                await reportApi.rejectReport(report.reportId, moderatorId);
+                console.log(`Обновлен статус дубликата жалобы ${report.reportId}`);
+              }
+            } catch (err) {
+              console.error(`Ошибка при обновлении статуса дубликата жалобы ${report.reportId}:`, err);
+            }
+          }
+        }
       }
 
       // Перезагружаем список репортов
@@ -258,7 +308,7 @@ const ModeratorReportsPage = () => {
   // Функция для получения ссылки на объект
   const getObjectLink = (type, targetId) => {
     switch (type) {
-      case 'REVIEW': return `/review/${targetId}`;
+      case 'REVIEW': return `/reviews/${targetId}`;
       case 'AUTHOR': return `/author/${targetId}`;
       case 'RELEASE': return `/release/${targetId}`;
       case 'PROFILE': return `/profile/${targetId}`;
@@ -273,8 +323,8 @@ const ModeratorReportsPage = () => {
       const link = getObjectLink(type, targetId);
       console.log('Ссылка:', link);
       
-      // Открываем в новой вкладке, чтобы избежать проблем с роутингом
-      window.open(link, '_blank');
+      // Используем navigate для внутренней навигации вместо открытия в новой вкладке
+      navigate(link);
     } catch (error) {
       console.error('Ошибка навигации:', error);
     }
@@ -297,13 +347,21 @@ const ModeratorReportsPage = () => {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+    
+    // Загружаем все репорты для сортировки
+    if (!allReports.length) {
+      loadReports(page);
+    }
   };
 
   // Сортировка данных
   const sortedReports = React.useMemo(() => {
     if (!sortConfig.key) return reports;
+    
+    // Если сортируем, используем все загруженные репорты
+    const dataToSort = allReports.length > 0 ? allReports : [...reports];
 
-    return [...reports].sort((a, b) => {
+    const sorted = [...dataToSort].sort((a, b) => {
       let aValue = a[sortConfig.key];
       let bValue = b[sortConfig.key];
 
@@ -333,7 +391,15 @@ const ModeratorReportsPage = () => {
       }
       return 0;
     });
-  }, [reports, sortConfig]);
+    
+    // Если сортируем по всем данным, возвращаем только текущую страницу
+    if (allReports.length > 0) {
+      const startIndex = page * 10;
+      return sorted.slice(startIndex, startIndex + 10);
+    }
+    
+    return sorted;
+  }, [reports, allReports, sortConfig, page]);
 
   // Функция для получения иконки сортировки
   const getSortIcon = (columnKey) => {
@@ -388,6 +454,55 @@ const ModeratorReportsPage = () => {
             ...
           </span>
         )}
+      </Box>
+    );
+  };
+
+  // Открытие диалога подтверждения действия
+  const openActionDialog = async (type, report) => {
+    try {
+      // Проверяем наличие дубликатов жалоб
+      let duplicates = [];
+      if (report && report.targetId && report.type) {
+        const allReportsResponse = await reportApi.getAllReports(0, 1000);
+        if (allReportsResponse && allReportsResponse.content) {
+          duplicates = allReportsResponse.content.filter(
+            r => r.reportId !== report.reportId && 
+            r.targetId === report.targetId && 
+            r.type === report.type && 
+            r.status === 'PENDING'
+          );
+        }
+      }
+      
+      setDuplicateReports(duplicates);
+      setActionDialog({ open: true, type, report });
+    } catch (error) {
+      console.error('Ошибка при проверке дубликатов жалоб:', error);
+      // В случае ошибки просто открываем диалог без информации о дубликатах
+      setDuplicateReports([]);
+      setActionDialog({ open: true, type, report });
+    }
+  };
+
+  // Компонент для отображения информации о дубликатах жалоб
+  const DuplicateReportsInfo = ({ duplicates }) => {
+    if (!duplicates || duplicates.length === 0) return null;
+    
+    return (
+      <Box sx={{ 
+        mt: 2, 
+        p: 2, 
+        bgcolor: 'rgba(255,152,0,0.1)', 
+        borderRadius: 1,
+        border: '1px solid rgba(255,152,0,0.3)'
+      }}>
+        <Typography variant="subtitle2" sx={{ color: '#ff9800', fontWeight: 600, mb: 1 }}>
+          Внимание! Найдены дубликаты жалобы ({duplicates.length}):
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#ffffff' }}>
+          При выполнении действия статус дубликатов также будет обновлен автоматически.
+        </Typography>
       </Box>
     );
   };
@@ -668,14 +783,10 @@ const ModeratorReportsPage = () => {
                                         size="small"
                                         onClick={() => {
                                           console.log('Клик по действию:', action.type, action.label);
-                                          if (typeof setActionDialog === 'function') {
-                                            setActionDialog({ 
-                                              open: true, 
-                                              type: action.type, 
-                                              report 
-                                            });
+                                          if (typeof openActionDialog === 'function') {
+                                            openActionDialog(action.type, report);
                                           } else {
-                                            console.error('setActionDialog не является функцией');
+                                            console.error('openActionDialog не является функцией');
                                           }
                                         }}
                                         disabled={report.status !== 'PENDING'}
@@ -795,6 +906,9 @@ const ModeratorReportsPage = () => {
                 </Typography>
               </Box>
             )}
+            
+            {/* Информация о дубликатах жалоб */}
+            <DuplicateReportsInfo duplicates={duplicateReports} />
           </DialogContent>
           <DialogActions sx={{ 
             borderTop: '1px solid rgba(255,255,255,0.05)', 

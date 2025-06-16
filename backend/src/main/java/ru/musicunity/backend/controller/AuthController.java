@@ -19,7 +19,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.records.AuthResponse;
-import ru.musicunity.backend.pojo.records.JwtResponse;
 import ru.musicunity.backend.pojo.records.LoginRequest;
 import ru.musicunity.backend.pojo.records.RegisterRequest;
 import ru.musicunity.backend.repository.UserRepository;
@@ -49,7 +48,7 @@ public class AuthController {
         @ApiResponse(responseCode = "403", description = "Аккаунт заблокирован")
     })
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(@RequestParam String username, @RequestParam String password) {
+    public ResponseEntity<AuthResponse> login(@RequestParam String username, @RequestParam String password) {
         log.info("Попытка входа пользователя: {}", username);
         
         try {
@@ -83,29 +82,29 @@ public class AuthController {
             if (user.getIsBlocked()) {
                 return ResponseEntity
                         .status(HttpStatus.FORBIDDEN)
-                        .body(new JwtResponse(null, "Аккаунт заблокирован"));
+                        .body(new AuthResponse(null));
             }
             
             // Генерируем токен
             String token = jwtService.generateToken(user);
             
             log.info("Успешный вход пользователя: {}", username);
-            return ResponseEntity.ok(new JwtResponse(token, "Авторизация успешна"));
+            return ResponseEntity.ok(new AuthResponse(token));
         } catch (BadCredentialsException e) {
             log.warn("Неверные учетные данные для пользователя: {}", username);
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(new JwtResponse(null, "Неверное имя пользователя или пароль"));
+                    .body(new AuthResponse(null));
         } catch (UsernameNotFoundException e) {
             log.warn("Пользователь не найден: {}", username);
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(new JwtResponse(null, "Неверное имя пользователя или пароль"));
+                    .body(new AuthResponse(null));
         } catch (Exception e) {
             log.error("Ошибка при авторизации пользователя {}: {}", username, e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new JwtResponse(null, "Внутренняя ошибка сервера"));
+                    .body(new AuthResponse(null));
         }
     }
 
