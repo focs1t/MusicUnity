@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 @RestController
 @RequestMapping("/api/likes")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*", allowedHeaders = "*", exposedHeaders = "*")
 @Tag(name = "Лайки", description = "API для управления лайками на отзывы")
 public class LikeController {
     private final LikeService likeService;
@@ -36,7 +37,10 @@ public class LikeController {
     @GetMapping("/review/{reviewId}")
     public ResponseEntity<List<LikeDTO>> getLikesByReview(
         @Parameter(description = "ID отзыва") @PathVariable Long reviewId) {
-        return ResponseEntity.ok(likeService.getLikesByReview(reviewId));
+        logger.info("Получение лайков для рецензии ID:" + reviewId);
+        List<LikeDTO> likes = likeService.getLikesByReview(reviewId);
+        logger.info("Найдено лайков: " + likes.size());
+        return ResponseEntity.ok(likes);
     }
 
     @Operation(summary = "Получение лайков авторов отзыва")
@@ -46,7 +50,10 @@ public class LikeController {
     @GetMapping("/review/{reviewId}/count/author")
     public ResponseEntity<List<LikeDTO>> getAuthorLikesByReview(
         @Parameter(description = "ID отзыва") @PathVariable Long reviewId) {
-        return ResponseEntity.ok(likeService.getAuthorLikesByReview(reviewId));
+        logger.info("Получение авторских лайков для рецензии ID:" + reviewId);
+        List<LikeDTO> authorLikes = likeService.getAuthorLikesByReview(reviewId);
+        logger.info("Найдено авторских лайков: " + authorLikes.size());
+        return ResponseEntity.ok(authorLikes);
     }
 
     @Operation(summary = "Получение всех рецензий с авторскими лайками")
@@ -74,7 +81,10 @@ public class LikeController {
     @GetMapping("/review/{reviewId}/count")
     public ResponseEntity<Long> getLikesCountByReview(
         @Parameter(description = "ID отзыва") @PathVariable Long reviewId) {
-        return ResponseEntity.ok(likeService.getLikesCountByReview(reviewId));
+        logger.info("Запрос на получение количества лайков для рецензии ID:" + reviewId);
+        Long count = likeService.getLikesCountByReview(reviewId);
+        logger.info("Количество лайков для рецензии " + reviewId + ": " + count);
+        return ResponseEntity.ok(count);
     }
 
     @Operation(summary = "Получение количества полученных лайков пользователя")
@@ -84,6 +94,7 @@ public class LikeController {
     @GetMapping("/user/{userId}/received")
     public ResponseEntity<Long> getReceivedLikesCountByUser(
         @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        logger.info("Запрос на количество полученных лайков для пользователя ID:" + userId);
         return ResponseEntity.ok(likeService.getReceivedLikesCountByUser(userId));
     }
 
@@ -94,6 +105,7 @@ public class LikeController {
     @GetMapping("/user/{userId}/given")
     public ResponseEntity<Long> getGivenLikesCountByUser(
         @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        logger.info("Запрос на количество поставленных лайков для пользователя ID:" + userId);
         return ResponseEntity.ok(likeService.getGivenLikesCountByUser(userId));
     }
 
@@ -104,6 +116,7 @@ public class LikeController {
     @GetMapping("/user/{userId}/received/author")
     public ResponseEntity<Long> getReceivedAuthorLikesCountByUser(
         @Parameter(description = "ID пользователя") @PathVariable Long userId) {
+        logger.info("Запрос на количество полученных авторских лайков для пользователя ID:" + userId);
         return ResponseEntity.ok(likeService.getReceivedAuthorLikesCountByUser(userId));
     }
     
@@ -115,6 +128,7 @@ public class LikeController {
     public ResponseEntity<Page<ReviewDTO>> getLikedReviewsByUser(
         @Parameter(description = "ID пользователя") @PathVariable Long userId,
         @Parameter(description = "Параметры пагинации") Pageable pageable) {
+        logger.info("Запрос на получение лайкнутых рецензий для пользователя ID:" + userId);
         return ResponseEntity.ok(reviewService.getLikedReviewsByUser(userId, pageable));
     }
 
@@ -129,7 +143,15 @@ public class LikeController {
         @Parameter(description = "ID отзыва") @RequestParam Long reviewId,
         @Parameter(description = "ID пользователя") @RequestParam Long userId,
         @Parameter(description = "Тип лайка") @RequestParam LikeType type) {
-        return ResponseEntity.ok(likeService.createLike(reviewId, userId, type));
+        logger.info("Запрос на создание лайка: reviewId=" + reviewId + ", userId=" + userId + ", type=" + type);
+        try {
+            LikeDTO createdLike = likeService.createLike(reviewId, userId, type);
+            logger.info("Лайк успешно создан: " + createdLike.getLikeId());
+            return ResponseEntity.ok(createdLike);
+        } catch (Exception e) {
+            logger.severe("Ошибка при создании лайка: " + e.getMessage());
+            throw e;
+        }
     }
 
     @Operation(summary = "Удаление лайка")
@@ -142,7 +164,14 @@ public class LikeController {
     public ResponseEntity<Void> removeLike(
         @Parameter(description = "ID отзыва") @RequestParam Long reviewId,
         @Parameter(description = "ID пользователя") @RequestParam Long userId) {
-        likeService.removeLike(reviewId, userId);
-        return ResponseEntity.ok().build();
+        logger.info("Запрос на удаление лайка: reviewId=" + reviewId + ", userId=" + userId);
+        try {
+            likeService.removeLike(reviewId, userId);
+            logger.info("Лайк успешно удален");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.severe("Ошибка при удалении лайка: " + e.getMessage());
+            throw e;
+        }
     }
 } 

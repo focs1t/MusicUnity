@@ -39,6 +39,23 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findLikedByUser(@Param("userId") Long userId, Pageable pageable);
     
     /**
+     * Проверка существования рецензии от пользователя на конкретный релиз
+     * @param userId ID пользователя
+     * @param releaseId ID релиза
+     * @return true, если рецензия существует и не удалена
+     */
+    boolean existsByUserUserIdAndReleaseReleaseIdAndIsDeletedFalse(Long userId, Long releaseId);
+    
+    /**
+     * Детальная проверка существования рецензии от пользователя на конкретный релиз
+     * @param userId ID пользователя
+     * @param releaseId ID релиза
+     * @return количество рецензий, соответствующих критериям
+     */
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.user.userId = :userId AND r.release.releaseId = :releaseId AND r.isDeleted = false")
+    long countDetailedByUserAndRelease(@Param("userId") Long userId, @Param("releaseId") Long releaseId);
+    
+    /**
      * Подсчет количества рецензий определенного типа по релизу
      * @param releaseId ID релиза
      * @param type тип рецензии

@@ -12,6 +12,7 @@ import { fileApi } from '../shared/api/file';
 import { useAuth } from '../app/providers/AuthProvider';
 import { userApi } from '../shared/api/user';
 import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
+import Notification from '../components/Notification';
 
 // Стилизованные компоненты
 const MainContainer = styled(Box)(({ theme }) => ({
@@ -202,45 +203,6 @@ const MenuProps = {
 const ModeratorCreateReleasePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [userDetails, setUserDetails] = useState(null);
-  const [accessLoading, setAccessLoading] = useState(true);
-  
-  // Загружаем полные данные пользователя
-  useEffect(() => {
-    const checkAccess = async () => {
-      if (!user) {
-        setAccessLoading(false);
-        return;
-      }
-
-      // Если у пользователя уже есть поле rights, используем его
-      if (user.rights) {
-        setUserDetails(user);
-        setAccessLoading(false);
-        if (user.rights !== 'MODERATOR') {
-          navigate('/');
-        }
-        return;
-      }
-
-      // Иначе загружаем через API
-      try {
-        const userData = await userApi.getCurrentUser();
-        setUserDetails(userData);
-        setAccessLoading(false);
-        
-        if (userData.rights !== 'MODERATOR') {
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки данных пользователя:', error);
-        setAccessLoading(false);
-        navigate('/');
-      }
-    };
-
-    checkAccess();
-  }, [user, navigate]);
   
   // Основные поля формы
   const [formData, setFormData] = useState({
@@ -260,6 +222,7 @@ const ModeratorCreateReleasePage = () => {
   const [genres, setGenres] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [coverPreview, setCoverPreview] = useState(null);
+  const [notification, setNotification] = useState(null);
   
   // Поля для добавления авторов
   const [authorInput, setAuthorInput] = useState('');
@@ -267,43 +230,77 @@ const ModeratorCreateReleasePage = () => {
   const [newAuthorIsArtist, setNewAuthorIsArtist] = useState(false);
   const [newAuthorIsProducer, setNewAuthorIsProducer] = useState(false);
 
-  // Загрузка данных при монтировании
-  useEffect(() => {
-    const loadData = async () => {
-      if (!userDetails || userDetails.rights !== 'MODERATOR') {
-        return; // Не загружаем данные пока не подтвердились права
-      }
+  // Функция загрузки данных для страницы
+  const fetchData = async () => {
+    try {
+      setDataLoading(true);
+      console.log('Загружаем жанры и авторов...');
+      
+      const [genresResponse, authorsResponse] = await Promise.all([
+        genreApi.getAllGenres(),
+        authorApi.getAllAuthorsForAutocomplete()
+      ]);
+      
+      console.log('Жанры загружены:', genresResponse);
+      console.log('Авторы загружены:', authorsResponse);
+      
+      // Обрабатываем ответ от API - может быть Page или Array
+      const genresList = genresResponse?.content || genresResponse || [];
+      const authorsList = authorsResponse?.content || authorsResponse || [];
+      
+      setGenres(genresList);
+      setAuthors(authorsList);
+      
+      setError(''); // Очищаем ошибки при успешной загрузке
+    } catch (err) {
+      console.error('Ошибка загрузки данных:', err);
+      setError('Ошибка при загрузке данных: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
+  // Проверка прав доступа
+  useEffect(() => {
+    const checkAccess = async () => {
       try {
-        setDataLoading(true);
-        console.log('Загружаем жанры и авторов...');
-        
-        const [genresResponse, authorsResponse] = await Promise.all([
-          genreApi.getAllGenres(),
-          authorApi.getAllAuthorsForAutocomplete()
-        ]);
-        
-        console.log('Жанры загружены:', genresResponse);
-        console.log('Авторы загружены:', authorsResponse);
-        
-        // Обрабатываем ответ от API - может быть Page или Array
-        const genresList = genresResponse?.content || genresResponse || [];
-        const authorsList = authorsResponse?.content || authorsResponse || [];
-        
-        setGenres(genresList);
-        setAuthors(authorsList);
-        
-        setError(''); // Очищаем ошибки при успешной загрузке
+        if (user) {
+          // Получаем полные данные пользователя
+          const userData = await userApi.getCurrentUser();
+          console.log('ModeratorCreateReleasePage: Данные пользователя', userData);
+          
+          if (userData.rights === 'MODERATOR' || userData.rights === 'ADMIN') {
+            console.log('ModeratorCreateReleasePage: Права модератора подтверждены');
+            // Загружаем данные для страницы
+            fetchData();
+          } else {
+            console.log('ModeratorCreateReleasePage: Недостаточно прав', userData.rights);
+            setError('У вас недостаточно прав для доступа к этой странице');
+            setLoading(false);
+            // Опционально: перенаправление
+            // navigate('/');
+          }
+        } else {
+          console.log('ModeratorCreateReleasePage: Пользователь не авторизован');
+          setError('Для доступа к этой странице необходимо войти в систему');
+          setLoading(false);
+          // Опционально: перенаправление
+          // navigate('/');
+        }
       } catch (err) {
-        console.error('Ошибка загрузки данных:', err);
-        setError('Ошибка при загрузке данных: ' + (err.response?.data?.message || err.message));
-      } finally {
-        setDataLoading(false);
+        console.error('Ошибка при проверке прав:', err);
+        setError('Ошибка при проверке прав доступа');
+        setLoading(false);
       }
     };
+    
+    checkAccess();
+  }, [user, navigate]);
 
-    loadData();
-  }, [userDetails]); // Зависим от userDetails
+  // Загрузка данных при монтировании (если проверка прав не требуется)
+  useEffect(() => {
+    // Загрузку данных перенесли в функцию fetchData, которую вызываем после проверки прав
+  }, []);
 
   // Обработчики изменений
   const handleInputChange = (field, value) => {
@@ -386,31 +383,37 @@ const ModeratorCreateReleasePage = () => {
   // Отправка формы
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    // Валидация
     if (!formData.title.trim()) {
-      setError('Введите название релиза');
+      setNotification({
+        type: 'error',
+        message: 'Введите название релиза'
+      });
       return;
     }
 
     if (!formData.type) {
-      setError('Выберите тип релиза');
+      setNotification({
+        type: 'error',
+        message: 'Выберите тип релиза'
+      });
       return;
     }
 
     if (formData.genreIds.length === 0) {
-      setError('Выберите хотя бы один жанр');
+      setNotification({
+        type: 'error',
+        message: 'Выберите хотя бы один жанр'
+      });
       return;
     }
 
     if (formData.authors.length === 0) {
-      setError('Добавьте хотя бы одного автора');
+      setNotification({
+        type: 'error',
+        message: 'Добавьте хотя бы одного автора'
+      });
       return;
     }
-
-
 
     setLoading(true);
 
@@ -464,6 +467,13 @@ const ModeratorCreateReleasePage = () => {
       console.log('==========================================');
 
       const result = await releaseApi.createRelease(requestData);
+      
+      // Показываем уведомление об успешном создании
+      setNotification({
+        type: 'success',
+        message: `Релиз "${requestData.title}" успешно создан`
+      });
+      
       setSuccess('Релиз успешно создан!');
       
       // Перенаправляем на страницу созданного релиза через 2 секунды
@@ -486,6 +496,12 @@ const ModeratorCreateReleasePage = () => {
       } else {
         setError('Произошла ошибка при создании релиза');
       }
+      
+      // Показываем уведомление об ошибке
+      setNotification({
+        type: 'error',
+        message: err.response?.data?.message || 'Произошла ошибка при создании релиза'
+      });
     } finally {
       setLoading(false);
     }
@@ -504,7 +520,7 @@ const ModeratorCreateReleasePage = () => {
   }
 
   // Если данные еще загружаются, показываем загрузку
-  if (accessLoading || !userDetails) {
+  if (dataLoading) {
     return (
       <MainContainer>
         <LoadingSpinner 
@@ -515,26 +531,16 @@ const ModeratorCreateReleasePage = () => {
     );
   }
 
-  // Если нет прав модератора, показываем ошибку
-  if (userDetails.rights !== 'MODERATOR') {
-    return (
-      <MainContainer>
-        <Box sx={{ textAlign: 'center', minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 600, fontSize: '1.5rem', mb: 2, color: 'white' }}>
-              Доступ запрещен
-            </Typography>
-            <Typography sx={{ color: 'rgba(161, 161, 170, 0.8)', fontSize: '0.875rem' }}>
-              У вас нет прав для просмотра этой страницы.
-            </Typography>
-          </Box>
-        </Box>
-      </MainContainer>
-    );
-  }
-
   return (
     <MainContainer>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      
       <ContentContainer>
         <Typography variant="h3" sx={{ fontWeight: 600, fontSize: '1.5rem', mb: 2, color: 'white' }}>
           Создать релиз

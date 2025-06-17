@@ -99,6 +99,8 @@ const AuthProvider = ({ children }) => {
         
         // Устанавливаем состояние для продолжения отрисовки
         setAuthChecked(true);
+        // Обновляем статус в store
+        dispatch(authModel.setAuthChecked(true));
         return;
       }
       
@@ -108,6 +110,8 @@ const AuthProvider = ({ children }) => {
       if (!hasToken) {
         console.log('AuthProvider: Токены не найдены, пользователь не авторизован');
         setAuthChecked(true);
+        // Обновляем статус в store
+        dispatch(authModel.setAuthChecked(true));
         return;
       }
       
@@ -115,6 +119,8 @@ const AuthProvider = ({ children }) => {
       console.log('AuthProvider: Токен найден, проверяем авторизацию');
       await dispatch(authModel.checkAuth());
       setAuthChecked(true);
+      // Обновляем статус в store
+      dispatch(authModel.setAuthChecked(true));
     };
     
     checkAuthentication();

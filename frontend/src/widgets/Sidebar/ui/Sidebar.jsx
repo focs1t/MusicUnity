@@ -4,6 +4,7 @@ import { ROUTES } from '../../../shared/config/routes';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { userApi } from '../../../shared/api/user';
 import styles from './Sidebar.module.css';
+import { useDispatch } from 'react-redux';
 
 // Импортируем все необходимые иконки из Material-UI
 import HomeIcon from '@mui/icons-material/Home';
@@ -24,6 +25,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const { isAuth, user } = useAuth();
   const [userDetails, setUserDetails] = useState(null);
+  const dispatch = useDispatch();
 
   // Загружаем полные данные пользователя если он авторизован
   useEffect(() => {
@@ -87,6 +89,31 @@ export const Sidebar = () => {
   };
 
   const handleNavigation = (path) => {
+    // Для маршрутов модератора проверяем права пользователя
+    if (path === ROUTES.MODERATOR_REPORTS || path === ROUTES.MODERATOR_CREATE_RELEASE) {
+      if (!user) {
+        console.log("Sidebar: Пользователь не авторизован для доступа к странице модератора");
+        // Сохраняем желаемый путь для перенаправления после авторизации
+        localStorage.setItem('redirectAfterAuth', path);
+        // Показываем предупреждение и перенаправляем на главную
+        alert('Для доступа к этой странице необходимо авторизоваться');
+        navigate(ROUTES.HOME);
+        return;
+      }
+
+      if (!userDetails || userDetails.rights !== 'MODERATOR') {
+        console.log("Sidebar: У пользователя нет прав модератора", userDetails?.rights);
+        // Если у нас нет userDetails или нет прав модератора, перенаправляем
+        if (!userDetails) {
+          console.log("Sidebar: Ожидаем загрузку данных пользователя...");
+        } else {
+          alert('У вас нет прав для доступа к этой странице');
+          navigate(ROUTES.HOME);
+          return;
+        }
+      }
+    }
+
     navigate(path);
   };
 

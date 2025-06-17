@@ -9,15 +9,25 @@ export const fileApi = {
    * @returns {Promise<{key: string, temporaryUrl: string, permanentUrl: string}>}
    */
   uploadAvatar: async (file) => {
+    console.log('Начинаем загрузку аватара:', file.name, file.type, file.size);
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await httpClient.post(`${API_URL}/upload/avatar`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
+    try {
+      console.log('Отправляем запрос на сервер:', `${API_URL}/upload/avatar`);
+      const response = await httpClient.post(`${API_URL}/upload/avatar`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Ответ от сервера:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при загрузке аватара:', error);
+      console.error('Детали ошибки:', error.response?.data);
+      console.error('Статус ошибки:', error.response?.status);
+      throw error;
+    }
   },
 
   /**
@@ -26,15 +36,25 @@ export const fileApi = {
    * @returns {Promise<{key: string, temporaryUrl: string, permanentUrl: string}>}
    */
   uploadCover: async (file) => {
+    console.log('Начинаем загрузку обложки:', file.name, file.type, file.size);
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await httpClient.post(`${API_URL}/upload/cover`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
+    try {
+      console.log('Отправляем запрос на сервер:', `${API_URL}/upload/cover`);
+      const response = await httpClient.post(`${API_URL}/upload/cover`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Ответ от сервера:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при загрузке обложки:', error);
+      console.error('Детали ошибки:', error.response?.data);
+      console.error('Статус ошибки:', error.response?.status);
+      throw error;
+    }
   },
 
   /**

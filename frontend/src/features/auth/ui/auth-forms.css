@@ -61,6 +61,21 @@
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* Стиль для полей с ошибкой */
+.form-group input.error,
+.form-group input:invalid:focus {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2);
+}
+
+/* Сообщение об ошибке для конкретного поля */
+.field-error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
 .error-message {
   margin-bottom: 20px;
   padding: 12px 15px;
@@ -81,7 +96,11 @@
   min-height: 20px;
 }
 
-button[type="submit"] {
+/* Стили для кнопки */
+.login-form button,
+.register-form button,
+.forgot-password-form button,
+.reset-password-form button {
   width: 100%;
   padding: 12px 15px;
   background-color: #4285f4;
@@ -92,14 +111,19 @@ button[type="submit"] {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s;
-  margin-top: 10px;
 }
 
-button[type="submit"]:hover:not(:disabled) {
+.login-form button:hover,
+.register-form button:hover,
+.forgot-password-form button:hover,
+.reset-password-form button:hover {
   background-color: #3367d6;
 }
 
-button[type="submit"]:disabled {
-  background-color: #a5c7fe;
+.login-form button:disabled,
+.register-form button:disabled,
+.forgot-password-form button:disabled,
+.reset-password-form button:disabled {
+  background-color: #9e9e9e;
   cursor: not-allowed;
 } 

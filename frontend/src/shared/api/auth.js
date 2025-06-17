@@ -5,10 +5,44 @@ const API_URL = '/api/auth';
 export const authApi = {
   login: async (username, password) => {
     try {
-      const response = await httpClient.post(`${API_URL}/login`, {
-        username,
-        password
+      const params = new URLSearchParams();
+      params.append('username', username);
+      params.append('password', password);
+      
+      const response = await httpClient.post(`${API_URL}/login`, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       });
+      
+      // Сохраняем токен и информацию о пользователе
+      if (response.data && response.data.token) {
+        const token = response.data.token;
+        localStorage.setItem('token', token);
+        
+        // Получаем информацию о пользователе из токена
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const payload = JSON.parse(jsonPayload);
+          const user = {
+            userId: payload.id,
+            username: payload.sub,
+            email: payload.email,
+            role: payload.role
+          };
+          
+          localStorage.setItem('user', JSON.stringify(user));
+          console.log('Пользователь успешно авторизован:', user);
+        } catch (e) {
+          console.error('Ошибка при декодировании токена:', e);
+        }
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Login error:', error);

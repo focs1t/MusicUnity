@@ -331,20 +331,7 @@
   min-height: 60vh;
 }
 
-.loading-spinner {
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid #3a82f7;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* Loading spinner removed - using shared component */
 
 .loading-container p {
   color: rgba(255, 255, 255, 0.7);

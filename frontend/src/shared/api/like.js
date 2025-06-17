@@ -10,9 +10,12 @@ export const likeApi = {
    */
   getLikesByReview: async (reviewId) => {
     try {
+      console.log('Запрос лайков для рецензии:', reviewId);
       const response = await httpClient.get(`${API_URL}/review/${reviewId}`);
+      console.log('Получены лайки:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Ошибка получения лайков:', error);
       throw error;
     }
   },
@@ -147,11 +150,14 @@ export const likeApi = {
    */
   createLike: async (reviewId, userId, type) => {
     try {
+      console.log(`Создаем лайк: reviewId=${reviewId}, userId=${userId}, type=${type}`);
       const response = await httpClient.post(API_URL, null, {
         params: { reviewId, userId, type }
       });
+      console.log('Результат создания лайка:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Ошибка при создании лайка:', error);
       throw error;
     }
   },
@@ -164,11 +170,38 @@ export const likeApi = {
    */
   removeLike: async (reviewId, userId) => {
     try {
+      console.log(`Удаляем лайк: reviewId=${reviewId}, userId=${userId}`);
       await httpClient.delete(API_URL, {
         params: { reviewId, userId }
       });
+      console.log('Лайк успешно удален');
     } catch (error) {
+      console.error('Ошибка при удалении лайка:', error);
       throw error;
     }
+  },
+
+  // НЕ МЕНЯЙТЕ ЭТИ МЕТОДЫ - они используются в компонентах ReviewPage и других
+  // Это обертки над createLike и removeLike с автоматическим получением userId
+  addLikeToReview: async (reviewId) => {
+    const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+    const userId = user.userId;
+    
+    if (!userId) {
+      throw new Error('Пользователь не авторизован');
+    }
+    
+    return likeApi.createLike(reviewId, userId, 'REGULAR');
+  },
+  
+  removeLikeFromReview: async (reviewId) => {
+    const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+    const userId = user.userId;
+    
+    if (!userId) {
+      throw new Error('Пользователь не авторизован');
+    }
+    
+    await likeApi.removeLike(reviewId, userId);
   }
 }; 

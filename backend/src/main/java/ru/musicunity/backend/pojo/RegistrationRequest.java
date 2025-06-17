@@ -1,4 +1,4 @@
-package ru.musicunity.backend.model;
+package ru.musicunity.backend.pojo;
 
 import ru.musicunity.backend.pojo.enums.RequestStatus;
 import jakarta.persistence.*;

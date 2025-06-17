@@ -27,35 +27,51 @@ const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjA
 // Функция для получения текущего ID пользователя из localStorage
 const getCurrentUserId = () => {
   try {
-    const userDataFromStorage = localStorage.getItem('userData');
-    if (userDataFromStorage) {
-      const userData = JSON.parse(userDataFromStorage);
+    // Проверяем localStorage и sessionStorage на наличие данных пользователя
+    const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
       const userId = userData?.id || userData?.userId;
       if (userId) {
-        console.log('ID пользователя из localStorage:', userId);
+        console.log('ID пользователя из хранилища данных:', userId);
         return parseInt(userId, 10) || null;
       }
     }
-  } catch (error) {
-    console.error('Ошибка при парсинге userData из localStorage:', error);
-  }
-  
-  // Пытаемся получить из токена
-  try {
-    const tokenFromStorage = localStorage.getItem('authToken') || localStorage.getItem('token');
-    if (tokenFromStorage) {
-      const tokenParts = tokenFromStorage.split('.');
-      if (tokenParts.length === 3) {
-        const payload = JSON.parse(atob(tokenParts[1]));
-        const userIdFromToken = payload?.userId || payload?.id || payload?.sub;
-        if (userIdFromToken) {
-          console.log('ID пользователя из токена:', userIdFromToken);
-          return parseInt(userIdFromToken, 10) || null;
+    
+    // Если данные пользователя не найдены, пробуем получить из токена
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      try {
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          const base64Url = tokenParts[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const payload = JSON.parse(jsonPayload);
+          const userIdFromToken = payload?.id || payload?.sub;
+          if (userIdFromToken) {
+            console.log('ID пользователя из токена:', userIdFromToken);
+            
+            // Сохраняем данные пользователя для будущих обращений
+            const user = {
+              userId: userIdFromToken,
+              username: payload.sub,
+              role: payload.role
+            };
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            return parseInt(userIdFromToken, 10) || null;
+          }
         }
+      } catch (tokenError) {
+        console.error('Ошибка при декодировании токена:', tokenError);
       }
     }
   } catch (error) {
-    console.error('Ошибка при декодинге токена:', error);
+    console.error('Ошибка при получении ID пользователя:', error);
   }
   
   console.log('ID пользователя не найден');
@@ -436,7 +452,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
               authorLikes.slice(0, 3).map((authorLike, index) => 
                 React.createElement('div', { className: 'author-rating-wrapper', key: `author-like-wrapper-${index}` }, [
                   React.createElement(Link, {
-                    to: `/author/${authorLike.author?.authorId || authorLike.author?.id}`,
+                    to: `/author/${authorLike.author?.authorId || authorLike.author?.id || 0}`,
                     key: `author-like-link-${index}`
                   },
                     React.createElement('img', {
@@ -667,7 +683,22 @@ const AuthorLikesPage = () => {
           if (reviewId) {
             const authorLikesForReview = await likeApi.getAuthorLikesByReview(reviewId);
             if (authorLikesForReview && authorLikesForReview.length > 0) {
-              authorLikesData[reviewId] = authorLikesForReview;
+              // Отладка структуры авторских лайков
+              console.log(`DEBUG: Структура авторских лайков для рецензии ${reviewId}:`, 
+                JSON.stringify(authorLikesForReview, null, 2));
+              
+              // Исправление отсутствующего authorId
+              const fixedAuthorLikes = authorLikesForReview.map(like => {
+                if (like.author) {
+                  // Если у автора есть userId, но нет authorId, используем userId как authorId
+                  if (like.author.userId && !like.author.authorId) {
+                    like.author.authorId = like.author.userId;
+                  }
+                }
+                return like;
+              });
+              
+              authorLikesData[reviewId] = fixedAuthorLikes;
             }
           }
         })
@@ -678,14 +709,26 @@ const AuthorLikesPage = () => {
       console.error('Ошибка при загрузке авторских лайков:', error);
     }
   };
-
+  
+  // Функция для обновления авторских лайков для конкретной рецензии
   const updateAuthorLikesForReview = async (reviewId) => {
     try {
       const updatedAuthorLikes = await likeApi.getAuthorLikesByReview(reviewId);
       if (updatedAuthorLikes && updatedAuthorLikes.length > 0) {
+        // Исправление отсутствующего authorId
+        const fixedAuthorLikes = updatedAuthorLikes.map(like => {
+          if (like.author) {
+            // Если у автора есть userId, но нет authorId, используем userId как authorId
+            if (like.author.userId && !like.author.authorId) {
+              like.author.authorId = like.author.userId;
+            }
+          }
+          return like;
+        });
+        
         setAuthorLikes(prev => ({
           ...prev,
-          [reviewId]: updatedAuthorLikes
+          [reviewId]: fixedAuthorLikes
         }));
       } else {
         setAuthorLikes(prev => {
@@ -875,18 +918,15 @@ const AuthorLikesPage = () => {
         })
       );
       
-      let response;
       if (isCurrentlyLiked) {
         // Дизлайк
         console.log(`Убираем лайк с рецензии ${reviewId}`);
-        response = await likeApi.unlikeReview(reviewId);
+        await likeApi.removeLike(reviewId, currentUserId);
       } else {
         // Лайк
         console.log(`Ставим лайк рецензии ${reviewId}`);
-        response = await likeApi.likeReview(reviewId);
+        await likeApi.createLike(reviewId, currentUserId, 'REGULAR');
       }
-      
-      console.log('Ответ API:', response);
       
       // Показываем уведомление об успехе
       setNotification({
@@ -894,8 +934,24 @@ const AuthorLikesPage = () => {
         type: 'success'
       });
       
-      // Обновляем авторские лайки, если действие выполнил автор
-      await updateAuthorLikesForReview(reviewId);
+      // Получаем актуальное количество лайков с сервера
+      try {
+        const updatedLikesCount = await likeApi.getLikesCountByReview(reviewId);
+        
+        // Обновляем точное количество лайков после получения от сервера
+        setReviews(prevReviews => 
+          prevReviews.map(r => 
+            (r.id === reviewId || r.reviewId === reviewId) 
+              ? {...r, likesCount: updatedLikesCount} 
+              : r
+          )
+        );
+        
+        // Обновляем авторские лайки
+        await updateAuthorLikesForReview(reviewId);
+      } catch (countError) {
+        console.error('Ошибка при получении количества лайков:', countError);
+      }
       
     } catch (error) {
       console.error('Ошибка при обновлении лайка:', error);

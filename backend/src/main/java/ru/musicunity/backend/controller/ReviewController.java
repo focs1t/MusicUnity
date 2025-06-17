@@ -8,13 +8,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.musicunity.backend.dto.AverageRatingsDTO;
 import ru.musicunity.backend.dto.ReviewDTO;
+import ru.musicunity.backend.pojo.User;
 import ru.musicunity.backend.pojo.enums.ReviewType;
+import ru.musicunity.backend.repository.UserRepository;
 import ru.musicunity.backend.service.ReviewService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -22,6 +30,7 @@ import ru.musicunity.backend.service.ReviewService;
 @Tag(name = "Отзывы", description = "API для управления отзывами на музыкальные релизы")
 public class ReviewController {
     private final ReviewService reviewService;
+    private final UserRepository userRepository;
 
     @Operation(summary = "Получение отзыва по ID")
     @ApiResponses(value = {
@@ -128,10 +137,11 @@ public class ReviewController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Количество отзывов")
     })
-    @GetMapping("/user/{userId}/count")
-    public ResponseEntity<Long> getReviewsCountByUser(
-        @Parameter(description = "ID пользователя") @PathVariable Long userId) {
-        return ResponseEntity.ok(reviewService.getReviewsCountByUser(userId));
+    @GetMapping("/user/{userId}/reviews/count")
+    public ResponseEntity<Map<String, Long>> getReviewsCountByUser(@PathVariable Long userId) {
+        Map<String, Long> counts = new HashMap<>();
+        counts.put("total", reviewService.getReviewsCountByUser(userId));
+        return ResponseEntity.ok(counts);
     }
     
     @Operation(summary = "Получение количества полных рецензий пользователя")
@@ -187,5 +197,59 @@ public class ReviewController {
     public ResponseEntity<AverageRatingsDTO> getAverageRatingsByRelease(
         @Parameter(description = "ID релиза") @PathVariable Long releaseId) {
         return ResponseEntity.ok(reviewService.getAverageRatingsByRelease(releaseId));
+    }
+
+    /**
+     * Проверка существования рецензии пользователя на релиз
+     * @param releaseId ID релиза
+     * @return статус наличия рецензии
+     */
+    @GetMapping("/check")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Boolean>> checkUserReview(
+            @RequestParam Long userId,
+            @RequestParam Long releaseId) {
+        System.out.println("DEBUG: Запрос на проверку рецензии - userId: " + userId + ", releaseId: " + releaseId);
+        
+        // Проверяем, что запрос относится к текущему пользователю
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        
+        User user = userRepository.findByUsername(currentUsername)
+                .orElse(null);
+        
+        // Проверка, что ID в запросе соответствует текущему пользователю
+        // Если это не так - проверяем рецензию от имени авторизованного пользователя
+        Long actualUserId = userId;
+        if (user != null && !user.getUserId().equals(userId)) {
+            System.out.println("WARNING: ID пользователя в запросе не совпадает с ID текущего пользователя");
+            System.out.println("WARNING: Запрос от имени пользователя " + userId + ", но авторизован " + user.getUserId());
+            // Используем ID авторизованного пользователя вместо переданного
+            actualUserId = user.getUserId();
+        }
+        
+        if (releaseId == null) {
+            System.out.println("ERROR: Отсутствует обязательный параметр releaseId");
+            Map<String, Boolean> errorResponse = new HashMap<>();
+            errorResponse.put("hasReviewed", false);
+            errorResponse.put("error", true);
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+        
+        try {
+            // Используем ID текущего авторизованного пользователя
+            boolean hasReviewed = reviewService.hasUserReviewedRelease(actualUserId, releaseId);
+            System.out.println("DEBUG: Результат проверки рецензии для пользователя " + actualUserId + ": " + hasReviewed);
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("hasReviewed", hasReviewed);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("ERROR: Ошибка при проверке рецензии: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, Boolean> errorResponse = new HashMap<>();
+            errorResponse.put("hasReviewed", false);
+            errorResponse.put("error", true);
+            return ResponseEntity.ok(errorResponse);
+        }
     }
 } 

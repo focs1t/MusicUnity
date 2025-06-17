@@ -392,7 +392,7 @@ const ReviewCard = ({ review, isLiked, onLikeToggle, authorLikes = [] }) => {
                 <div className="author-likes-avatars flex items-center gap-1">
                   {authorLikes.slice(0, 3).map((authorLike, index) => (
                     <div className="author-rating-wrapper" key={`author-like-wrapper-${index}`}>
-                      <a href={`/author/${authorLike.author?.authorId || authorLike.author?.id}`}>
+                      <a href={`/author/${authorLike.author?.authorId || authorLike.author?.id || 0}`}>
                         <img
                           src={authorLike.author?.avatar || DEFAULT_AVATAR_PLACEHOLDER}
                           alt={authorLike.author?.username || 'Автор'}
@@ -495,6 +495,9 @@ function ReleasePage() {
   // Состояние для процесса отправки
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  
+  // Состояние для отслеживания наличия рецензии от пользователя
+  const [userHasReviewed, setUserHasReviewed] = useState(false);
   
   // Состояния для рецензий
   const [reviews, setReviews] = useState([]);
@@ -653,6 +656,16 @@ function ReleasePage() {
       const updatedRelease = await releaseApi.getReleaseById(id);
       setRelease(updatedRelease);
       
+      // ВАЖНО: Устанавливаем флаг наличия рецензии пользователя
+      setUserHasReviewed(true);
+      console.log('Рецензия успешно создана, устанавливаем флаг userHasReviewed = true');
+      
+      // Отображение уведомления об успешной публикации
+      setNotification({
+        message: 'Ваша рецензия успешно опубликована',
+        type: 'success'
+      });
+      
       // Обновляем также детализированные рейтинги и количество
       try {
         const [updatedAverageRatings, totalReviewsCount, extendedReviewsResponse] = await Promise.all([
@@ -794,7 +807,22 @@ function ReleasePage() {
           if (reviewId) {
             const authorLikesForReview = await likeApi.getAuthorLikesByReview(reviewId);
             if (authorLikesForReview && authorLikesForReview.length > 0) {
-              authorLikesData[reviewId] = authorLikesForReview;
+              // Отладка структуры авторских лайков
+              console.log(`DEBUG: Структура авторских лайков для рецензии ${reviewId}:`, 
+                JSON.stringify(authorLikesForReview, null, 2));
+              
+              // Исправление отсутствующего authorId
+              const fixedAuthorLikes = authorLikesForReview.map(like => {
+                if (like.author) {
+                  // Если у автора есть userId, но нет authorId, используем userId как authorId
+                  if (like.author.userId && !like.author.authorId) {
+                    like.author.authorId = like.author.userId;
+                  }
+                }
+                return like;
+              });
+              
+              authorLikesData[reviewId] = fixedAuthorLikes;
             }
           }
         })
@@ -811,9 +839,20 @@ function ReleasePage() {
     try {
       const updatedAuthorLikes = await likeApi.getAuthorLikesByReview(reviewId);
       if (updatedAuthorLikes && updatedAuthorLikes.length > 0) {
+        // Исправление отсутствующего authorId
+        const fixedAuthorLikes = updatedAuthorLikes.map(like => {
+          if (like.author) {
+            // Если у автора есть userId, но нет authorId, используем userId как authorId
+            if (like.author.userId && !like.author.authorId) {
+              like.author.authorId = like.author.userId;
+            }
+          }
+          return like;
+        });
+        
         setAuthorLikes(prev => ({
           ...prev,
-          [reviewId]: updatedAuthorLikes
+          [reviewId]: fixedAuthorLikes
         }));
       } else {
         setAuthorLikes(prev => {
@@ -864,6 +903,29 @@ function ReleasePage() {
         const data = await releaseApi.getReleaseById(id);
         console.log('✅ Релиз загружен:', data.title);
         setRelease(data);
+        
+        // Проверяем, оставил ли пользователь уже рецензию на этот релиз
+        if (user && user.id) {
+          try {
+            console.log(`Проверяем наличие рецензии для пользователя ${user.id} на релиз ${id}`);
+            // Получаем все рецензии для данного релиза
+            const allReviews = await reviewApi.getExtendedReviewsByRelease(id, 0, 100);
+            
+            // Проверяем, есть ли среди них рецензия от текущего пользователя
+            if (allReviews && allReviews.content && allReviews.content.length > 0) {
+              const userReview = allReviews.content.find(review => {
+                const reviewUserId = review.user?.userId || review.user?.id;
+                return String(reviewUserId) === String(user.id);
+              });
+              
+              const hasReviewed = !!userReview;
+              console.log(`Результат проверки: пользователь ${hasReviewed ? 'уже оставил' : 'еще не оставлял'} рецензию`);
+              setUserHasReviewed(hasReviewed);
+            }
+          } catch (error) {
+            console.error('Ошибка при проверке наличия рецензии:', error);
+          }
+        }
         
 
         
@@ -1901,8 +1963,39 @@ function ReleasePage() {
               </div>
             </div>
             
-            {/* Блок создания рецензии - отображается только для авторизованных пользователей (кроме авторов) */}
-            {user && !isAuthor ? (
+            {/* Блок создания рецензии / сообщений */}
+            {/* Случай 1: Пользователь неавторизован */}
+            {!user && (
+              <div className="review-auth-container">
+                <div className="review-auth-box">
+                  <div className="review-auth-message">Чтобы оставить рецензию, необходимо авторизоваться</div>
+                  <button onClick={handleOpenLoginModal} className="review-auth-button">
+                    Войти
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Случай 2: Пользователь авторизован и является автором */}
+            {user && isAuthor && (
+              <div className="review-auth-container">
+                <div className="review-auth-box">
+                  <div className="review-auth-message">Автор не может оставлять рецензии на собственные релизы</div>
+                </div>
+              </div>
+            )}
+            
+            {/* Случай 3: Пользователь авторизован, не автор, но уже оставил рецензию */}
+            {user && !isAuthor && userHasReviewed && (
+              <div className="review-auth-container">
+                <div className="review-auth-box">
+                  <div className="review-auth-message">Вы уже оставили рецензию на этот релиз</div>
+                </div>
+              </div>
+            )}
+            
+            {/* Случай 4: Пользователь авторизован, не автор и еще не оставлял рецензию */}
+            {user && !isAuthor && !userHasReviewed && (
               <div className="review-form-container">
                 <div className="review-form-title">Оценить работу</div>
                 <div dir="ltr" data-orientation="vertical" className="review-form-grid">
@@ -2312,16 +2405,7 @@ function ReleasePage() {
                   </div>
                 </div>
               </div>
-            ) : (!user && (
-              <div className="review-auth-container">
-                <div className="review-auth-box">
-                  <div className="review-auth-message">Чтобы оставить рецензию, необходимо авторизоваться</div>
-                  <button onClick={handleOpenLoginModal} className="review-auth-button">
-                    Войти
-                  </button>
-                </div>
-              </div>
-            ))}
+            )}
 
             {/* Секция с рецензиями пользователей */}
             <section className="reviews-section">

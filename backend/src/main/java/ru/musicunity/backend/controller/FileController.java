@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +21,7 @@ import ru.musicunity.backend.service.S3Service;
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
 @Tag(name = "Файлы", description = "API для работы с файлами (аватары, обложки)")
+@Slf4j
 public class FileController {
 
     private final S3Service s3Service;
@@ -56,10 +58,21 @@ public class FileController {
         )
         @RequestParam("file") MultipartFile file
     ) {
-        String key = s3Service.uploadFile(file, "avatars");
-        String permanentUrl = s3Service.getPermanentUrl(key);
-        String temporaryUrl = s3Service.getPresignedUrl(key);
-        return ResponseEntity.ok(new FileUploadResponse(key, temporaryUrl, permanentUrl));
+        try {
+            log.info("Получен запрос на загрузку аватара. Имя файла: {}, размер: {}, тип: {}", 
+                    file.getOriginalFilename(), file.getSize(), file.getContentType());
+                
+            String key = s3Service.uploadFile(file, "avatars");
+            String permanentUrl = s3Service.getPermanentUrl(key);
+            String temporaryUrl = s3Service.getPresignedUrl(key);
+            
+            log.info("Аватар успешно загружен. Ключ: {}, URL: {}", key, permanentUrl);
+            
+            return ResponseEntity.ok(new FileUploadResponse(key, temporaryUrl, permanentUrl));
+        } catch (Exception e) {
+            log.error("Ошибка при загрузке аватара", e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -98,10 +111,21 @@ public class FileController {
         )
         @RequestParam("file") MultipartFile file
     ) {
-        String key = s3Service.uploadFile(file, "covers");
-        String permanentUrl = s3Service.getPermanentUrl(key);
-        String temporaryUrl = s3Service.getPresignedUrl(key);
-        return ResponseEntity.ok(new FileUploadResponse(key, temporaryUrl, permanentUrl));
+        try {
+            log.info("Получен запрос на загрузку обложки. Имя файла: {}, размер: {}, тип: {}", 
+                    file.getOriginalFilename(), file.getSize(), file.getContentType());
+                
+            String key = s3Service.uploadFile(file, "covers");
+            String permanentUrl = s3Service.getPermanentUrl(key);
+            String temporaryUrl = s3Service.getPresignedUrl(key);
+            
+            log.info("Обложка успешно загружена. Ключ: {}, URL: {}", key, permanentUrl);
+            
+            return ResponseEntity.ok(new FileUploadResponse(key, temporaryUrl, permanentUrl));
+        } catch (Exception e) {
+            log.error("Ошибка при загрузке обложки", e);
+            throw e;
+        }
     }
 
     @Operation(

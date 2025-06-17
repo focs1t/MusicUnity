@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { userApi } from '../shared/api';
+import { LoadingSpinner } from '../shared/ui/LoadingSpinner';
 import './Top100Page.css';
 
 // Встроенный плейсхолдер в формате data URI для аватара
@@ -47,10 +48,7 @@ const Top100Page = () => {
       <div className="site-content top100-page">
         <main>
           <div className="container">
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>Загрузка рейтинга...</p>
-            </div>
+            <LoadingSpinner text="Загрузка рейтинга..." />
           </div>
         </main>
       </div>

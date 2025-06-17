@@ -48,7 +48,7 @@ function App() {
             <Route path={ROUTES.AUTHORS} element={<Authors />} />
             <Route path={ROUTES.REVIEWS} element={<Reviews />} />
             <Route path={ROUTES.RELEASES} element={<Releases />} />
-            {/* Роуты для модератора */}
+            {/* Роуты для модератора - прямой доступ без защиты */}
             <Route path={ROUTES.MODERATOR_CREATE_RELEASE} element={<ModeratorCreateReleasePage />} />
             <Route path={ROUTES.MODERATOR_REPORTS} element={<ModeratorReportsPage />} />
             <Route path={ROUTES.CONTACT} element={<Contact />} />

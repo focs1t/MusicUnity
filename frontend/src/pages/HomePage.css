@@ -96,29 +96,7 @@
   }
 }
 
-/* Loading States */
-.home-page-container .loading-spinner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  gap: 1rem;
-}
-
-.home-page-container .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid #3a82f7;
-  border-radius: 50%;
-  animation: home-page-spin 1s linear infinite;
-}
-
-@keyframes home-page-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* Loading States removed - using shared component */
 
 /* Release Cards - точная копия из AuthorPage */
 .home-page-container .releases-grid {
@@ -473,7 +451,7 @@
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 0.25rem;
 }
@@ -816,6 +794,26 @@
   display: flex;
   flex-direction: column;
   min-height: 280px; /* Минимальная высота для карточки */
+  height: 100%; /* Занимает всю доступную высоту */
+  justify-content: space-between; /* Распределяет пространство между элементами */
+}
+
+/* Стили для содержимого рецензии */
+.home-page-container .review-content-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Выравнивание содержимого сверху */
+  padding-bottom: 10px; /* Отступ снизу для отделения от кнопок */
+  overflow: hidden; /* Предотвращает выход содержимого за пределы блока */
+}
+
+/* Стили для текста рецензии */
+.home-page-container .prose {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 4; /* Ограничиваем количество строк */
+  -webkit-box-orient: vertical;
 }
 
 .home-page-container .review-wrapper .mt-auto {
@@ -1056,6 +1054,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding-top: 0;
 }
 
 .home-page-container .review-author-name {
@@ -1448,4 +1447,32 @@
 
 .home-page-container .text-muted-foreground {
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* Стили для блока с действиями (кнопки лайка и т.д.) */
+.home-page-container .review-actions-block {
+  margin-top: auto;
+  border-top: 1px solid rgba(39, 39, 42, 0.5);
+  padding-top: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Стили для карточек рецензий */
+.home-page-container .reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .home-page-container .reviews-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page-container .reviews-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
