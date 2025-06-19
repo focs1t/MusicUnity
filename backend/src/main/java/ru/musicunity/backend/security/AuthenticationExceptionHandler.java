@@ -33,8 +33,32 @@ public class AuthenticationExceptionHandler implements AuthenticationEntryPoint 
 
             objectMapper.writeValue(response.getOutputStream(), body);
         } else {
-            // Для веб-запросов перенаправляем на страницу входа
-            response.sendRedirect("/admin/login");
-        }
-    }
-} 
+            // Для веб-запросов перенаправляем на страницу входа с учетом ngrok
+            String baseUrl = getRequestBaseUrl(request);
+            response.sendRedirect(baseUrl + "/admin/login");
+                  }
+      }
+      
+      private String getRequestBaseUrl(HttpServletRequest request) {
+          // Проверяем заголовки от ngrok/прокси
+          String forwardedProto = request.getHeader("X-Forwarded-Proto");
+          String forwardedHost = request.getHeader("X-Forwarded-Host");
+          String forwardedPort = request.getHeader("X-Forwarded-Port");
+          
+          if (forwardedHost != null) {
+              String scheme = forwardedProto != null ? forwardedProto : "https";
+              String port = "";
+              
+              // Для HTTPS обычно порт не нужен, для HTTP проверяем
+              if (forwardedPort != null && !forwardedPort.equals("80") && !forwardedPort.equals("443")) {
+                  port = ":" + forwardedPort;
+              }
+              
+              return scheme + "://" + forwardedHost + port;
+          }
+          
+          // Fallback к стандартному способу
+          return request.getScheme() + "://" + request.getServerName() + 
+                 (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "");
+      }
+  } 

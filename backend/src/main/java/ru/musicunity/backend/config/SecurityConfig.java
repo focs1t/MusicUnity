@@ -25,6 +25,7 @@ import ru.musicunity.backend.security.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 @EnableWebSecurity
@@ -93,15 +94,20 @@ public class SecurityConfig {
                         
                         if (!user.getRights().name().equals("ADMIN")) {
                             SecurityContextHolder.clearContext();
-                            response.sendRedirect("/admin/login?error=access");
+                            // Используем полный URL с учетом заголовков прокси
+                            String baseUrl = getRequestBaseUrl(request);
+                            response.sendRedirect(baseUrl + "/admin/login?error=access");
                             return;
                         }
                         
                         user.setLastLogin(LocalDateTime.now());
                         userRepository.save(user);
-                        response.sendRedirect("/admin/dashboard");
+                        // Используем полный URL с учетом заголовков прокси
+                        String baseUrl = getRequestBaseUrl(request);
+                        response.sendRedirect(baseUrl + "/admin/dashboard");
                     } catch (Exception e) {
-                        response.sendRedirect("/admin/login?error=true");
+                        String baseUrl = getRequestBaseUrl(request);
+                        response.sendRedirect(baseUrl + "/admin/login?error=true");
                     }
                 })
                 .permitAll()
@@ -139,5 +145,44 @@ public class SecurityConfig {
     @Bean
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
+    }
+    
+    private String getRequestBaseUrl(HttpServletRequest request) {
+        // Логирование заголовков для отладки
+        System.out.println("=== DEBUG: Request headers ===");
+        System.out.println("X-Forwarded-Proto: " + request.getHeader("X-Forwarded-Proto"));
+        System.out.println("X-Forwarded-Host: " + request.getHeader("X-Forwarded-Host"));
+        System.out.println("X-Forwarded-Port: " + request.getHeader("X-Forwarded-Port"));
+        System.out.println("Host: " + request.getHeader("Host"));
+        System.out.println("Original URL: " + request.getRequestURL());
+        System.out.println("Scheme: " + request.getScheme());
+        System.out.println("Server Name: " + request.getServerName());
+        System.out.println("Server Port: " + request.getServerPort());
+        
+        // Проверяем заголовки от ngrok/прокси
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        String forwardedHost = request.getHeader("X-Forwarded-Host");
+        String forwardedPort = request.getHeader("X-Forwarded-Port");
+        
+        String baseUrl;
+        if (forwardedHost != null) {
+            String scheme = forwardedProto != null ? forwardedProto : "https";
+            String port = "";
+            
+            // Для HTTPS обычно порт не нужен, для HTTP проверяем
+            if (forwardedPort != null && !forwardedPort.equals("80") && !forwardedPort.equals("443")) {
+                port = ":" + forwardedPort;
+            }
+            
+            baseUrl = scheme + "://" + forwardedHost + port;
+        } else {
+            // Fallback к стандартному способу
+            baseUrl = request.getScheme() + "://" + request.getServerName() + 
+                     (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "");
+        }
+        
+        System.out.println("Calculated base URL: " + baseUrl);
+        System.out.println("===============================");
+        return baseUrl;
     }
 } 

@@ -80,7 +80,7 @@ public class RegistrationRequestAdminController {
                 "Ошибка при одобрении заявки: " + e.getMessage());
         }
         
-        return "redirect:/admin/registration-requests";
+        return "redirect:registration-requests";
     }
 
     @PostMapping("/{requestId}/reject")
@@ -110,6 +110,6 @@ public class RegistrationRequestAdminController {
                 "Ошибка при отклонении заявки: " + e.getMessage());
         }
         
-        return "redirect:/admin/registration-requests";
+        return "redirect:registration-requests";
     }
 } 
