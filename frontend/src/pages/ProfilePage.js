@@ -991,8 +991,29 @@ const ProfilePage = () => {
             likedReviewsData
           ] = results.map(result => result.status === 'fulfilled' ? result.value : null);
           
+          // Детальное логирование каждого результата
+          console.log('Детальные результаты статистики:');
+          console.log('receivedLikes:', receivedLikes);
+          console.log('givenLikes:', givenLikes);
+          console.log('authorLikes:', authorLikes);
+          console.log('reviewsCount:', reviewsCount);
+          console.log('extendedReviewsCount:', extendedReviewsCount);
+          console.log('simpleReviewsCount:', simpleReviewsCount);
+          
+          // Проверяем статус каждого запроса отдельно
+          results.forEach((result, index) => {
+            const labels = [
+              'receivedLikes', 'givenLikes', 'authorLikes', 'reviewsCount', 
+              'extendedReviewsCount', 'simpleReviewsCount', 'followedAuthors', 
+              'favorites', 'likedReviews'
+            ];
+            if (result.status === 'rejected') {
+              console.error(`Ошибка при загрузке ${labels[index]}:`, result.reason);
+            }
+          });
+          
           // Обновление статистики с проверками на null
-          setStats({
+          const updatedStats = {
             receivedLikes: receivedLikes || 0,
             givenLikes: givenLikes || 0,
             receivedAuthorLikes: authorLikes || 0,
@@ -1001,7 +1022,10 @@ const ProfilePage = () => {
             simpleReviews: simpleReviewsCount || 0,
             followedAuthors: followedAuthorsData?.totalElements || 0,
             favorites: favoritesData?.totalElements || 0
-          });
+          };
+          
+          console.log('Финальная статистика для установки:', updatedStats);
+          setStats(updatedStats);
           
           // Получаем список ID рецензий, которые пользователь лайкнул
           if (likedReviewsData && likedReviewsData.content) {

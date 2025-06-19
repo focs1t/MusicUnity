@@ -350,7 +350,7 @@ export const reviewApi = {
   getExtendedReviewsCountByUser: async (userId) => {
     try {
       console.log(`Запрос количества полных рецензий для пользователя ${userId}`);
-      const response = await httpClient.get(`${API_URL}/user/${userId}/reviews/extended/count`);
+      const response = await httpClient.get(`${API_URL}/user/${userId}/extended/count`);
       console.log(`Ответ API о количестве полных рецензий:`, response.data);
       return typeof response.data === 'number' ? response.data : 0;
     } catch (error) {
@@ -372,7 +372,7 @@ export const reviewApi = {
   getSimpleReviewsCountByUser: async (userId) => {
     try {
       console.log(`Запрос количества простых рецензий для пользователя ${userId}`);
-      const response = await httpClient.get(`${API_URL}/user/${userId}/reviews/simple/count`);
+      const response = await httpClient.get(`${API_URL}/user/${userId}/simple/count`);
       console.log(`Ответ API о количестве простых рецензий:`, response.data);
       return typeof response.data === 'number' ? response.data : 0;
     } catch (error) {
