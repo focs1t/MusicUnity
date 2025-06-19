@@ -30,7 +30,8 @@ body {
 /* Медиа-запрос для мобильных устройств */
 @media (max-width: 768px) {
   .content {
-    padding-left: 55px;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
   }
 }
 
@@ -47,6 +48,26 @@ body {
 
 .sidebar:hover {
   width: 16rem;
+}
+
+/* Скрываем сайдбар на мобильных устройствах */
+@media (max-width: 768px) {
+  .sidebar,
+  aside.sidebar,
+  *[class*="sidebar"],
+  *[class*="Sidebar"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+  }
 }
 
 /* Tailwind-подобные утилиты */
@@ -1290,3 +1311,93 @@ button:disabled {
     display: none;
   }
 }
+
+/* === ДОПОЛНИТЕЛЬНАЯ МОБИЛЬНАЯ АДАПТАЦИЯ === */
+@media (max-width: 768px) {
+  /* Оптимизируем карточки авторов на главной странице */
+  .home-page-container .authors-grid,
+  .home-page-container .authors-list {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  .home-page-container .author-card {
+    padding: 0.4rem !important;
+    min-height: auto !important;
+    background: linear-gradient(135deg, rgba(24, 24, 27, 0.95), rgba(39, 39, 42, 0.9)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  .home-page-container .author-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 10px 30px rgba(58, 130, 247, 0.2) !important;
+    border-color: rgba(58, 130, 247, 0.4) !important;
+  }
+  
+  .home-page-container .author-card::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 20% !important;
+    right: 20% !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, rgba(58, 130, 247, 0.6), transparent) !important;
+  }
+  
+  .home-page-container .author-avatar-container {
+    max-width: 50px !important;
+    width: 50px !important;
+    height: 50px !important;
+    border: 2px solid rgba(58, 130, 247, 0.3) !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4) !important;
+  }
+  
+  .home-page-container .author-name-container {
+    font-size: 0.7rem !important;
+    margin: 0.25rem 0 0.125rem !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    text-align: center !important;
+  }
+  
+  /* Делаем иконки более видимыми */
+  .bookmark-icon,
+  .favorite-icon,
+  .heart-icon {
+    filter: drop-shadow(0 0 2px rgba(58, 130, 247, 0.5)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page-container .authors-grid,
+  .home-page-container .authors-list {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  .home-page-container .author-card {
+    padding: 0.3rem !important;
+    border-radius: 10px !important;
+  }
+  
+  .home-page-container .author-avatar-container {
+    max-width: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-width: 1.5px !important;
+  }
+  
+  .home-page-container .author-name-container {
+    font-size: 0.6rem !important;
+    margin: 0.125rem 0 0.0625rem !important;
+    font-weight: 700 !important;
+    line-height: 1.0 !important;
+  }
+}
+
+/* Импортируем мобильные стили в конец для максимального приоритета */
+@import url('./styles/mobile.css');

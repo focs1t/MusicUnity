@@ -1,0 +1,165 @@
+/* Кнопка открытия поиска */
+.searchButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  margin-right: 8px;
+}
+
+.searchButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.searchButton:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Контейнер развернутого поиска */
+.searchContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem;
+  animation: slideInFromTop 0.2s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Форма поиска */
+.searchForm {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.searchInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.searchInputWrapper:focus-within {
+  border-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 1rem 1rem 1rem 3rem;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.1rem;
+  outline: none;
+  width: 100%;
+}
+
+.searchInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin-right: 0.5rem;
+}
+
+.closeButton:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.closeButton:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Адаптация для малых экранов */
+@media (max-width: 480px) {
+  .searchContainer {
+    padding: 0.75rem;
+  }
+  
+  .searchInput {
+    font-size: 1rem;
+    padding: 0.875rem 0.875rem 0.875rem 2.5rem;
+  }
+  
+  .searchIcon {
+    left: 0.75rem;
+  }
+  
+  .closeButton {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Адаптация для горизонтальной ориентации */
+@media (max-width: 768px) and (orientation: landscape) {
+  .searchContainer {
+    padding: 0.5rem 1rem;
+  }
+  
+  .searchInput {
+    padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  }
+}
+
+/* Улучшения доступности */
+@media (prefers-reduced-motion: reduce) {
+  .searchContainer {
+    animation: none;
+  }
+  
+  .searchButton,
+  .closeButton {
+    transition: none;
+  }
+}
+
+
+
+ 

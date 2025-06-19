@@ -1,0 +1,372 @@
+/* Кнопка открытия меню */
+.menuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+}
+
+.menuButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menuButton:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Оверлей */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  backdrop-filter: blur(2px);
+}
+
+/* Мобильное меню */
+.mobileNav {
+  position: fixed;
+  top: 0;
+  left: -320px;
+  width: 320px;
+  height: 100vh;
+  background-color: #000;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  transition: left 0.3s ease;
+  overflow: hidden;
+}
+
+.mobileNav.open {
+  left: 0;
+}
+
+/* Заголовок меню */
+.header {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #111;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  border-radius: 6px;
+}
+
+.closeButton:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Контент меню */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Секция пользователя */
+.userSection {
+  padding: 0 1rem 1rem;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.userAvatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.userAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.userAvatar img + .avatarPlaceholder {
+  display: none;
+}
+
+.userDetails {
+  flex: 1;
+}
+
+.userName {
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.userRole {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+}
+
+.userActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Секция авторизации */
+.authSection {
+  padding: 0 1rem 1rem;
+}
+
+.authButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem;
+  margin-bottom: 0.5rem;
+  background-color: #3a82f7;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.authButton:hover {
+  background-color: #2563eb;
+}
+
+.authButton:last-child {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.authButton:last-child:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Разделитель */
+.divider {
+  height: 1px;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 1rem 0;
+}
+
+/* Группы навигации */
+.navGroup {
+  padding: 0 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.groupTitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+/* Элементы навигации */
+.navItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 0.5rem;
+  margin-bottom: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navItem:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.navItem.active {
+  background-color: rgba(58, 130, 247, 0.1);
+  color: #3a82f7;
+}
+
+.navItem.active:hover {
+  background-color: rgba(58, 130, 247, 0.15);
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.textWrapper {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* Адаптация для очень маленьких экранов */
+@media (max-width: 360px) {
+  .mobileNav {
+    width: 280px;
+    left: -280px;
+  }
+}
+
+/* Адаптация для горизонтальной ориентации */
+@media (max-width: 768px) and (orientation: landscape) {
+  .content {
+    padding: 0.5rem 0;
+  }
+  
+  .navGroup {
+    margin-bottom: 1rem;
+  }
+  
+  .userActions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .actionButton {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+  }
+}
+
+/* Улучшения доступности */
+@media (prefers-reduced-motion: reduce) {
+  .mobileNav,
+  .overlay,
+  .menuButton,
+  .closeButton,
+  .actionButton,
+  .authButton,
+  .navItem {
+    transition: none;
+  }
+}
+
+/* Тёмная тема */
+@media (prefers-color-scheme: dark) {
+  .mobileNav {
+    background-color: #000;
+    border-right-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .header {
+    background-color: #111;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Фокус состояния для accessibility */
+.actionButton:focus,
+.authButton:focus,
+.navItem:focus,
+.closeButton:focus {
+  outline: 2px solid #3a82f7;
+  outline-offset: 2px;
+}
+
+/* Скроллбар для webkit */
+.content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+} 

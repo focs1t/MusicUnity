@@ -33,6 +33,9 @@ import InfoIcon from '@mui/icons-material/Info';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { LoginModal, RegisterModal, ForgotPasswordModal, ResetPasswordModal } from '../../AuthModal';
+import { MobileNavigation } from '../../MobileNavigation';
+import { MobileSearch } from '../../MobileSearch';
+import { BottomNavigation } from '../../BottomNavigation';
 import { userApi } from '../../../shared/api/user';
 import styles from './Header.module.css';
 import { useContext } from 'react';
@@ -719,6 +722,16 @@ export const Header = () => {
             <div className={styles.authContainer}>
               {renderAuthButtons()}
             </div>
+            
+            {/* Мобильная навигация */}
+            <div className={styles.mobileControls}>
+              <MobileSearch />
+              <MobileNavigation 
+                onLoginOpen={handleOpenLoginModal}
+                onRegisterOpen={handleOpenRegisterModal}
+                onMobileMenuClose={handleMobileMenuClose}
+              />
+            </div>
           </div>
         </div>
       </header>
@@ -748,6 +761,9 @@ export const Header = () => {
         onClose={handleCloseResetPasswordModal}
         token={resetToken}
       />
+      
+      {/* Нижняя навигация */}
+      <BottomNavigation />
     </>
   );
 }; 
