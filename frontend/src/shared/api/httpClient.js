@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-// Возвращаем полный URL к API серверу, так как прокси не работает
+// Используем ngrok URL для бэкенда
 const httpClient = axios.create({
-  baseURL: 'http://26.179.22.134:8080',
+  baseURL: 'https://12a1-91-108-189-233.ngrok-free.app',
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true' // Пропускаем предупреждение ngrok
   },
   withCredentials: true // Включаем поддержку кросс-доменных куки
 });

@@ -20,6 +20,10 @@ public class CorsConfig {
         config.addAllowedOrigin("http://192.168.31.31:3000");
         config.addAllowedOrigin("http://26.179.22.134:3000");
         
+        // Добавляем ngrok URL'ы
+        config.addAllowedOrigin("https://0563-91-108-189-233.ngrok-free.app");
+        config.addAllowedOrigin("https://12a1-91-108-189-233.ngrok-free.app");
+        
         // Разрешаем все HTTP методы
         config.addAllowedMethod("*");
         
