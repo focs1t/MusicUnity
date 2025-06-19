@@ -50,6 +50,11 @@ export const likeSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    resetLikes: (state) => {
+      state.reviewLikes = {};
+      state.loading = false;
+      state.error = null;
+    },
     requestFailure: (state, action) => {
       state.loading = false;
       state.error = action.payload;
@@ -62,6 +67,7 @@ export const {
   loadReviewLikesSuccess,
   addLikeSuccess,
   removeLikeSuccess,
+  resetLikes,
   requestFailure
 } = likeSlice.actions;
 

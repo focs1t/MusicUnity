@@ -6,9 +6,12 @@ import {
   registerStart, 
   registerSuccess, 
   registerFailure, 
-  logout as logoutAction 
+  logout as logoutAction, 
+  setUser, 
+  setAuthChecked 
 } from './authStore';
 import { jwtDecode } from 'jwt-decode';
+import { resetLikes } from '../../like';
 
 // Функция для расшифровки токена и получения информации о пользователе
 const getUserFromToken = (token) => {
@@ -244,6 +247,9 @@ export const logout = () => (dispatch) => {
   try {
     // Сначала диспатчим действие logout для обновления Redux
     dispatch(logoutAction());
+    
+    // Очищаем состояние лайков
+    dispatch(resetLikes());
     
     // Проверяем наличие токенов
     const tokenFromLocalStorage = localStorage.getItem('token');

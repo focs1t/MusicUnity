@@ -61,6 +61,13 @@ const authSlice = createSlice({
   }
 });
 
+// Селекторы
+export const selectIsAuth = (state) => state.auth.isAuthenticated;
+export const selectUserData = (state) => state.auth.user;
+export const selectAuthLoading = (state) => state.auth.loading;
+export const selectAuthError = (state) => state.auth.error;
+export const selectAuthChecked = (state) => state.auth.authChecked;
+
 export const { 
   loginStart, 
   loginSuccess, 

@@ -1,4 +1,4 @@
 import { LikeType } from './model/types';
-import likeReducer from './model/likeStore';
+import likeReducer, { resetLikes } from './model/likeStore';
 
-export { LikeType, likeReducer }; 
+export { LikeType, likeReducer, resetLikes }; 

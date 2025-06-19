@@ -35,6 +35,10 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { LoginModal, RegisterModal, ForgotPasswordModal, ResetPasswordModal } from '../../AuthModal';
 import { userApi } from '../../../shared/api/user';
 import styles from './Header.module.css';
+import { useContext } from 'react';
+import { useDispatch } from 'react-redux';
+import { AuthContext } from '../../../app/providers/AuthProvider/ui/AuthProvider';
+import { resetLikes } from '../../../entities/like';
 
 // Стилизация поля поиска
 const Search = styled('div')(({ theme }) => ({
@@ -172,6 +176,9 @@ export const Header = () => {
   // Состояние для скрытия шапки при скролле
   const [visible, setVisible] = useState(true);
   const [prevScrollPos, setPrevScrollPos] = useState(0);
+
+  const { logout: authLogout } = useContext(AuthContext);
+  const dispatch = useDispatch();
 
   // Проверка состояния авторизации и загрузка данных пользователя
   useEffect(() => {
@@ -352,8 +359,11 @@ export const Header = () => {
       document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
     
+    // Сбрасываем состояние лайков
+    dispatch(resetLikes());
+    
     // Только после этого вызываем logout через AuthContext
-    logout();
+    authLogout();
     
     // Закрываем все меню
     handleClose();

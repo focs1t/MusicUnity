@@ -1,14 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { authModel } from '../../../../entities/auth';
 import { userApi } from '../../../../shared/api/user';
-
-// Создаем селекторы для authModel
-const selectIsAuth = (state) => state.auth.isAuthenticated;
-const selectUserData = (state) => state.auth.user;
-const selectAuthLoading = (state) => state.auth.loading;
-const selectAuthError = (state) => state.auth.error;
+import { 
+  selectIsAuth, 
+  selectUserData, 
+  selectAuthLoading, 
+  selectAuthError 
+} from '../../../../entities/auth/model/authStore';
+import * as authModel from '../../../../entities/auth/model';
+import { resetLikes } from '../../../../entities/like';
 
 // Создаем контекст для авторизации
 export const AuthContext = createContext(null);
@@ -41,7 +42,7 @@ const AuthProvider = ({ children }) => {
   // Функция для выхода из системы
   const logout = () => {
     console.log('AuthProvider: Выполняем выход из системы');
-    dispatch(authModel.logout());
+    dispatch(authModel.logoutOperation());
   };
   
   // Функция для входа в систему
@@ -141,7 +142,10 @@ const AuthProvider = ({ children }) => {
       setLogoutInProgress(true);
       
       // Выполняем выход из системы
-      dispatch(authModel.logout());
+      dispatch(authModel.logoutOperation());
+      
+      // Сбрасываем состояние лайков
+      dispatch(resetLikes());
       
       // Показываем уведомление пользователю
       if (event.detail?.message) {
