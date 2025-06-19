@@ -224,24 +224,45 @@ const AuthorPage = () => {
   }, [id]);
 
   const handleFollowClick = async () => {
+    console.log('=== handleFollowClick вызван ===');
+    
     try {
       const currentUserId = getCurrentUserId();
+      console.log('Текущий ID пользователя:', currentUserId);
+      
       if (!currentUserId) {
         console.error('Пользователь не авторизован');
+        setNotification({
+          message: 'Войдите в систему, чтобы подписаться на автора',
+          type: 'warning'
+        });
         return;
       }
 
+      console.log(`Попытка ${isFollowing ? 'отписаться от' : 'подписаться на'} автора ${id}`);
+
       if (isFollowing) {
+        console.log('Отписываемся от автора...');
         await authorApi.unfollowAuthor(id, currentUserId);
         setIsFollowing(false);
-        setFollowersCount(prev => prev - 1);
+        setFollowersCount(prev => Math.max(0, prev - 1));
+        setNotification({
+          message: 'Вы отписались от автора',
+          type: 'success'
+        });
       } else {
+        console.log('Подписываемся на автора...');
         await authorApi.followAuthor(id);
         setIsFollowing(true);
         setFollowersCount(prev => prev + 1);
+        setNotification({
+          message: 'Вы подписались на автора',
+          type: 'success'
+        });
       }
     } catch (err) {
       console.error('Ошибка при изменении подписки:', err);
+      console.error('Детали ошибки:', err.response?.data);
       
       // Проверяем на ошибку автора
       if (err.response && err.response.status === 403 && 
@@ -251,9 +272,14 @@ const AuthorPage = () => {
           message: 'Автор не может подписываться на других авторов',
           type: 'error'
         });
+      } else if (err.response?.status === 401) {
+        setNotification({
+          message: 'Войдите в систему, чтобы подписаться на автора',
+          type: 'warning'
+        });
       } else {
         setNotification({
-          message: 'Ошибка при подписке',
+          message: err.response?.data?.message || 'Ошибка при подписке',
           type: 'error'
         });
       }
@@ -330,8 +356,14 @@ const AuthorPage = () => {
               <div className="author-rating-wrapper">
                 <button 
                   className="like-button"
-                  onClick={handleFollowClick}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Кнопка подписки нажата!');
+                    handleFollowClick();
+                  }}
                   title={isFollowing ? "Отписаться" : "Подписаться"}
+                  style={{ pointerEvents: 'auto', zIndex: 100 }}
                 >
                   <div className="w-6 h-6 lg:w-6 lg:h-6 flex items-center justify-center">
                     {isFollowing ? (
@@ -362,7 +394,9 @@ const AuthorPage = () => {
                 </button>
                 <div className="author-hover-menu">
                   <div className="author-hover-content">
-                    <div className="author-hover-title">Количество добавлений в предпочтения</div>
+                    <div className="author-hover-title">
+                      {isFollowing ? 'Отписаться от автора' : 'Подписаться на автора'}
+                    </div>
                   </div>
                 </div>
               </div>

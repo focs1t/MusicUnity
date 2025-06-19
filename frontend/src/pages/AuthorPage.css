@@ -108,9 +108,12 @@
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(255, 255, 255, 0.05);
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.2s ease;
   padding: 0;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 100;
 }
 
 .author-page-container .like-button:hover {
@@ -121,6 +124,11 @@
 .author-page-container .like-button:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.4);
   outline-offset: 2px;
+}
+
+.author-page-container .like-button:active {
+  transform: scale(0.95);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 @media (min-width: 1024px) {
